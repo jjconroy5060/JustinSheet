@@ -37,6 +37,10 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .chk{border-radius:50%;border:2px solid var(--line);background:none;cursor:pointer;color:var(--done);font-size:.65rem;padding:0;line-height:1}
 .chk:hover{border-color:var(--done)}
 .cat{font-size:.85rem;color:var(--mute)}
+.side{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+.gear{background:none;border:0;cursor:pointer;color:var(--mute);font-size:.95rem;padding:2px 4px}
+.chkrow{display:flex;align-items:center;gap:10px;margin:0;padding:6px 0;color:var(--ink);font-size:.9rem;border-top:1px solid var(--line);cursor:pointer}
+.chkrow input{width:auto}.chkrow span:nth-of-type(1){flex:1}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:1.6rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:6}
 .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
 .btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
@@ -64,7 +68,7 @@ const db = supabase.createClient(
   'https://vcoydiomjzkkukfqfywz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
-const S = { user: null, entries: [], options: [], tab: 'home', sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { user: null, entries: [], options: [], tab: 'home', settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -89,12 +93,13 @@ async function loadAll() {
   S.loading = false; S.anchor = true; render();
 }
 
-function categories(extra) {
-  const set = new Set(S.options.map(o => o.name));
-  S.entries.forEach(e => e.category && set.add(e.category));
-  if (extra) set.add(extra);
-  return [...set].sort((a, b) => a.localeCompare(b));
+function catCounts() { const c = {}; S.entries.forEach(e => { if (e.category) c[e.category] = (c[e.category] || 0) + 1; }); return c; }
+const visible = n => { const o = S.options.find(x => x.name === n); return !o || o.show_in_menu !== false; };
+function allCats() {
+  const c = catCounts(), set = new Set([...S.options.map(o => o.name), ...Object.keys(c)]);
+  return [...set].sort((a, b) => (c[b] || 0) - (c[a] || 0) || a.localeCompare(b));
 }
+function categories(extra) { return allCats().filter(n => visible(n) || n === extra); }
 
 /* ---------- views ---------- */
 function rowHtml(e, n, cols = '', cls = '') {
@@ -127,6 +132,16 @@ function wheel() {
     .filter(([e]) => !q || norm(e.category).includes(q) || norm(e.description).includes(q))
     .map(([e, n]) => { const isP = e.status === 'priority'; const cls = isP ? 'pr' + (first ? ' first-p' : '') : ''; if (isP) first = false; return rowHtml(e, n, 'dc', cls); }).join('');
   return `<div class="card"><div class="head"><h2>Wheel</h2><span class="cat">${d.length.toLocaleString()} completed · ${p.length} priority</span></div>${rows || '<div class="cat">No matches.</div>'}</div>`;
+}
+
+function settingsHtml() {
+  const c = catCounts();
+  return `<div class="modal"><div class="sheet"><div class="head"><h2>Settings</h2><button class="btn alt" data-cancel>Done</button></div>
+    <h3 style="font-size:.95rem;margin-top:8px">Categories in the dropdown</h3>
+    <div class="cat">Untick a category to hide it from the dropdown. Nothing is deleted, and the list is sorted by how often each is used.</div>
+    <div style="margin-top:8px">${allCats().map(n => `<label class="chkrow"><input type="checkbox" data-vis="${esc(n)}" ${visible(n) ? 'checked' : ''}><span>${esc(n)}</span><span class="cat">${c[n] || 0}</span></label>`).join('')}</div>
+    <h3 style="font-size:.95rem;margin-top:16px">Add a category</h3>
+    <div style="display:flex;gap:6px;margin-top:6px"><input id="s-new" placeholder="New category name"><button class="btn" data-addcat>Add</button></div></div></div>`;
 }
 
 function anchor() {
@@ -177,10 +192,10 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : '';
+  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.settings ? settingsHtml() : '';
   app.innerHTML = `<div class="wrap"><header><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button></nav>
-    <button class="link" data-out>Sign out</button>
+    <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
     ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
@@ -238,6 +253,23 @@ async function saveBulk() {
   S.bulk = null; S.anchor = true; render(); toast(`Added ${data.length} rows`);
 }
 
+async function toggleVis(box) {
+  const name = box.dataset.vis, show = box.checked, o = S.options.find(x => x.name === name);
+  const res = o ? await db.from('wheel_options').update({ show_in_menu: show }).eq('id', o.id).select().single()
+    : await db.from('wheel_options').insert({ name, weight: 1, active: false, sort_order: Math.max(0, ...S.options.map(x => x.sort_order)) + 1, show_in_menu: show }).select().single();
+  if (res.error) { box.checked = !show; return toast('Could not save: ' + res.error.message); }
+  if (o) Object.assign(o, res.data); else S.options.push(res.data);
+}
+
+async function addCat() {
+  const name = $('#s-new').value.replace(/\s+/g, ' ').trim();
+  if (!name) return;
+  if (allCats().some(c => c.toLowerCase() === name.toLowerCase())) return toast('That category already exists');
+  const { data, error } = await db.from('wheel_options').insert({ name, weight: 1, active: false, sort_order: Math.max(0, ...S.options.map(x => x.sort_order)) + 1, show_in_menu: true }).select().single();
+  if (error) return toast('Could not add: ' + error.message);
+  S.options.push(data); render(); toast('Added ' + name);
+}
+
 async function del() {
   if (!confirm('Delete this item?')) return;
   const { error } = await db.from('log_entries').delete().eq('id', S.modal.id);
@@ -248,8 +280,10 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.modal = null; S.bulk = null; return render(); }
-  if (g('data-cancel')) { S.modal = null; S.bulk = null; return render(); }
+  if (t.classList.contains('modal')) { S.modal = null; S.bulk = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.modal = null; S.bulk = null; S.settings = false; return render(); }
+  if (g('data-settings')) { S.settings = true; return render(); }
+  if (g('data-addcat')) return addCat();
   if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; return render(); }
   if (g('data-bulk')) { S.bulk = { status: g('data-bulk').dataset.bulk }; return render(); }
   if (g('data-fill')) return fillLines();
@@ -262,7 +296,9 @@ document.addEventListener('click', e => {
   if (g('data-finish')) { const en = S.entries.find(x => x.id == g('data-finish').dataset.finish); return openModal(en, { finish: true }); }
   if (g('data-edit')) { const en = S.entries.find(x => x.id == g('data-edit').dataset.edit); return openModal(en); }
 });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat(); });
 document.addEventListener('change', e => {
+  if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
   if (e.target.id === 'm-cat' || e.target.id === 'm-status') { const m = S.modal; m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
   if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
 });
