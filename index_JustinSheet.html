@@ -13,7 +13,7 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.45 ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
 h1,h2,h3{margin:0;line-height:1.2}
 button,input,select,textarea{font:inherit;color:inherit}
-.wrap{max-width:760px;margin:0 auto;padding:16px}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
 header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;margin-bottom:6px}
 header h1{font-size:1.3rem}
 nav{display:flex;gap:6px}
@@ -41,6 +41,14 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .gear{background:none;border:0;cursor:pointer;color:var(--mute);font-size:.95rem;padding:2px 4px}
 .chkrow{display:flex;align-items:center;gap:10px;margin:0;padding:6px 0;color:var(--ink);font-size:.9rem;border-top:1px solid var(--line);cursor:pointer}
 .chkrow input{width:auto}.chkrow span:nth-of-type(1){flex:1}
+.row .t1{flex:1;min-width:0;overflow-wrap:anywhere}.row .t2,.row .t3{flex:0 0 5.2em}.row .t4{flex:0 0 3.6em;text-align:right}.row .t5{flex:0 0 7.5em}
+.paused{color:var(--danger)}.dropped{color:var(--mute);text-decoration:line-through}
+.cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}.cols .card,.ovg .card{margin:0}
+.ovg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+@media(max-width:720px){.cols{grid-template-columns:1fr}}
+.seg.sm button{padding:3px 10px;font-size:.8rem}
+.arrow{background:none;border:0;color:var(--mute);cursor:pointer;padding:0 2px;font-size:.7rem}
+table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.mx th{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line)}table.mx td:first-child,table.mx th:first-child{text-align:left}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:1.6rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:6}
 .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
 .btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
@@ -68,7 +76,7 @@ const db = supabase.createClient(
   'https://vcoydiomjzkkukfqfywz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
-const S = { user: null, entries: [], options: [], tab: 'home', settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { user: null, entries: [], options: [], tab: 'home', current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -90,6 +98,8 @@ async function loadAll() {
   S.entries = all;
   const o = await db.from('wheel_options').select('*').order('sort_order');
   S.options = o.data || [];
+  const c = await db.from('current_items').select('*').order('sort_order');
+  S.current = c.data || []; S.curErr = c.error ? c.error.message : null;
   S.loading = false; S.anchor = true; render();
 }
 
@@ -144,6 +154,112 @@ function settingsHtml() {
     <div style="display:flex;gap:6px;margin-top:6px"><input id="s-new" placeholder="New category name"><button class="btn" data-addcat>Add</button></div></div></div>`;
 }
 
+/* ---------- Current ---------- */
+const CATS = [['games', 'Games'], ['shows', 'Shows'], ['books', 'Books'], ['manga', 'Manga'], ['music', 'Music']];
+const YC = { 2024: '#c4604f', 2025: '#d6913f', 2026: '#cdb43a', 2027: '#6fa86f', 2028: '#5b9bc4', 2029: '#9b7bc4' };
+const yc = y => YC[y] || 'var(--mute)';
+const catName = k => (CATS.find(c => c[0] === k) || [])[1];
+const cur = k => S.current.filter(i => i.category === k);
+const ranked = k => cur(k).filter(i => i.rank != null && !i.done).sort((a, b) => a.rank - b.rank);
+const stCls = i => i.status === 'paused' ? 'paused' : i.status === 'dropped' ? 'dropped' : '';
+const prog = i => `${esc(i.progress) || '—'}${i.total ? ' / ' + esc(i.total) : ''}`;
+const mark = i => i.done ? `<span style="color:${yc(i.done_year)}">✓${i.done_year ? ' ’' + String(i.done_year).slice(2) : ''}</span>`
+  : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : '';
+const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t2">${esc(i.progress) || '—'}</div><div class="t3">${esc(i.total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
+const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t5">${prog(i)}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
+
+function currentView() {
+  if (S.curErr) return `<div class="card">Couldn’t load Current: ${esc(S.curErr)}<br><span class="cat">Run 4_current.sql in the Supabase SQL Editor first.</span></div>`;
+  const tabs = [['overview', 'Overview'], ...CATS, ['years', 'Years']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
+  const body = S.cat === 'overview' ? overview() : S.cat === 'years' ? yearsView() : catView(S.cat);
+  return `<div class="seg">${tabs}</div>${body}`;
+}
+
+function overview() {
+  return `<div class="ovg">${CATS.map(([k, l]) => { const r = ranked(k);
+    return `<div class="card"><div class="head"><h2 style="cursor:pointer" data-ctab="${k}">${l}</h2><button class="btn alt" data-cadd="${k}">Add</button></div>
+      ${r.map((i, n) => rankRow(i, n + 1, false)).join('') || '<div class="cat">Nothing current.</div>'}</div>`; }).join('')}</div>`;
+}
+
+function catView(k) {
+  const all = cur(k).sort((a, b) => a.sort_order - b.sort_order), r = ranked(k);
+  const F = { all: ['All', () => true], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], rewatch: ['Rewatch', i => i.status === 'rewatch'] };
+  const chips = Object.entries(F).map(([f, [l, fn]]) => [f, l, all.filter(fn).length]).filter(([f, , n]) => f === 'all' || n || f === S.flt)
+    .map(([f, l, n]) => `<button class="${S.flt === f ? 'on' : ''}" data-cflt="${f}">${l} (${n})</button>`).join('');
+  const rows = all.filter((F[S.flt] || F.all)[1]);
+  return `<div class="cols"><div class="card"><div class="head"><h2>Current</h2><button class="btn" data-cadd="${k}">Add</button></div>
+    ${r.map((i, n) => rankRow(i, n + 1, true)).join('') || '<div class="cat">Nothing current.</div>'}</div>
+    <div class="card"><div class="head"><h2>All ${catName(k).toLowerCase()}</h2></div><div class="seg sm">${chips}</div>
+    <div class="row th"><div class="c0">#</div><div class="t1">Title</div><div class="t2">How far</div><div class="t3">Total</div><div class="t4"></div></div>
+    ${rows.map((i, n) => curRow(i, n + 1)).join('') || '<div class="cat">Nothing here.</div>'}</div></div>`;
+}
+
+function yearsView() {
+  const done = S.current.filter(i => i.done), ys = [...new Set(done.map(i => i.done_year).filter(Boolean))].sort();
+  const sel = S.yr ?? (ys.length ? ys[ys.length - 1] : 'all');
+  const chip = (v, l) => `<button class="${String(sel) === String(v) ? 'on' : ''}" data-cyr="${v}">${l}</button>`;
+  const cnt = (k, y) => done.filter(i => i.category === k && (y === 'all' || i.done_year === y)).length;
+  const matrix = `<table class="mx"><tr><th></th>${ys.map(y => `<th style="color:${yc(y)}">${y}</th>`).join('')}<th>Total</th></tr>
+    ${CATS.map(([k, l]) => `<tr><td>${l}</td>${ys.map(y => `<td>${cnt(k, y) || '·'}</td>`).join('')}<td>${cnt(k, 'all') || '·'}</td></tr>`).join('')}
+    <tr><th>All</th>${ys.map(y => `<th>${done.filter(i => i.done_year === y).length}</th>`).join('')}<th>${done.length}</th></tr></table>`;
+  const list = done.filter(i => sel === 'all' || i.done_year === sel);
+  const groups = CATS.map(([k, l]) => [l, list.filter(i => i.category === k)]).filter(([, a]) => a.length);
+  return `<div class="card"><h2 style="margin-bottom:8px">Completed by year</h2>${matrix}</div>
+    <div class="card"><div class="seg sm">${ys.map(y => chip(y, y)).join('')}${chip('all', 'All')}</div>
+    ${groups.map(([l, a]) => `<div class="cat" style="margin:8px 0 2px;font-weight:600">${l} (${a.length})</div>${a.map((i, n) => curRow(i, n + 1)).join('')}`).join('') || '<div class="cat">Nothing completed.</div>'}</div>`;
+}
+
+function curModalHtml() {
+  const m = S.cm, top = Math.max(new Date().getFullYear(), ...S.current.map(i => i.done_year || 0)) + 1, yrs = [];
+  for (let y = 2024; y <= top; y++) yrs.push(y);
+  const st = [['active', 'Active'], ['paused', 'Paused'], ['dropped', 'Dropped'], ['rewatch', 'Rewatch / replay later']];
+  return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit' : 'Add to'} ${m.id ? '' : catName(m.category)}</h2>
+    <label>Title</label><input id="c-title" value="${esc(m.title)}">
+    <div style="display:flex;gap:8px"><div style="flex:1"><label>How far</label><input id="c-prog" value="${esc(m.progress)}" placeholder="Ch. 12"></div><div style="flex:1"><label>Total</label><input id="c-tot" value="${esc(m.total)}" placeholder="147 Chs."></div></div>
+    <label>Status</label><select id="c-status">${st.map(([k, l]) => `<option value="${k}" ${m.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <label class="chkrow"><input type="checkbox" id="c-incur" ${m.incur ? 'checked' : ''}><span>In my Current list</span></label>
+    <label class="chkrow"><input type="checkbox" id="c-done" ${m.done ? 'checked' : ''}><span>Done</span></label>
+    ${m.done ? `<label>Year completed</label><select id="c-year">${yrs.map(y => `<option ${y === m.year ? 'selected' : ''}>${y}</option>`).join('')}</select>` : ''}
+    <div class="acts"><button class="btn" data-csave>Save</button>${m.id ? '<button class="btn danger" data-cdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+}
+
+function readCm() {
+  const m = S.cm; m.title = $('#c-title').value; m.progress = $('#c-prog').value; m.total = $('#c-tot').value; m.status = $('#c-status').value;
+  m.incur = $('#c-incur').checked; m.done = $('#c-done').checked; m.year = $('#c-year') ? Number($('#c-year').value) : (m.done ? (m.year || new Date().getFullYear()) : m.year);
+  return m;
+}
+
+async function saveCur() {
+  const m = readCm(), title = m.title.trim();
+  if (!title) return toast('Add a title first');
+  const old = m.id ? S.current.find(x => x.id === m.id) : null;
+  let rank = null;
+  if (m.incur && !m.done) rank = old && old.rank != null ? old.rank : Math.max(0, ...cur(m.category).map(i => i.rank || 0)) + 1;
+  const payload = { category: m.category, title, progress: m.progress.trim() || null, total: m.total.trim() || null, status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
+  let res;
+  if (m.id) res = await db.from('current_items').update(payload).eq('id', m.id).select().single();
+  else { payload.sort_order = Math.max(0, ...S.current.map(i => i.sort_order)) + 1; res = await db.from('current_items').insert(payload).select().single(); }
+  if (res.error) return toast('Save failed: ' + res.error.message);
+  S.current = S.current.filter(i => i.id !== res.data.id).concat(res.data);
+  S.cm = null; render();
+}
+
+async function delCur() {
+  if (!confirm('Delete this item?')) return;
+  const { error } = await db.from('current_items').delete().eq('id', S.cm.id);
+  if (error) return toast('Delete failed: ' + error.message);
+  S.current = S.current.filter(i => i.id !== S.cm.id); S.cm = null; render();
+}
+
+async function moveRank(id, dir) {
+  const it = S.current.find(x => x.id == id), r = ranked(it.category), o = r[r.findIndex(x => x.id == id) + dir];
+  if (!o) return;
+  const [a, b] = [it.rank, o.rank];
+  const e1 = await db.from('current_items').update({ rank: b }).eq('id', it.id), e2 = await db.from('current_items').update({ rank: a }).eq('id', o.id);
+  if (e1.error || e2.error) return toast('Could not reorder');
+  it.rank = b; o.rank = a; render();
+}
+
 function anchor() {
   const el = $('.row.first-p');
   if (!el) return window.scrollTo(0, document.body.scrollHeight);
@@ -192,12 +308,12 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.settings ? settingsHtml() : '';
+  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.cm ? curModalHtml() : S.settings ? settingsHtml() : '';
   app.innerHTML = `<div class="wrap"><header><h1>Justin’s Sheet</h1>
-    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button></nav>
+    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
-    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : wheel())}</div>
+    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
@@ -280,8 +396,16 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.modal = null; S.bulk = null; S.settings = false; return render(); }
-  if (g('data-cancel')) { S.modal = null; S.bulk = null; S.settings = false; return render(); }
+  if (t.classList.contains('modal')) { S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
+  if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
+  if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
+  if (g('data-cmove')) return moveRank(g('data-cmove').dataset.cmove, Number(g('data-cmove').dataset.dir));
+  if (g('data-cadd')) { S.cm = { id: null, category: g('data-cadd').dataset.cadd, title: '', progress: '', total: '', status: 'active', incur: true, done: false, year: new Date().getFullYear() }; return render(); }
+  if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, progress: i.progress || '', total: i.total || '', status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
+  if (g('data-csave')) return saveCur();
+  if (g('data-cdel')) return delCur();
   if (g('data-settings')) { S.settings = true; return render(); }
   if (g('data-addcat')) return addCat();
   if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; return render(); }
@@ -290,7 +414,7 @@ document.addEventListener('click', e => {
   if (g('data-bsave')) return saveBulk();
   if (g('data-save')) return save(g('data-save').dataset.save);
   if (g('data-del')) return del();
-  if (g('data-tab')) { S.tab = g('data-tab').dataset.tab; S.anchor = S.tab === 'wheel'; render(); if (S.tab === 'home') window.scrollTo(0, 0); return; }
+  if (g('data-tab')) { S.tab = g('data-tab').dataset.tab; S.anchor = S.tab === 'wheel'; render(); if (S.tab !== 'wheel') window.scrollTo(0, 0); return; }
   if (g('data-out')) return db.auth.signOut();
   if (g('data-add')) { const st = g('data-add').dataset.add; return openModal({ status: st }); }
   if (g('data-finish')) { const en = S.entries.find(x => x.id == g('data-finish').dataset.finish); return openModal(en, { finish: true }); }
@@ -299,6 +423,7 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat(); });
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
+  if (e.target.id === 'c-done') { readCm(); if (S.cm.done && !S.cm.year) S.cm.year = new Date().getFullYear(); return render(); }
   if (e.target.id === 'm-cat' || e.target.id === 'm-status') { const m = S.modal; m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
   if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
 });
