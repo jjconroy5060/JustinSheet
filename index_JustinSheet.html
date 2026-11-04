@@ -23,7 +23,7 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
 .card h2{font-size:1.05rem}
 .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
-.row{display:flex;gap:8px;align-items:center;padding:2px 6px;border-radius:4px;font-size:.8rem;cursor:pointer}
+.row{display:flex;gap:8px;align-items:center;padding:2px 6px;border-radius:4px;font-size:.8rem;line-height:1.3;cursor:pointer}
 .row+.row{border-top:1px solid var(--line)}
 .row.th{cursor:default;font-weight:600;color:var(--accent)}
 .row.pr{background:color-mix(in srgb,var(--prio) 28%,transparent)}
@@ -41,10 +41,10 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .gear{background:none;border:0;cursor:pointer;color:var(--mute);font-size:.95rem;padding:2px 4px}
 .chkrow{display:flex;align-items:center;gap:10px;margin:0;padding:6px 0;color:var(--ink);font-size:.9rem;border-top:1px solid var(--line);cursor:pointer}
 .chkrow input{width:auto}.chkrow span:nth-of-type(1){flex:1}
-.row .t1{flex:1;min-width:0;overflow-wrap:anywhere}.row .t2,.row .t3{flex:0 0 5.2em}.row .t4{flex:0 0 3.6em;text-align:right}.row .t5{flex:0 0 7.5em}
+.row .t1{flex:1;min-width:0;overflow-wrap:anywhere}.row .t2,.row .t3{flex:0 0 5.2em}.row .t4{flex:0 0 3.6em;text-align:right}.row .t5{flex:0 0 9.5em;white-space:nowrap}
 .paused{color:var(--danger)}.dropped{color:var(--mute);text-decoration:line-through}
 .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}.cols .card,.ovg .card{margin:0}
-.ovg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.ovg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
 @media(max-width:720px){.cols{grid-template-columns:1fr}}
 .seg.sm button{padding:3px 10px;font-size:.8rem}
 .arrow{background:none;border:0;color:var(--mute);cursor:pointer;padding:0 2px;font-size:.7rem}
@@ -155,14 +155,19 @@ function settingsHtml() {
 }
 
 /* ---------- Current ---------- */
-const CATS = [['games', 'Games'], ['shows', 'Shows'], ['books', 'Books'], ['manga', 'Manga'], ['music', 'Music']];
+const CATS = [['games', 'Games'], ['shows', 'Media'], ['books', 'Books'], ['manga', 'Manga'], ['music', 'Music']];
 const YC = { 2024: '#c4604f', 2025: '#d6913f', 2026: '#cdb43a', 2027: '#6fa86f', 2028: '#5b9bc4', 2029: '#9b7bc4' };
-const yc = y => YC[y] || 'var(--mute)';
+const yc = y => YC[y] || (y ? `hsl(${(y * 67) % 360} 55% 60%)` : 'var(--mute)');
 const catName = k => (CATS.find(c => c[0] === k) || [])[1];
 const cur = k => S.current.filter(i => i.category === k);
 const ranked = k => cur(k).filter(i => i.rank != null && !i.done).sort((a, b) => a.rank - b.rank);
 const stCls = i => i.status === 'paused' ? 'paused' : i.status === 'dropped' ? 'dropped' : '';
-const prog = i => `${esc(i.progress) || '—'}${i.total ? ' / ' + esc(i.total) : ''}`;
+const unit = x => x.toLowerCase().replace(/s?\.?$/, '');
+const prog = i => {
+  const p = (i.progress || '').trim(), t = (i.total || '').trim(), re = /^([\d.]+)\s*([A-Za-z][A-Za-z.]*)$/, a = p.match(re), b = t.match(re);
+  if (a && b && unit(a[2]) === unit(b[2])) return `${esc(a[1])} / ${esc(b[1])} ${esc(b[2])}`;
+  return `${esc(p) || '—'}${t ? ' / ' + esc(t) : ''}`;
+};
 const mark = i => i.done ? `<span style="color:${yc(i.done_year)}">✓${i.done_year ? ' ’' + String(i.done_year).slice(2) : ''}</span>`
   : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : '';
 const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t2">${esc(i.progress) || '—'}</div><div class="t3">${esc(i.total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
@@ -183,7 +188,7 @@ function overview() {
 
 function catView(k) {
   const all = cur(k).sort((a, b) => a.sort_order - b.sort_order), r = ranked(k);
-  const F = { all: ['All', () => true], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], rewatch: ['Rewatch', i => i.status === 'rewatch'] };
+  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch'], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], rewatch: ['Rewatch', i => i.status === 'rewatch'] };
   const chips = Object.entries(F).map(([f, [l, fn]]) => [f, l, all.filter(fn).length]).filter(([f, , n]) => f === 'all' || n || f === S.flt)
     .map(([f, l, n]) => `<button class="${S.flt === f ? 'on' : ''}" data-cflt="${f}">${l} (${n})</button>`).join('');
   const rows = all.filter((F[S.flt] || F.all)[1]);
