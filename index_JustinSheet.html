@@ -14,7 +14,7 @@ body{background:var(--bg);color:var(--ink);font:16px/1.45 ui-rounded,"SF Pro Rou
 h1,h2,h3{margin:0;line-height:1.2}
 button,input,select,textarea{font:inherit;color:inherit}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
-header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;margin-bottom:6px}
 header h1{font-size:1.3rem}
 nav{display:flex;gap:6px}
 nav button,.seg button{border:1px solid var(--line);background:var(--card);padding:7px 14px;border-radius:999px;cursor:pointer}
@@ -23,19 +23,21 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
 .card h2{font-size:1.05rem}
 .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
-.row{display:flex;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:.95rem;cursor:pointer}
-.row.th{cursor:default;font-weight:600;color:var(--accent);border-top:0;padding-top:0}
-.row .c1{flex:0 0 32%;min-width:0;overflow-wrap:anywhere;border-left:4px solid var(--prio);padding-left:8px}
+.row{display:flex;gap:8px;align-items:center;padding:2px 6px;border-radius:4px;font-size:.8rem;cursor:pointer}
+.row+.row{border-top:1px solid var(--line)}
+.row.th{cursor:default;font-weight:600;color:var(--accent)}
+.row.pr{background:color-mix(in srgb,var(--prio) 28%,transparent)}
+.row .c0{flex:0 0 2.8em;text-align:right;color:var(--mute);font-variant-numeric:tabular-nums}
+.row .c1{flex:0 0 30%;min-width:0;overflow-wrap:anywhere;border-left:3px solid var(--prio);padding-left:6px}
 .c1.future{border-color:var(--fut)}.c1.done{border-color:var(--done)}.th .c1{border-color:transparent}
 .row .c2{flex:1;min-width:0;overflow-wrap:anywhere}
-.row .c3{flex:none;width:100px}
+.row .c3{flex:none;width:84px}
 .empty-desc{color:var(--mute)}
-.chk,.chk-sp{flex:none;width:28px;height:28px}
-.chk{border-radius:50%;border:2px solid var(--line);background:none;cursor:pointer;color:var(--done);padding:0}
+.chk,.chk-sp{flex:none;width:20px;height:20px}
+.chk{border-radius:50%;border:2px solid var(--line);background:none;cursor:pointer;color:var(--done);font-size:.65rem;padding:0;line-height:1}
 .chk:hover{border-color:var(--done)}
-.compact .row{font-size:.8rem;padding:2px 0;gap:8px}
-.compact .chk,.compact .chk-sp{width:20px;height:20px;font-size:.65rem}
 .cat{font-size:.85rem;color:var(--mute)}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:1.6rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:6}
 .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
 .btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
 .btn.danger{background:none;color:var(--danger);border:1px solid var(--line)}
@@ -62,7 +64,7 @@ const db = supabase.createClient(
   'https://vcoydiomjzkkukfqfywz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
-const S = { user: null, entries: [], options: [], tab: 'home', seg: 'priority', sub: 'now', bulk: null, q: '', limit: 50, modal: null, loading: false };
+const S = { user: null, entries: [], options: [], tab: 'home', sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -84,7 +86,7 @@ async function loadAll() {
   S.entries = all;
   const o = await db.from('wheel_options').select('*').order('sort_order');
   S.options = o.data || [];
-  S.loading = false; render();
+  S.loading = false; S.anchor = true; render();
 }
 
 function categories(extra) {
@@ -95,39 +97,43 @@ function categories(extra) {
 }
 
 /* ---------- views ---------- */
-function rowHtml(e, showCheck) {
-  return `<div class="row" data-edit="${e.id}"><div class="c1 ${e.status}">${esc(e.category) || '—'}</div>
+function rowHtml(e, n, cols = '', cls = '') {
+  return `<div class="row ${cls}" data-edit="${e.id}"><div class="c0">${n}</div><div class="c1 ${e.status}">${esc(e.category) || '—'}</div>
     <div class="c2 ${e.description ? '' : 'empty-desc'}">${esc(e.description) || '—'}</div>
-    ${e.status === 'done' ? `<div class="c3">${fmt(e.done_on)}</div>` : ''}
-    ${showCheck ? `<button class="chk" title="Mark done" data-finish="${e.id}">✓</button>` : ''}</div>`;
+    ${cols.includes('d') ? `<div class="c3">${fmt(e.done_on)}</div>` : ''}
+    ${cols.includes('c') ? (e.status === 'priority' ? `<button class="chk" title="Mark done" data-finish="${e.id}">✓</button>` : '<span class="chk-sp"></span>') : ''}</div>`;
 }
-const thHtml = (done, check) => `<div class="row th"><div class="c1">Wheel spin</div><div class="c2">${done ? 'What was done' : 'What to do'}</div>${done ? '<div class="c3">Date</div>' : ''}${check ? '<span class="chk-sp"></span>' : ''}</div>`;
+const thHtml = cols => `<div class="row th"><div class="c0">#</div><div class="c1">Wheel spin</div><div class="c2">What</div>${cols.includes('d') ? '<div class="c3">Date</div>' : ''}${cols.includes('c') ? '<span class="chk-sp"></span>' : ''}</div>`;
 
 function priorityCard() {
-  const fut = S.sub === 'future', st = fut ? 'future' : 'priority';
-  let list = by(st);
-  if (fut) list = [...list].sort((a, b) => (a.category || '~').localeCompare(b.category || '~') || a.sort_order - b.sort_order);
+  const fut = S.sub === 'future', st = fut ? 'future' : 'priority', cols = fut ? '' : 'c';
+  const list = by(st);
+  if (fut) list.sort((a, b) => (a.category || '~').localeCompare(b.category || '~') || a.sort_order - b.sort_order);
   const t = (k, l, n) => `<button class="${S.sub === k ? 'on' : ''}" data-sub="${k}">${l} (${n})</button>`;
-  return `<div class="card ${fut ? '' : 'compact'}"><div class="head"><div class="seg" style="margin:0">${t('now', 'Priority', by('priority').length)}${t('future', 'Future', by('future').length)}</div>
+  return `<div class="card"><div class="head"><div class="seg" style="margin:0">${t('now', 'Priority', by('priority').length)}${t('future', 'Future', by('future').length)}</div>
     <div class="acts" style="margin:0"><button class="btn alt" data-bulk="${st}">Bulk add</button><button class="btn" data-add="${st}">Add</button></div></div>
-    ${thHtml(false, !fut)}${list.map(e => rowHtml(e, !fut)).join('') || '<div class="cat">Nothing here yet.</div>'}</div>`;
+    ${thHtml(cols)}${list.map((e, i) => rowHtml(e, i + 1, cols)).join('') || '<div class="cat">Nothing here yet.</div>'}</div>`;
 }
 
 function home() {
   return priorityCard() + `<div class="grid"><div class="card soon">Room for more</div><div class="card soon">Room for more</div></div>`;
 }
 
-function log() {
-  const seg2 = (k, l) => `<button class="${S.seg === k ? 'on' : ''}" data-seg="${k}">${l} (${by(k).length})</button>`;
-  const top = `<div class="seg">${seg2('priority', 'Priority')}${seg2('done', 'Done')}</div>`;
-  if (S.seg === 'priority') return top + priorityCard();
-  const q = norm(S.q);
-  const rows = by('done').filter(e => !q || norm(e.category).includes(q) || norm(e.description).includes(q))
-    .sort((a, b) => (b.done_on || '').localeCompare(a.done_on || '') || b.sort_order - a.sort_order);
-  return top + `<div class="card"><div class="head"><h2>Done</h2><button class="btn" data-add="done">Add</button></div>
-    <input id="q" placeholder="Search done items" value="${esc(S.q)}" style="margin-bottom:10px">${thHtml(true, false)}
-    ${rows.slice(0, S.limit).map(e => rowHtml(e, false)).join('') || '<div class="cat">No matches.</div>'}
-    ${rows.length > S.limit ? `<button class="btn alt" data-more style="margin-top:10px">Show more (${rows.length - S.limit} left)</button>` : ''}</div>`;
+function wheel() {
+  const d = by('done').sort((a, b) => (a.done_on || '').localeCompare(b.done_on || '') || a.sort_order - b.sort_order);
+  const p = by('priority'), q = norm(S.q);
+  let first = true;
+  const rows = [...d, ...p].map((e, i) => [e, i + 1])
+    .filter(([e]) => !q || norm(e.category).includes(q) || norm(e.description).includes(q))
+    .map(([e, n]) => { const isP = e.status === 'priority'; const cls = isP ? 'pr' + (first ? ' first-p' : '') : ''; if (isP) first = false; return rowHtml(e, n, 'dc', cls); }).join('');
+  return `<div class="card"><div class="head"><h2>Wheel</h2><span class="cat">${d.length.toLocaleString()} completed · ${p.length} priority</span></div>${rows || '<div class="cat">No matches.</div>'}</div>`;
+}
+
+function anchor() {
+  const el = $('.row.first-p');
+  if (!el) return window.scrollTo(0, document.body.scrollHeight);
+  const top = el.getBoundingClientRect().top + window.scrollY;
+  window.scrollTo(0, top - $('header').offsetHeight - el.offsetHeight * 5 - 8);
 }
 
 function bulkHtml() {
@@ -148,6 +154,7 @@ function modalHtml() {
   const showDate = m.status === 'done' || m.finish;
   return `<div class="modal" data-close><div class="sheet">
     <h2>${m.id ? 'Edit item' : 'Add item'}</h2>
+    ${!m.id ? `<label>Add to</label><select id="m-status">${[['priority', 'Priority'], ['future', 'Future'], ['done', 'Done']].map(([k, l]) => `<option value="${k}" ${m.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
     <label>Category</label>
     <select id="m-cat"><option value="">No category</option>${cats.map(c => `<option ${c === m.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
     ${futures.length ? `<label>Choose from Future (${futures.length})</label><select id="m-pick"><option value="">Pick one…</option>${futures.map(f => `<option value="${f.id}">${esc(f.description)}</option>`).join('')}</select>` : ''}
@@ -172,9 +179,12 @@ function render() {
   }
   const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : '';
   app.innerHTML = `<div class="wrap"><header><h1>Justin’s Sheet</h1>
-    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'log' ? 'on' : ''}" data-tab="log">Log</button></nav>
-    <button class="link" data-out>Sign out</button></header>
-    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : log())}</div>${modal}`;
+    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button></nav>
+    <button class="link" data-out>Sign out</button>
+    ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
+    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : wheel())}</div>
+    ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
+  if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
 
 /* ---------- actions ---------- */
@@ -197,6 +207,7 @@ async function save(status) {
     for (const f of dupes) { await db.from('log_entries').delete().eq('id', f.id); S.entries = S.entries.filter(e => e.id !== f.id); }
   }
   S.entries.sort((a, b) => a.sort_order - b.sort_order);
+  S.anchor = !(m.id && m.status === 'done' && status === 'done');
   S.modal = null; render();
 }
 
@@ -224,7 +235,7 @@ async function saveBulk() {
     for (const f of by('future').filter(f => f.category === category && names.has(norm(f.description)))) { await db.from('log_entries').delete().eq('id', f.id); S.entries = S.entries.filter(e => e.id !== f.id); }
   }
   S.entries.sort((a, b) => a.sort_order - b.sort_order);
-  S.bulk = null; render(); toast(`Added ${data.length} rows`);
+  S.bulk = null; S.anchor = true; render(); toast(`Added ${data.length} rows`);
 }
 
 async function del() {
@@ -245,19 +256,17 @@ document.addEventListener('click', e => {
   if (g('data-bsave')) return saveBulk();
   if (g('data-save')) return save(g('data-save').dataset.save);
   if (g('data-del')) return del();
-  if (g('data-tab')) { S.tab = g('data-tab').dataset.tab; return render(); }
-  if (g('data-seg')) { S.seg = g('data-seg').dataset.seg; S.limit = 50; return render(); }
-  if (g('data-more')) { S.limit += 100; return render(); }
+  if (g('data-tab')) { S.tab = g('data-tab').dataset.tab; S.anchor = S.tab === 'wheel'; render(); if (S.tab === 'home') window.scrollTo(0, 0); return; }
   if (g('data-out')) return db.auth.signOut();
   if (g('data-add')) { const st = g('data-add').dataset.add; return openModal({ status: st }); }
   if (g('data-finish')) { const en = S.entries.find(x => x.id == g('data-finish').dataset.finish); return openModal(en, { finish: true }); }
   if (g('data-edit')) { const en = S.entries.find(x => x.id == g('data-edit').dataset.edit); return openModal(en); }
 });
 document.addEventListener('change', e => {
-  if (e.target.id === 'm-cat') { const m = S.modal; m.category = e.target.value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; render(); }
+  if (e.target.id === 'm-cat' || e.target.id === 'm-status') { const m = S.modal; m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
   if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
 });
-document.addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; S.limit = 50; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
+document.addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
 document.addEventListener('submit', async e => {
   if (e.target.id !== 'login') return;
   e.preventDefault();
