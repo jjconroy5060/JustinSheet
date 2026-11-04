@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Justin’s Sheet</title>
+<style>
+:root{--bg:#f7f4f8;--card:#fff;--ink:#2a2030;--mute:#7a6f82;--line:#e4dce8;--accent:#7b4a8a;--accent-ink:#fff;--prio:#d393a1;--fut:#c09fc2;--done:#8aa68f;--danger:#b4474f}
+@media(prefers-color-scheme:dark){:root{--bg:#1a141d;--card:#251d29;--ink:#efe8f2;--mute:#a597ad;--line:#3a2f40;--accent:#c09fc2;--accent-ink:#1a141d;--prio:#d393a1;--fut:#8e6f93;--done:#7b9a82;--danger:#e0707a}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+h1,h2,h3{margin:0;line-height:1.2}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
+header h1{font-size:1.3rem}
+nav{display:flex;gap:6px}
+nav button,.seg button{border:1px solid var(--line);background:var(--card);padding:7px 14px;border-radius:999px;cursor:pointer}
+nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.link{background:none;border:0;color:var(--mute);cursor:pointer;text-decoration:underline;padding:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h2{font-size:1.05rem}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .tx{flex:1;min-width:0;cursor:pointer}
+.cat{font-size:.82rem;color:var(--mute)}
+.desc{overflow-wrap:anywhere}
+.empty-desc{color:var(--mute);font-style:italic}
+.bar{width:5px;align-self:stretch;border-radius:3px;flex:none}
+.bar.priority{background:var(--prio)}.bar.future{background:var(--fut)}.bar.done{background:var(--done)}
+.chk{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:none;cursor:pointer;color:var(--done);font-size:1rem}
+.chk:hover{border-color:var(--done)}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
+.btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:none;color:var(--danger);border:1px solid var(--line)}
+.seg{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.grp{font-size:.85rem;font-weight:600;color:var(--accent);margin:14px 0 2px}
+.soon{border-style:dashed;color:var(--mute);text-align:center;padding:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.grid .card{margin:0}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
+.modal{position:fixed;inset:0;background:rgba(10,5,14,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0));max-height:92vh;overflow:auto}
+@media(min-width:600px){.modal{align-items:center}.sheet{border-radius:18px}}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.login{max-width:340px;margin:18vh auto 0}
+.err{color:var(--danger);margin-top:8px;font-size:.9rem}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;z-index:10}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const db = supabase.createClient(
+  'https://vcoydiomjzkkukfqfywz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
+);
+const S = { user: null, entries: [], options: [], tab: 'home', seg: 'priority', q: '', limit: 50, modal: null, loading: false };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const fmt = d => d ? new Date(d + 'T00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+const by = st => S.entries.filter(e => e.status === st);
+const norm = s => (s || '').trim().toLowerCase();
+
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.append(t); setTimeout(() => t.remove(), 2600); }
+
+async function loadAll() {
+  S.loading = true; render();
+  let all = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from('log_entries').select('*').order('sort_order').range(from, from + 999);
+    if (error) { toast('Could not load: ' + error.message); break; }
+    all = all.concat(data);
+    if (data.length < 1000) break;
+  }
+  S.entries = all;
+  const o = await db.from('wheel_options').select('*').order('sort_order');
+  S.options = o.data || [];
+  S.loading = false; render();
+}
+
+function categories(extra) {
+  const set = new Set(S.options.map(o => o.name));
+  S.entries.forEach(e => e.category && set.add(e.category));
+  if (extra) set.add(extra);
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+/* ---------- views ---------- */
+function rowHtml(e, showCheck) {
+  return `<div class="row"><span class="bar ${e.status}"></span>
+    <div class="tx" data-edit="${e.id}"><div class="cat">${esc(e.category) || 'No category'}${e.done_on ? ' · ' + fmt(e.done_on) : ''}</div>
+    <div class="desc ${e.description ? '' : 'empty-desc'}">${esc(e.description) || 'Nothing chosen yet'}</div></div>
+    ${showCheck ? `<button class="chk" title="Mark done" data-finish="${e.id}">✓</button>` : ''}</div>`;
+}
+
+function home() {
+  const p = by('priority');
+  return `<div class="card"><div class="head"><h2>Priority (${p.length})</h2><button class="btn" data-add="priority">Add</button></div>
+    ${p.map(e => rowHtml(e, true)).join('') || '<div class="cat">Nothing on your list. Add something or pick from Future.</div>'}</div>
+    <div class="grid"><div class="card soon">Room for more</div><div class="card soon">Room for more</div></div>`;
+}
+
+function log() {
+  const seg = S.seg, list = by(seg);
+  let body = '';
+  if (seg === 'done') {
+    const q = norm(S.q);
+    const rows = list.filter(e => !q || norm(e.category).includes(q) || norm(e.description).includes(q))
+      .sort((a, b) => (b.done_on || '').localeCompare(a.done_on || '') || b.sort_order - a.sort_order);
+    body = `<input id="q" placeholder="Search done items" value="${esc(S.q)}" style="margin-bottom:8px">` +
+      rows.slice(0, S.limit).map(e => rowHtml(e, false)).join('') +
+      (rows.length > S.limit ? `<button class="btn alt" data-more style="margin-top:10px">Show more (${rows.length - S.limit} left)</button>` : '') +
+      (rows.length ? '' : '<div class="cat">No matches.</div>');
+  } else if (seg === 'future') {
+    const groups = {};
+    list.forEach(e => (groups[e.category || 'No category'] ||= []).push(e));
+    body = Object.keys(groups).sort().map(k => `<div class="grp">${esc(k)}</div>` + groups[k].map(e => rowHtml(e, false)).join('')).join('') || '<div class="cat">Nothing in Future.</div>';
+  } else body = list.map(e => rowHtml(e, true)).join('') || '<div class="cat">Nothing on your list.</div>';
+  const seg2 = (k, l) => `<button class="${seg === k ? 'on' : ''}" data-seg="${k}">${l} (${by(k).length})</button>`;
+  return `<div class="seg">${seg2('priority', 'Priority')}${seg2('future', 'Future')}${seg2('done', 'Done')}</div>
+    <div class="card"><div class="head"><h2>${{ priority: 'Priority', future: 'Future', done: 'Done' }[seg]}</h2><button class="btn" data-add="${seg}">Add</button></div>${body}</div>`;
+}
+
+function modalHtml() {
+  const m = S.modal, cats = categories(m.category);
+  const futures = m.status !== 'done' ? by('future').filter(f => f.id !== m.id && f.category === m.category) : [];
+  const showDate = m.status === 'done' || m.finish;
+  return `<div class="modal" data-close><div class="sheet">
+    <h2>${m.id ? 'Edit item' : 'Add item'}</h2>
+    <label>Category</label>
+    <select id="m-cat"><option value="">No category</option>${cats.map(c => `<option ${c === m.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+    ${futures.length ? `<label>Choose from Future (${futures.length})</label><select id="m-pick"><option value="">Pick one…</option>${futures.map(f => `<option value="${f.id}">${esc(f.description)}</option>`).join('')}</select>` : ''}
+    <label>What</label><textarea id="m-desc" rows="3">${esc(m.description)}</textarea>
+    ${showDate ? `<label>Date</label><input id="m-date" type="date" value="${esc(m.done_on || today())}">` : ''}
+    <div class="acts">
+      <button class="btn" data-save="${m.finish ? 'done' : m.status}">${m.finish ? 'Save as done' : 'Save'}</button>
+      ${m.status === 'priority' && !m.finish ? '<button class="btn alt" data-save="done">Mark done</button>' : ''}
+      ${m.status === 'future' ? '<button class="btn alt" data-save="priority">Move to Priority</button>' : ''}
+      ${m.status === 'done' ? '<button class="btn alt" data-save="priority">Back to Priority</button>' : ''}
+      ${m.id ? '<button class="btn danger" data-del>Delete</button>' : ''}
+      <button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+}
+
+function render() {
+  const app = $('#app');
+  if (!S.user) {
+    app.innerHTML = `<form class="login card" id="login"><h1>Justin’s Sheet</h1><label>Email</label><input id="em" type="email" autocomplete="username" required>
+      <label>Password</label><input id="pw" type="password" autocomplete="current-password" required>
+      <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
+    return;
+  }
+  const modal = S.modal ? modalHtml() : '';
+  app.innerHTML = `<div class="wrap"><header><h1>Justin’s Sheet</h1>
+    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'log' ? 'on' : ''}" data-tab="log">Log</button></nav>
+    <button class="link" data-out>Sign out</button></header>
+    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : log())}</div>${modal}`;
+}
+
+/* ---------- actions ---------- */
+function openModal(e, opts = {}) { S.modal = { id: e.id || null, category: e.category || '', description: e.description || '', status: e.status, done_on: e.done_on || '', finish: !!opts.finish }; render(); }
+
+async function save(status) {
+  const m = S.modal;
+  const category = $('#m-cat').value || null, description = $('#m-desc').value.trim() || null;
+  const done_on = status === 'done' ? ($('#m-date')?.value || today()) : null;
+  if (status === 'done' && !category && !description) return toast('Add a category or what you did first');
+  const pick = $('#m-pick')?.value;
+  const payload = { category, description, status, done_on };
+  let res;
+  if (m.id) res = await db.from('log_entries').update(payload).eq('id', m.id).select().single();
+  else { payload.sort_order = Math.max(0, ...S.entries.map(e => e.sort_order)) + 1; res = await db.from('log_entries').insert(payload).select().single(); }
+  if (res.error) return toast('Save failed: ' + res.error.message);
+  S.entries = S.entries.filter(e => e.id !== res.data.id).concat(res.data);
+  if (status === 'priority') {
+    const dupes = by('future').filter(f => f.id === Number(pick) || (description && f.category === category && norm(f.description) === norm(description)));
+    for (const f of dupes) { await db.from('log_entries').delete().eq('id', f.id); S.entries = S.entries.filter(e => e.id !== f.id); }
+  }
+  S.entries.sort((a, b) => a.sort_order - b.sort_order);
+  S.modal = null; render();
+}
+
+async function del() {
+  if (!confirm('Delete this item?')) return;
+  const { error } = await db.from('log_entries').delete().eq('id', S.modal.id);
+  if (error) return toast('Delete failed: ' + error.message);
+  S.entries = S.entries.filter(e => e.id !== S.modal.id); S.modal = null; render();
+}
+
+document.addEventListener('click', e => {
+  const t = e.target, g = a => t.closest(`[${a}]`);
+  if (!S.user) return;
+  if (t.classList.contains('modal')) { S.modal = null; return render(); }
+  if (g('data-cancel')) { S.modal = null; return render(); }
+  if (g('data-save')) return save(g('data-save').dataset.save);
+  if (g('data-del')) return del();
+  if (g('data-tab')) { S.tab = g('data-tab').dataset.tab; return render(); }
+  if (g('data-seg')) { S.seg = g('data-seg').dataset.seg; S.limit = 50; return render(); }
+  if (g('data-more')) { S.limit += 100; return render(); }
+  if (g('data-out')) return db.auth.signOut();
+  if (g('data-add')) { const st = g('data-add').dataset.add; return openModal({ status: st }); }
+  if (g('data-finish')) { const en = S.entries.find(x => x.id == g('data-finish').dataset.finish); return openModal(en, { finish: true }); }
+  if (g('data-edit')) { const en = S.entries.find(x => x.id == g('data-edit').dataset.edit); return openModal(en); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'm-cat') { const m = S.modal; m.category = e.target.value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; render(); }
+  if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
+});
+document.addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; S.limit = 50; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'login') return;
+  e.preventDefault();
+  const { error } = await db.auth.signInWithPassword({ email: $('#em').value, password: $('#pw').value });
+  if (error) $('#lerr').textContent = 'Sign-in failed: ' + error.message;
+});
+
+db.auth.onAuthStateChange((_ev, session) => {
+  const was = S.user; S.user = session?.user || null;
+  if (S.user && !was) loadAll(); else if (!S.user) { S.entries = []; render(); }
+});
+db.auth.getSession().then(({ data }) => { if (!data.session) render(); });
+</script>
+</body>
+</html>
