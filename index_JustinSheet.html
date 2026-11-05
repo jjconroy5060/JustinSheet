@@ -61,6 +61,11 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .row .c3{width:4.4em}.dl{display:none}.ds{display:inline}
 .chk,.chk-sp{width:18px;height:18px}
 }
+.wlist{max-height:36vh;overflow:auto;margin-top:6px}
+.wrow{display:flex;align-items:center;gap:8px;padding:3px 0;border-top:1px solid var(--line);font-size:.85rem}
+.wrow input[type=checkbox]{width:auto}.wrow .wn{flex:1;min-width:0}.wrow.off .wn{color:var(--mute)}
+.wrow input.wt{width:4.5em;padding:3px 6px}.wrow .pct{width:3.6em;text-align:right;color:var(--mute)}
+.rolls .row{cursor:default}.rolls .x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1rem}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:1.6rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:6}
 .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
 .btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
@@ -88,7 +93,7 @@ const db = supabase.createClient(
   'https://vcoydiomjzkkukfqfywz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
-const S = { user: null, entries: [], options: [], tab: 'home', current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -139,7 +144,7 @@ function priorityCard() {
   if (fut) list.sort((a, b) => (a.category || '~').localeCompare(b.category || '~') || a.sort_order - b.sort_order);
   const t = (k, l, n) => `<button class="${S.sub === k ? 'on' : ''}" data-sub="${k}">${l} (${n})</button>`;
   return `<div class="card"><div class="head"><div class="seg" style="margin:0">${t('now', 'Priority', by('priority').length)}${t('future', 'Future', by('future').length)}</div>
-    <div class="acts" style="margin:0"><button class="btn alt" data-bulk="${st}">Bulk add</button><button class="btn" data-add="${st}">Add</button></div></div>
+    <div class="acts" style="margin:0"><button class="btn alt" data-roll>Roll</button><button class="btn alt" data-bulk="${st}">Bulk add</button><button class="btn" data-add="${st}">Add</button></div></div>
     ${thHtml(cols)}${list.map((e, i) => rowHtml(e, i + 1, cols)).join('') || '<div class="cat">Nothing here yet.</div>'}</div>`;
 }
 
@@ -278,6 +283,42 @@ async function moveRank(id, dir) {
   it.rank = b; o.rank = a; render();
 }
 
+/* ---------- Wheel roll ---------- */
+function wheelHtml() {
+  const w = S.wheel, opts = [...S.options].sort((a, b) => (b.active - a.active) || a.sort_order - b.sort_order);
+  const rows = opts.map(o => `<div class="wrow ${o.active ? '' : 'off'}" data-oid="${o.id}"><input type="checkbox" data-wact="${o.id}" ${o.active ? 'checked' : ''}><span class="wn">${esc(o.name)}</span><input class="wt" type="number" min="0" step="any" data-w="${o.id}" value="${o.weight}"><span class="pct" data-pct="${o.id}"></span></div>`).join('');
+  const res = w.res.length ? `<h3 style="font-size:.95rem;margin-top:14px">Rolled (${w.res.length})</h3><div class="rolls">${w.res.map((n, i) => `<div class="row"><div class="c0">${i + 1}</div><div class="c1 priority">${esc(n)}</div><div class="c2"></div><button class="x" data-wdel="${i}">×</button></div>`).join('')}</div>` : '';
+  return `<div class="modal"><div class="sheet"><div class="head"><h2>Roll the wheel</h2><button class="btn alt" data-cancel>Close</button></div>
+    <div style="display:flex;gap:8px;align-items:center"><span class="cat" style="white-space:nowrap">Rolls</span><input id="w-n" type="number" min="1" max="100" value="${w.n}" style="width:5em"><button class="btn" data-wroll>${w.res.length ? 'Roll again' : 'Roll'}</button></div>
+    ${res}${w.res.length ? '<div class="acts"><button class="btn" data-wadd>Add ' + w.res.length + ' to Priority</button></div>' : ''}
+    <h3 style="font-size:.95rem;margin-top:16px">Categories and weights</h3><div class="cat">Tick to include a category. A higher weight comes up more often. Changes save right away.</div>
+    <div class="wlist">${rows}</div></div></div>`;
+}
+function updatePct() {
+  const tot = S.options.reduce((a, o) => a + (o.active ? Number(o.weight) || 0 : 0), 0);
+  S.options.forEach(o => { const el = document.querySelector(`[data-pct="${o.id}"]`); if (el) el.textContent = o.active && tot > 0 ? (Number(o.weight) / tot * 100).toFixed(1) + '%' : '—'; });
+}
+function doRoll() {
+  const n = Math.max(1, Math.min(100, parseInt($('#w-n').value) || 1)); S.wheel.n = n;
+  const pool = S.options.filter(o => o.active && Number(o.weight) > 0), tot = pool.reduce((a, o) => a + Number(o.weight), 0);
+  if (!pool.length) return toast('Tick at least one category with a weight above 0');
+  S.wheel.res = Array.from({ length: n }, () => { let r = Math.random() * tot; for (const o of pool) { r -= Number(o.weight); if (r < 0) return o.name; } return pool[pool.length - 1].name; });
+  render();
+}
+async function addRolls() {
+  let so = Math.max(0, ...S.entries.map(e => e.sort_order));
+  const rows = S.wheel.res.map(c => ({ category: c, description: null, status: 'priority', done_on: null, sort_order: ++so }));
+  const { data, error } = await db.from('log_entries').insert(rows).select();
+  if (error) return toast('Save failed: ' + error.message);
+  S.entries = S.entries.concat(data).sort((a, b) => a.sort_order - b.sort_order);
+  S.wheel = null; S.sub = 'now'; S.anchor = true; render(); toast(`Added ${data.length} to Priority`);
+}
+async function saveOpt(id, patch, box) {
+  const o = S.options.find(x => x.id == id), old = { ...o }; Object.assign(o, patch); updatePct();
+  const { error } = await db.from('wheel_options').update(patch).eq('id', id);
+  if (error) { Object.assign(o, old); if (box) box.value = o.weight; updatePct(); toast('Could not save: ' + error.message); }
+}
+
 function anchor() {
   const el = $('.row.first-p');
   if (!el) return window.scrollTo(0, document.body.scrollHeight);
@@ -326,13 +367,14 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.cm ? curModalHtml() : S.settings ? settingsHtml() : '';
+  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.settings ? settingsHtml() : '';
   app.innerHTML = `<div class="wrap"><header><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
     ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
+  if (S.wheel) updatePct();
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
 
@@ -414,8 +456,8 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
-  if (g('data-cancel')) { S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (t.classList.contains('modal')) { S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
   if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
   if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
@@ -424,6 +466,10 @@ document.addEventListener('click', e => {
   if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, progress: i.progress || '', total: i.total || '', status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
   if (g('data-csave')) return saveCur();
   if (g('data-cdel')) return delCur();
+  if (g('data-roll')) { S.wheel = { n: 5, res: [] }; return render(); }
+  if (g('data-wroll')) return doRoll();
+  if (g('data-wadd')) return addRolls();
+  if (g('data-wdel')) { S.wheel.n = Number($('#w-n').value) || S.wheel.n; S.wheel.res.splice(Number(g('data-wdel').dataset.wdel), 1); return render(); }
   if (g('data-settings')) { S.settings = true; return render(); }
   if (g('data-addcat')) return addCat();
   if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; return render(); }
@@ -441,6 +487,8 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat(); });
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
+  if (e.target.dataset.wact) { const b = e.target; b.closest('.wrow').classList.toggle('off', !b.checked); return saveOpt(b.dataset.wact, { active: b.checked }); }
+  if (e.target.dataset.w) { const v = Math.max(0, Number(e.target.value) || 0); e.target.value = v; return saveOpt(e.target.dataset.w, { weight: v }, e.target); }
   if (e.target.id === 'c-done') { readCm(); if (S.cm.done && !S.cm.year) S.cm.year = new Date().getFullYear(); return render(); }
   if (e.target.id === 'm-cat' || e.target.id === 'm-status') { const m = S.modal; m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
   if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
