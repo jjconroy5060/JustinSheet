@@ -226,7 +226,7 @@ async function delCat() {
 }
 
 /* ---------- Current ---------- */
-const CATS = [['games', 'Games'], ['shows', 'Media'], ['books', 'Books'], ['manga', 'Manga'], ['music', 'Music']];
+const CATS = [['games', 'Games'], ['shows', 'Media'], ['books', 'Books'], ['manga', 'Manga'], ['catchup', 'Catch up manga'], ['music', 'Music']];
 const YC = { 2024: '#c4604f', 2025: '#d6913f', 2026: '#cdb43a', 2027: '#6fa86f', 2028: '#5b9bc4', 2029: '#9b7bc4' };
 const yc = y => YC[y] || (y ? `hsl(${(y * 67) % 360} 55% 60%)` : 'var(--mute)');
 const catName = k => (CATS.find(c => c[0] === k) || [])[1];
