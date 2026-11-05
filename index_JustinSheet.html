@@ -66,6 +66,11 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .wrow input[type=checkbox]{width:auto}.wrow .wn{flex:1;min-width:0}.wrow.off .wn{color:var(--mute)}
 .wrow input.wt{width:4.5em;padding:3px 6px}.wrow .pct{width:3.6em;text-align:right;color:var(--mute)}
 .rolls .row{cursor:default}.rolls .x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1rem}
+.rr{border-top:1px solid var(--line);padding:8px 0}.rr .rh{display:flex;align-items:center;gap:8px}
+.rr .rh b{flex:1;font-weight:600;font-size:.9rem}.rr .n{color:var(--mute);width:1.6em;text-align:right;font-size:.8rem}
+.rr input,.rr select{margin-top:6px;font-size:.85rem;padding:6px 9px}
+.rr .x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1.1rem}
+.wro{display:flex;gap:8px;font-size:.85rem;padding:2px 0;border-top:1px solid var(--line)}.wro span:first-child{flex:1}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:1.6rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:6}
 .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
 .btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
@@ -93,7 +98,8 @@ const db = supabase.createClient(
   'https://vcoydiomjzkkukfqfywz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
-const S = { user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+let _mk = '';
+const S = { ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -124,10 +130,10 @@ async function loadAll() {
 function catCounts() { const c = {}; S.entries.forEach(e => { if (e.category) c[e.category] = (c[e.category] || 0) + 1; }); return c; }
 const visible = n => { const o = S.options.find(x => x.name === n); return !o || o.show_in_menu !== false; };
 function allCats() {
-  const c = catCounts(), set = new Set([...S.options.map(o => o.name), ...Object.keys(c)]);
-  return [...set].sort((a, b) => (c[b] || 0) - (c[a] || 0) || a.localeCompare(b));
+  const c = catCounts(), base = S.options.length ? S.options.map(o => o.name) : Object.keys(c);
+  return [...new Set(base)].sort((a, b) => (c[b] || 0) - (c[a] || 0) || a.localeCompare(b));
 }
-function categories(extra) { return allCats().filter(n => visible(n) || n === extra); }
+function categories(extra) { const l = allCats().filter(n => visible(n) || n === extra); if (extra && !l.includes(extra)) l.push(extra); return l; }
 
 /* ---------- views ---------- */
 function rowHtml(e, n, cols = '', cls = '') {
@@ -165,11 +171,58 @@ function wheel() {
 function settingsHtml() {
   const c = catCounts();
   return `<div class="modal"><div class="sheet"><div class="head"><h2>Settings</h2><button class="btn alt" data-cancel>Done</button></div>
-    <h3 style="font-size:.95rem;margin-top:8px">Categories in the dropdown</h3>
-    <div class="cat">Untick a category to hide it from the dropdown. Nothing is deleted, and the list is sorted by how often each is used.</div>
-    <div style="margin-top:8px">${allCats().map(n => `<label class="chkrow"><input type="checkbox" data-vis="${esc(n)}" ${visible(n) ? 'checked' : ''}><span>${esc(n)}</span><span class="cat">${c[n] || 0}</span></label>`).join('')}</div>
+    <h3 style="font-size:.95rem;margin-top:8px">Categories</h3>
+    <div class="cat">Tick a category to show it in the dropdowns. Edit lets you rename it, delete it, and set its wheel weight. Sorted by how often each is used.</div>
+    <div style="margin-top:8px">${allCats().map(n => { const o = S.options.find(x => x.name === n); return `<div class="chkrow"><input type="checkbox" data-vis="${esc(n)}" ${visible(n) ? 'checked' : ''}><span>${esc(n)}</span><span class="cat">${c[n] || 0}</span><span class="cat" style="width:3.2em;text-align:right">${o && o.active ? 'w ' + Number(o.weight) : ''}</span><button class="btn alt" style="padding:3px 10px" data-ecat="${esc(n)}">Edit</button></div>`; }).join('')}</div>
     <h3 style="font-size:.95rem;margin-top:16px">Add a category</h3>
     <div style="display:flex;gap:6px;margin-top:6px"><input id="s-new" placeholder="New category name"><button class="btn" data-addcat>Add</button></div></div></div>`;
+}
+
+function catEditHtml() {
+  const e = S.ce, n = catCounts()[e.name] || 0;
+  return `<div class="modal"><div class="sheet"><h2>Edit category</h2>
+    <label>Name</label><input id="e-name" value="${esc(e.name)}">
+    <div class="cat" style="margin-top:4px">${n ? `Renaming also updates the ${n} existing ${n === 1 ? 'entry' : 'entries'} that use it.` : 'No entries use this category yet.'}</div>
+    <label class="chkrow"><input type="checkbox" id="e-act" ${e.active ? 'checked' : ''}><span>On the wheel</span></label>
+    <label>Wheel weight (higher comes up more)</label><input id="e-w" type="number" min="0" step="any" value="${e.weight}">
+    <label>Second roll picks from Current</label>
+    <select id="e-cc"><option value="">Nothing (leave blank)</option>${CATS.map(([k, l]) => `<option value="${k}" ${e.cc === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <label class="chkrow"><input type="checkbox" id="e-show" ${e.show ? 'checked' : ''}><span>Show in dropdowns</span></label>
+    <div class="acts"><button class="btn" data-esave>Save</button><button class="btn danger" data-edelete>Delete</button><button class="btn alt" data-ecancel>Cancel</button></div></div></div>`;
+}
+
+async function openCatEdit(name) {
+  let o = S.options.find(x => x.name === name);
+  if (!o) {
+    const r = await db.from('wheel_options').insert({ name, weight: 1, active: false, sort_order: Math.max(0, ...S.options.map(x => x.sort_order)) + 1, show_in_menu: true }).select().single();
+    if (r.error) return toast('Could not open: ' + r.error.message);
+    o = r.data; S.options.push(o);
+  }
+  S.ce = { id: o.id, name: o.name, active: !!o.active, weight: Number(o.weight), cc: o.current_cat || '', show: o.show_in_menu !== false }; render();
+}
+
+async function saveCatEdit() {
+  const e = S.ce, name = $('#e-name').value.replace(/\s+/g, ' ').trim();
+  if (!name) return toast('Give it a name');
+  if (name.toLowerCase() !== e.name.toLowerCase() && allCats().some(c => c.toLowerCase() === name.toLowerCase())) return toast('That category already exists');
+  const patch = { name, active: $('#e-act').checked, weight: Math.max(0, Number($('#e-w').value) || 0), current_cat: $('#e-cc').value || null, show_in_menu: $('#e-show').checked };
+  const r = await db.from('wheel_options').update(patch).eq('id', e.id).select().single();
+  if (r.error) return toast('Save failed: ' + r.error.message + (/current_cat/.test(r.error.message) ? ' (run 5_wheel.sql first)' : ''));
+  if (name !== e.name) {
+    const u = await db.from('log_entries').update({ category: name }).eq('category', e.name);
+    if (u.error) { await db.from('wheel_options').update({ name: e.name }).eq('id', e.id); return toast('Could not rename entries: ' + u.error.message); }
+    S.entries.forEach(x => { if (x.category === e.name) x.category = name; });
+  }
+  Object.assign(S.options.find(x => x.id === e.id), r.data);
+  S.ce = null; render();
+}
+
+async function delCat() {
+  const e = S.ce, n = catCounts()[e.name] || 0;
+  if (!confirm(n ? `${n} ${n === 1 ? 'entry uses' : 'entries use'} “${e.name}”. They keep the name, but it will be removed from the wheel and the dropdowns. Delete it?` : `Delete “${e.name}”?`)) return;
+  const { error } = await db.from('wheel_options').delete().eq('id', e.id);
+  if (error) return toast('Delete failed: ' + error.message);
+  S.options = S.options.filter(x => x.id !== e.id); S.ce = null; render();
 }
 
 /* ---------- Current ---------- */
@@ -284,39 +337,53 @@ async function moveRank(id, dir) {
 }
 
 /* ---------- Wheel roll ---------- */
+const mapped = name => { const o = S.options.find(x => x.name === name); return o && o.current_cat ? o : null; };
 function wheelHtml() {
-  const w = S.wheel, opts = [...S.options].sort((a, b) => (b.active - a.active) || a.sort_order - b.sort_order);
-  const rows = opts.map(o => `<div class="wrow ${o.active ? '' : 'off'}" data-oid="${o.id}"><input type="checkbox" data-wact="${o.id}" ${o.active ? 'checked' : ''}><span class="wn">${esc(o.name)}</span><input class="wt" type="number" min="0" step="any" data-w="${o.id}" value="${o.weight}"><span class="pct" data-pct="${o.id}"></span></div>`).join('');
-  const res = w.res.length ? `<h3 style="font-size:.95rem;margin-top:14px">Rolled (${w.res.length})</h3><div class="rolls">${w.res.map((n, i) => `<div class="row"><div class="c0">${i + 1}</div><div class="c1 priority">${esc(n)}</div><div class="c2"></div><button class="x" data-wdel="${i}">×</button></div>`).join('')}</div>` : '';
+  const w = S.wheel, pool = S.options.filter(o => o.active && Number(o.weight) > 0).sort((a, b) => Number(b.weight) - Number(a.weight) || a.sort_order - b.sort_order);
+  const tot = pool.reduce((a, o) => a + Number(o.weight), 0), taken = new Set(w.res.map(r => r.fid).filter(Boolean));
+  const rows = w.res.map((r, i) => {
+    const futs = by('future').filter(f => f.category === r.cat && f.description && (!taken.has(f.id) || f.id === r.fid)), m = mapped(r.cat);
+    return `<div class="rr"><div class="rh"><span class="n">${i + 1}</span><b>${esc(r.cat)}</b><button class="x" data-wdel="${i}" title="Remove">×</button></div>
+      <input data-ri="${i}" value="${esc(r.desc)}" placeholder="${m ? 'What (Roll from Current fills this)' : 'What (optional)'}">
+      ${futs.length ? `<select data-rf="${i}"><option value="">Choose from Future (${futs.length})…</option>${futs.map(f => `<option value="${f.id}" ${f.id === r.fid ? 'selected' : ''}>${esc(f.description)}</option>`).join('')}</select>` : ''}</div>`;
+  }).join('');
+  const anyMapped = w.res.some(r => mapped(r.cat));
   return `<div class="modal"><div class="sheet"><div class="head"><h2>Roll the wheel</h2><button class="btn alt" data-cancel>Close</button></div>
-    <div style="display:flex;gap:8px;align-items:center"><span class="cat" style="white-space:nowrap">Rolls</span><input id="w-n" type="number" min="1" max="100" value="${w.n}" style="width:5em"><button class="btn" data-wroll>${w.res.length ? 'Roll again' : 'Roll'}</button></div>
-    ${res}${w.res.length ? '<div class="acts"><button class="btn" data-wadd>Add ' + w.res.length + ' to Priority</button></div>' : ''}
-    <h3 style="font-size:.95rem;margin-top:16px">Categories and weights</h3><div class="cat">Tick to include a category. A higher weight comes up more often. Changes save right away.</div>
-    <div class="wlist">${rows}</div></div></div>`;
-}
-function updatePct() {
-  const tot = S.options.reduce((a, o) => a + (o.active ? Number(o.weight) || 0 : 0), 0);
-  S.options.forEach(o => { const el = document.querySelector(`[data-pct="${o.id}"]`); if (el) el.textContent = o.active && tot > 0 ? (Number(o.weight) / tot * 100).toFixed(1) + '%' : '—'; });
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="cat">Rolls</span><input id="w-n" type="number" min="1" max="100" value="${w.n}" style="width:5em"><button class="btn" data-wroll>${w.res.length ? 'Roll again' : 'Roll'}</button>${anyMapped ? '<button class="btn alt" data-wcur>Roll from Current</button>' : ''}</div>
+    ${w.res.length ? `<h3 style="font-size:.95rem;margin-top:14px">Rolled (${w.res.length})</h3>${rows}<div class="acts"><button class="btn" data-wadd>Add ${w.res.length} to Priority</button></div>` : ''}
+    <h3 style="font-size:.95rem;margin-top:18px">Categories on the wheel</h3><div class="cat">Change these in Settings (⚙︎).</div>
+    <div style="margin-top:6px">${pool.map(o => `<div class="wro"><span>${esc(o.name)}${o.current_cat ? ` <span class="cat">→ ${catName(o.current_cat)}</span>` : ''}</span><span class="cat">w ${Number(o.weight)}</span><span class="cat" style="width:3.6em;text-align:right">${(Number(o.weight) / tot * 100).toFixed(1)}%</span></div>`).join('') || '<div class="cat">Nothing is on the wheel. Turn categories on in Settings.</div>'}</div></div></div>`;
 }
 function doRoll() {
   const n = Math.max(1, Math.min(100, parseInt($('#w-n').value) || 1)); S.wheel.n = n;
   const pool = S.options.filter(o => o.active && Number(o.weight) > 0), tot = pool.reduce((a, o) => a + Number(o.weight), 0);
-  if (!pool.length) return toast('Tick at least one category with a weight above 0');
-  S.wheel.res = Array.from({ length: n }, () => { let r = Math.random() * tot; for (const o of pool) { r -= Number(o.weight); if (r < 0) return o.name; } return pool[pool.length - 1].name; });
+  if (!pool.length) return toast('Turn on at least one category with a weight above 0 in Settings');
+  S.wheel.res = Array.from({ length: n }, () => { let r = Math.random() * tot, c = pool[pool.length - 1].name; for (const o of pool) { r -= Number(o.weight); if (r < 0) { c = o.name; break; } } return { cat: c, desc: '', src: '', fid: null }; });
+  render();
+}
+function rollCurrent() {
+  let done = 0; const empty = new Set();
+  S.wheel.res.forEach(r => {
+    const o = mapped(r.cat); if (!o || r.src === 'future' || r.src === 'typed') return;
+    const list = ranked(o.current_cat); if (!list.length) { empty.add(catName(o.current_cat)); return; }
+    const w = list.map((_, i) => 1 / (i + 1)), tot = w.reduce((a, b) => a + b, 0); let x = Math.random() * tot, pick = list[list.length - 1];
+    for (let i = 0; i < list.length; i++) { x -= w[i]; if (x < 0) { pick = list[i]; break; } }
+    r.desc = pick.title; r.src = 'roll'; r.fid = null; done++;
+  });
+  if (empty.size) toast('Nothing in Current for ' + [...empty].join(', '));
+  else if (!done) toast('Nothing to fill in');
   render();
 }
 async function addRolls() {
   let so = Math.max(0, ...S.entries.map(e => e.sort_order));
-  const rows = S.wheel.res.map(c => ({ category: c, description: null, status: 'priority', done_on: null, sort_order: ++so }));
+  const rows = S.wheel.res.map(r => ({ category: r.cat, description: r.desc.trim() || null, status: 'priority', done_on: null, sort_order: ++so }));
   const { data, error } = await db.from('log_entries').insert(rows).select();
   if (error) return toast('Save failed: ' + error.message);
+  const ids = new Set(S.wheel.res.map(r => r.fid).filter(Boolean));
+  by('future').forEach(f => { if (rows.some(r => r.description && r.category === f.category && norm(r.description) === norm(f.description))) ids.add(f.id); });
+  if (ids.size) { const d = await db.from('log_entries').delete().in('id', [...ids]); if (d.error) toast('Added, but could not clear Future: ' + d.error.message); else S.entries = S.entries.filter(e => !ids.has(e.id)); }
   S.entries = S.entries.concat(data).sort((a, b) => a.sort_order - b.sort_order);
   S.wheel = null; S.sub = 'now'; S.anchor = true; render(); toast(`Added ${data.length} to Priority`);
-}
-async function saveOpt(id, patch, box) {
-  const o = S.options.find(x => x.id == id), old = { ...o }; Object.assign(o, patch); updatePct();
-  const { error } = await db.from('wheel_options').update(patch).eq('id', id);
-  if (error) { Object.assign(o, old); if (box) box.value = o.weight; updatePct(); toast('Could not save: ' + error.message); }
 }
 
 function anchor() {
@@ -367,14 +434,15 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.settings ? settingsHtml() : '';
+  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
+  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.ce ? 'e' : S.settings ? 's' : '';
   app.innerHTML = `<div class="wrap"><header><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
     ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
-  if (S.wheel) updatePct();
+  const sh1 = document.querySelector('.sheet'); if (sh1 && mk === _mk) sh1.scrollTop = sy0; _mk = mk;
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
 
@@ -456,8 +524,8 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
-  if (g('data-cancel')) { S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (t.classList.contains('modal')) { S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
   if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
   if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
@@ -468,6 +536,11 @@ document.addEventListener('click', e => {
   if (g('data-cdel')) return delCur();
   if (g('data-roll')) { S.wheel = { n: 5, res: [] }; return render(); }
   if (g('data-wroll')) return doRoll();
+  if (g('data-wcur')) return rollCurrent();
+  if (g('data-ecat')) return openCatEdit(g('data-ecat').dataset.ecat);
+  if (g('data-esave')) return saveCatEdit();
+  if (g('data-edelete')) return delCat();
+  if (g('data-ecancel')) { S.ce = null; return render(); }
   if (g('data-wadd')) return addRolls();
   if (g('data-wdel')) { S.wheel.n = Number($('#w-n').value) || S.wheel.n; S.wheel.res.splice(Number(g('data-wdel').dataset.wdel), 1); return render(); }
   if (g('data-settings')) { S.settings = true; return render(); }
@@ -487,13 +560,15 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat(); });
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
-  if (e.target.dataset.wact) { const b = e.target; b.closest('.wrow').classList.toggle('off', !b.checked); return saveOpt(b.dataset.wact, { active: b.checked }); }
-  if (e.target.dataset.w) { const v = Math.max(0, Number(e.target.value) || 0); e.target.value = v; return saveOpt(e.target.dataset.w, { weight: v }, e.target); }
+  if (e.target.dataset.rf !== undefined) { const r = S.wheel.res[Number(e.target.dataset.rf)], f = S.entries.find(x => x.id == e.target.value);
+    if (f) { r.desc = f.description; r.src = 'future'; r.fid = f.id; } else { if (r.src === 'future') { r.desc = ''; r.src = ''; } r.fid = null; } return render(); }
   if (e.target.id === 'c-done') { readCm(); if (S.cm.done && !S.cm.year) S.cm.year = new Date().getFullYear(); return render(); }
   if (e.target.id === 'm-cat' || e.target.id === 'm-status') { const m = S.modal; m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
   if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
 });
-document.addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
+document.addEventListener('input', e => {
+  if (e.target.dataset.ri !== undefined) { const r = S.wheel.res[Number(e.target.dataset.ri)], v = e.target.value; r.desc = v; r.src = v.trim() ? 'typed' : '';
+    if (r.fid) { const f = S.entries.find(x => x.id === r.fid); if (!f || f.description !== v) r.fid = null; } return; } if (e.target.id === 'q') { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
 document.addEventListener('submit', async e => {
   if (e.target.id !== 'login') return;
   e.preventDefault();
