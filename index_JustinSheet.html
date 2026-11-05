@@ -99,7 +99,7 @@ const db = supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
 let _mk = '';
-const S = { ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -124,6 +124,7 @@ async function loadAll() {
   S.options = o.data || [];
   const c = await db.from('current_items').select('*').order('sort_order');
   S.current = c.data || []; S.curErr = c.error ? c.error.message : null;
+  const rg = await db.from('roguelikes').select('*').order('sort_order'); S.rogue = rg.data || [];
   S.loading = false; S.anchor = true; render();
 }
 
@@ -169,13 +170,65 @@ function wheel() {
 }
 
 function settingsHtml() {
-  const c = catCounts();
+  const t = (k, l) => `<button class="${S.stab === k ? 'on' : ''}" data-stab="${k}">${l}</button>`;
   return `<div class="modal"><div class="sheet"><div class="head"><h2>Settings</h2><button class="btn alt" data-cancel>Done</button></div>
-    <h3 style="font-size:.95rem;margin-top:8px">Categories</h3>
+    <div class="seg sm">${t('cats', 'Categories')}${t('rogue', 'Random Roguelike')}</div>${S.stab === 'rogue' ? rogueTab() : catsTab()}</div></div>`;
+}
+
+function catsTab() {
+  const c = catCounts();
+  return `<h3 style="font-size:.95rem;margin-top:4px">Categories</h3>
     <div class="cat">Tick a category to show it in the dropdowns. Edit lets you rename it, delete it, and set its wheel weight. Sorted by how often each is used.</div>
     <div style="margin-top:8px">${allCats().map(n => { const o = S.options.find(x => x.name === n); return `<div class="chkrow"><input type="checkbox" data-vis="${esc(n)}" ${visible(n) ? 'checked' : ''}><span>${esc(n)}</span><span class="cat">${c[n] || 0}</span><span class="cat" style="width:3.2em;text-align:right">${o && o.active ? 'w ' + Number(o.weight) : ''}</span><button class="btn alt" style="padding:3px 10px" data-ecat="${esc(n)}">Edit</button></div>`; }).join('')}</div>
     <h3 style="font-size:.95rem;margin-top:16px">Add a category</h3>
-    <div style="display:flex;gap:6px;margin-top:6px"><input id="s-new" placeholder="New category name"><button class="btn" data-addcat>Add</button></div></div></div>`;
+    <div style="display:flex;gap:6px;margin-top:6px"><input id="s-new" placeholder="New category name"><button class="btn" data-addcat>Add</button></div>`;
+}
+
+function rogueTab() {
+  const list = [...S.rogue].sort((a, b) => (b.active - a.active) || Number(b.weight) - Number(a.weight) || a.name.localeCompare(b.name));
+  const tot = S.rogue.reduce((a, x) => a + (x.active ? Number(x.weight) || 0 : 0), 0);
+  return `<h3 style="font-size:.95rem;margin-top:4px">Random Roguelike</h3>
+    <div class="cat">When Random Roguelike comes up on the wheel, Roll picks chooses one of these by weight. Tick a game to put it on the wheel.</div>
+    <div style="margin-top:8px">${list.map(x => `<div class="chkrow"><input type="checkbox" data-ract="${x.id}" ${x.active ? 'checked' : ''}><span>${esc(x.name)}</span><span class="cat" style="width:3.2em;text-align:right">w ${Number(x.weight)}</span><span class="cat" style="width:3.4em;text-align:right">${x.active && tot > 0 ? (Number(x.weight) / tot * 100).toFixed(1) + '%' : '—'}</span><button class="btn alt" style="padding:3px 10px" data-rlk="${x.id}">Edit</button></div>`).join('') || '<div class="cat">No roguelikes yet. Run 7_roguelike.sql, or add one below.</div>'}</div>
+    <h3 style="font-size:.95rem;margin-top:16px">Add a roguelike</h3>
+    <div style="display:flex;gap:6px;margin-top:6px"><input id="r-new" placeholder="Game name"><input id="r-neww" type="number" min="0" step="any" value="2" style="width:5em"><button class="btn" data-radd>Add</button></div>`;
+}
+
+function rogueEditHtml() {
+  const e = S.re;
+  return `<div class="modal"><div class="sheet"><h2>Edit roguelike</h2>
+    <label>Name</label><input id="r-name" value="${esc(e.name)}">
+    <label class="chkrow"><input type="checkbox" id="r-act" ${e.active ? 'checked' : ''}><span>On the wheel</span></label>
+    <label>Weight (higher comes up more)</label><input id="r-w" type="number" min="0" step="any" value="${e.weight}">
+    <div class="acts"><button class="btn" data-rsave>Save</button><button class="btn danger" data-rdel>Delete</button><button class="btn alt" data-rcancel>Cancel</button></div></div></div>`;
+}
+async function saveRogue() {
+  const e = S.re, name = $('#r-name').value.replace(/\s+/g, ' ').trim();
+  if (!name) return toast('Give it a name');
+  if (S.rogue.some(x => x.id !== e.id && x.name.toLowerCase() === name.toLowerCase())) return toast('Already in the list');
+  const r = await db.from('roguelikes').update({ name, active: $('#r-act').checked, weight: Math.max(0, Number($('#r-w').value) || 0) }).eq('id', e.id).select().single();
+  if (r.error) return toast('Save failed: ' + r.error.message);
+  Object.assign(S.rogue.find(x => x.id === e.id), r.data); S.re = null; render();
+}
+async function delRogue() {
+  if (!confirm(`Delete “${S.re.name}”?`)) return;
+  const { error } = await db.from('roguelikes').delete().eq('id', S.re.id);
+  if (error) return toast('Delete failed: ' + error.message);
+  S.rogue = S.rogue.filter(x => x.id !== S.re.id); S.re = null; render();
+}
+async function addRogue() {
+  const name = $('#r-new').value.replace(/\s+/g, ' ').trim(), w = Number($('#r-neww').value);
+  if (!name) return;
+  if (S.rogue.some(x => x.name.toLowerCase() === name.toLowerCase())) return toast('Already in the list');
+  const { data, error } = await db.from('roguelikes').insert({ name, weight: w >= 0 ? w : 2, active: true, sort_order: Math.max(0, ...S.rogue.map(x => x.sort_order)) + 1 }).select().single();
+  if (error) return toast('Could not add: ' + error.message);
+  S.rogue.push(data); render(); toast('Added ' + name);
+}
+async function toggleRogue(box) {
+  const x = S.rogue.find(r => r.id == box.dataset.ract), v = box.checked;
+  const { error } = await db.from('roguelikes').update({ active: v }).eq('id', x.id);
+  if (error) { box.checked = !v; return toast('Could not save: ' + error.message); }
+  x.active = v; render();
 }
 
 function catEditHtml() {
@@ -186,7 +239,7 @@ function catEditHtml() {
     <label class="chkrow"><input type="checkbox" id="e-act" ${e.active ? 'checked' : ''}><span>On the wheel</span></label>
     <label>Wheel weight (higher comes up more)</label><input id="e-w" type="number" min="0" step="any" value="${e.weight}">
     <label>Second roll picks from Current</label>
-    <select id="e-cc"><option value="">Nothing (leave blank)</option>${CATS.map(([k, l]) => `<option value="${k}" ${e.cc === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <select id="e-cc"><option value="">Nothing (leave blank)</option>${LINKS.map(([k, l]) => `<option value="${k}" ${e.cc === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
     <label class="chkrow"><input type="checkbox" id="e-show" ${e.show ? 'checked' : ''}><span>Show in dropdowns</span></label>
     <div class="acts"><button class="btn" data-esave>Save</button><button class="btn danger" data-edelete>Delete</button><button class="btn alt" data-ecancel>Cancel</button></div></div></div>`;
 }
@@ -226,12 +279,15 @@ async function delCat() {
 }
 
 /* ---------- Current ---------- */
-const CATS = [['games', 'Games'], ['shows', 'Media'], ['books', 'Books'], ['manga', 'Manga'], ['catchup', 'Catch up manga'], ['music', 'Music']];
+const CATS = [['games', 'Games'], ['shows', 'Media'], ['books', 'Books'], ['manga', 'Manga'], ['music', 'Music']];
+const LINKS = [...CATS, ['catchup', 'Catch up manga'], ['roguelike', 'Random roguelikes']];
+const linkName = k => (LINKS.find(c => c[0] === k) || [])[1];
 const YC = { 2024: '#c4604f', 2025: '#d6913f', 2026: '#cdb43a', 2027: '#6fa86f', 2028: '#5b9bc4', 2029: '#9b7bc4' };
 const yc = y => YC[y] || (y ? `hsl(${(y * 67) % 360} 55% 60%)` : 'var(--mute)');
 const catName = k => (CATS.find(c => c[0] === k) || [])[1];
 const cur = k => S.current.filter(i => i.category === k);
-const ranked = k => cur(k).filter(i => i.rank != null && !i.done).sort((a, b) => a.rank - b.rank);
+const ranked = k => cur(k).filter(i => i.rank != null && !i.done && i.status !== 'catchup').sort((a, b) => a.rank - b.rank);
+const rankedCU = () => cur('manga').filter(i => i.status === 'catchup' && i.rank != null && !i.done).sort((a, b) => a.rank - b.rank);
 const stCls = i => i.status === 'paused' ? 'paused' : i.status === 'dropped' ? 'dropped' : '';
 const unit = x => x.toLowerCase().replace(/s?\.?$/, '');
 const prog = i => {
@@ -240,7 +296,7 @@ const prog = i => {
   return `${esc(p) || '—'}${t ? ' / ' + esc(t) : ''}`;
 };
 const mark = i => i.done ? `<span style="color:${yc(i.done_year)}">✓${i.done_year ? ' ’' + String(i.done_year).slice(2) : ''}</span>`
-  : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : '';
+  : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : i.status === 'catchup' ? '<span class="cat">Catch up</span>' : '';
 const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t2">${esc(i.progress) || '—'}</div><div class="t3">${esc(i.total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
 const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t5">${prog(i)}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
 
@@ -251,20 +307,26 @@ function currentView() {
   return `<div class="seg">${tabs}</div>${body}`;
 }
 
+function cuBlock(arrows) {
+  const c = rankedCU();
+  return `<div class="head" style="margin:14px 0 4px"><h3 style="font-size:.9rem">Catch up</h3><button class="btn alt" data-cadd="manga" data-cst="catchup">Add</button></div>
+    ${c.map((i, n) => rankRow(i, n + 1, arrows)).join('') || '<div class="cat">Nothing to catch up on.</div>'}`;
+}
+
 function overview() {
   return `<div class="ovg">${CATS.map(([k, l]) => { const r = ranked(k);
     return `<div class="card"><div class="head"><h2 style="cursor:pointer" data-ctab="${k}">${l}</h2><button class="btn alt" data-cadd="${k}">Add</button></div>
-      ${r.map((i, n) => rankRow(i, n + 1, false)).join('') || '<div class="cat">Nothing current.</div>'}</div>`; }).join('')}</div>`;
+      ${r.map((i, n) => rankRow(i, n + 1, false)).join('') || '<div class="cat">Nothing current.</div>'}${k === 'manga' ? cuBlock(false) : ''}</div>`; }).join('')}</div>`;
 }
 
 function catView(k) {
   const all = cur(k).sort((a, b) => a.sort_order - b.sort_order), r = ranked(k);
-  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch'], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], rewatch: ['Rewatch', i => i.status === 'rewatch'] };
+  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch' && i.status !== 'catchup'], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], rewatch: ['Rewatch', i => i.status === 'rewatch'], catchup: ['Catch up', i => i.status === 'catchup'] };
   const chips = Object.entries(F).map(([f, [l, fn]]) => [f, l, all.filter(fn).length]).filter(([f, , n]) => f === 'all' || n || f === S.flt)
     .map(([f, l, n]) => `<button class="${S.flt === f ? 'on' : ''}" data-cflt="${f}">${l} (${n})</button>`).join('');
   const rows = all.filter((F[S.flt] || F.all)[1]);
   return `<div class="cols"><div class="card"><div class="head"><h2>Current</h2><button class="btn" data-cadd="${k}">Add</button></div>
-    ${r.map((i, n) => rankRow(i, n + 1, true)).join('') || '<div class="cat">Nothing current.</div>'}</div>
+    ${r.map((i, n) => rankRow(i, n + 1, true)).join('') || '<div class="cat">Nothing current.</div>'}${k === 'manga' ? cuBlock(true) : ''}</div>
     <div class="card"><div class="head"><h2>All ${catName(k).toLowerCase()}</h2></div><div class="seg sm">${chips}</div>
     <div class="row th"><div class="c0">#</div><div class="t1">Title</div><div class="t2">How far</div><div class="t3">Total</div><div class="t4"></div></div>
     ${rows.map((i, n) => curRow(i, n + 1)).join('') || '<div class="cat">Nothing here.</div>'}</div></div>`;
@@ -288,7 +350,7 @@ function yearsView() {
 function curModalHtml() {
   const m = S.cm, top = Math.max(new Date().getFullYear(), ...S.current.map(i => i.done_year || 0)) + 1, yrs = [];
   for (let y = 2024; y <= top; y++) yrs.push(y);
-  const st = [['active', 'Active'], ['paused', 'Paused'], ['dropped', 'Dropped'], ['rewatch', 'Rewatch / replay later']];
+  const st = [['active', 'Active'], ['paused', 'Paused'], ['dropped', 'Dropped'], ['rewatch', 'Rewatch / replay later'], ['catchup', 'Catch up']];
   return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit' : 'Add to'} ${m.id ? '' : catName(m.category)}</h2>
     <label>Title</label><input id="c-title" value="${esc(m.title)}">
     <div style="display:flex;gap:8px"><div style="flex:1"><label>How far</label><input id="c-prog" value="${esc(m.progress)}" placeholder="Ch. 12"></div><div style="flex:1"><label>Total</label><input id="c-tot" value="${esc(m.total)}" placeholder="147 Chs."></div></div>
@@ -310,7 +372,10 @@ async function saveCur() {
   if (!title) return toast('Add a title first');
   const old = m.id ? S.current.find(x => x.id === m.id) : null;
   let rank = null;
-  if (m.incur && !m.done) rank = old && old.rank != null ? old.rank : Math.max(0, ...cur(m.category).map(i => i.rank || 0)) + 1;
+  if (m.incur && !m.done) {
+    const cu = m.status === 'catchup', same = old && old.rank != null && (old.status === 'catchup') === cu;
+    rank = same ? old.rank : Math.max(0, ...(cu ? rankedCU() : ranked(m.category)).filter(i => i.id !== m.id).map(i => i.rank)) + 1;
+  }
   const payload = { category: m.category, title, progress: m.progress.trim() || null, total: m.total.trim() || null, status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
   let res;
   if (m.id) res = await db.from('current_items').update(payload).eq('id', m.id).select().single();
@@ -328,7 +393,7 @@ async function delCur() {
 }
 
 async function moveRank(id, dir) {
-  const it = S.current.find(x => x.id == id), r = ranked(it.category), o = r[r.findIndex(x => x.id == id) + dir];
+  const it = S.current.find(x => x.id == id), r = it.status === 'catchup' ? rankedCU() : ranked(it.category), o = r[r.findIndex(x => x.id == id) + dir];
   if (!o) return;
   const [a, b] = [it.rank, o.rank];
   const e1 = await db.from('current_items').update({ rank: b }).eq('id', it.id), e2 = await db.from('current_items').update({ rank: a }).eq('id', o.id);
@@ -344,15 +409,15 @@ function wheelHtml() {
   const rows = w.res.map((r, i) => {
     const futs = by('future').filter(f => f.category === r.cat && f.description && (!taken.has(f.id) || f.id === r.fid)), m = mapped(r.cat);
     return `<div class="rr"><div class="rh"><span class="n">${i + 1}</span><b>${esc(r.cat)}</b><button class="x" data-wdel="${i}" title="Remove">×</button></div>
-      <input data-ri="${i}" value="${esc(r.desc)}" placeholder="${m ? 'What (Roll from Current fills this)' : 'What (optional)'}">
+      <input data-ri="${i}" value="${esc(r.desc)}" placeholder="${m ? 'What (Roll picks fills this)' : 'What (optional)'}">
       ${futs.length ? `<select data-rf="${i}"><option value="">Choose from Future (${futs.length})…</option>${futs.map(f => `<option value="${f.id}" ${f.id === r.fid ? 'selected' : ''}>${esc(f.description)}</option>`).join('')}</select>` : ''}</div>`;
   }).join('');
   const anyMapped = w.res.some(r => mapped(r.cat));
   return `<div class="modal"><div class="sheet"><div class="head"><h2>Roll the wheel</h2><button class="btn alt" data-cancel>Close</button></div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="cat">Rolls</span><input id="w-n" type="number" min="1" max="100" value="${w.n}" style="width:5em"><button class="btn" data-wroll>${w.res.length ? 'Roll again' : 'Roll'}</button>${anyMapped ? '<button class="btn alt" data-wcur>Roll from Current</button>' : ''}</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="cat">Rolls</span><input id="w-n" type="number" min="1" max="100" value="${w.n}" style="width:5em"><button class="btn" data-wroll>${w.res.length ? 'Roll again' : 'Roll'}</button>${anyMapped ? '<button class="btn alt" data-wcur>Roll picks</button>' : ''}</div>
     ${w.res.length ? `<h3 style="font-size:.95rem;margin-top:14px">Rolled (${w.res.length})</h3>${rows}<div class="acts"><button class="btn" data-wadd>Add ${w.res.length} to Priority</button></div>` : ''}
     <h3 style="font-size:.95rem;margin-top:18px">Categories on the wheel</h3><div class="cat">Change these in Settings (⚙︎).</div>
-    <div style="margin-top:6px">${pool.map(o => `<div class="wro"><span>${esc(o.name)}${o.current_cat ? ` <span class="cat">→ ${catName(o.current_cat)}</span>` : ''}</span><span class="cat">w ${Number(o.weight)}</span><span class="cat" style="width:3.6em;text-align:right">${(Number(o.weight) / tot * 100).toFixed(1)}%</span></div>`).join('') || '<div class="cat">Nothing is on the wheel. Turn categories on in Settings.</div>'}</div></div></div>`;
+    <div style="margin-top:6px">${pool.map(o => `<div class="wro"><span>${esc(o.name)}${o.current_cat ? ` <span class="cat">→ ${linkName(o.current_cat)}</span>` : ''}</span><span class="cat">w ${Number(o.weight)}</span><span class="cat" style="width:3.6em;text-align:right">${(Number(o.weight) / tot * 100).toFixed(1)}%</span></div>`).join('') || '<div class="cat">Nothing is on the wheel. Turn categories on in Settings.</div>'}</div></div></div>`;
 }
 function doRoll() {
   const n = Math.max(1, Math.min(100, parseInt($('#w-n').value) || 1)); S.wheel.n = n;
@@ -361,16 +426,26 @@ function doRoll() {
   S.wheel.res = Array.from({ length: n }, () => { let r = Math.random() * tot, c = pool[pool.length - 1].name; for (const o of pool) { r -= Number(o.weight); if (r < 0) { c = o.name; break; } } return { cat: c, desc: '', src: '', fid: null }; });
   render();
 }
+function pickFrom(key) {
+  if (key === 'roguelike') {
+    const pool = S.rogue.filter(x => x.active && Number(x.weight) > 0); if (!pool.length) return null;
+    let r = Math.random() * pool.reduce((a, x) => a + Number(x.weight), 0);
+    for (const x of pool) { r -= Number(x.weight); if (r < 0) return x.name; }
+    return pool[pool.length - 1].name;
+  }
+  const list = key === 'catchup' ? rankedCU() : ranked(key); if (!list.length) return null;
+  const w = list.map((_, i) => 1 / (i + 1)); let x = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < list.length; i++) { x -= w[i]; if (x < 0) return list[i].title; }
+  return list[list.length - 1].title;
+}
 function rollCurrent() {
   let done = 0; const empty = new Set();
   S.wheel.res.forEach(r => {
     const o = mapped(r.cat); if (!o || r.src === 'future' || r.src === 'typed') return;
-    const list = ranked(o.current_cat); if (!list.length) { empty.add(catName(o.current_cat)); return; }
-    const w = list.map((_, i) => 1 / (i + 1)), tot = w.reduce((a, b) => a + b, 0); let x = Math.random() * tot, pick = list[list.length - 1];
-    for (let i = 0; i < list.length; i++) { x -= w[i]; if (x < 0) { pick = list[i]; break; } }
-    r.desc = pick.title; r.src = 'roll'; r.fid = null; done++;
+    const t = pickFrom(o.current_cat); if (t == null) { empty.add(linkName(o.current_cat)); return; }
+    r.desc = t; r.src = 'roll'; r.fid = null; done++;
   });
-  if (empty.size) toast('Nothing in Current for ' + [...empty].join(', '));
+  if (empty.size) toast('Nothing to pick from in ' + [...empty].join(', '));
   else if (!done) toast('Nothing to fill in');
   render();
 }
@@ -415,6 +490,7 @@ function modalHtml() {
     <label>Category</label>
     <select id="m-cat"><option value="">No category</option>${cats.map(c => `<option ${c === m.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
     ${futures.length ? `<label>Choose from Future (${futures.length})</label><select id="m-pick"><option value="">Pick one…</option>${futures.map(f => `<option value="${f.id}">${esc(f.description)}</option>`).join('')}</select>` : ''}
+    ${m.status !== 'done' && mapped(m.category) ? `<button class="btn alt" data-mroll style="margin-top:10px">${mapped(m.category).current_cat === 'roguelike' ? 'Roll a roguelike' : 'Roll from Current'}</button>` : ''}
     <label>What</label><textarea id="m-desc" rows="3">${esc(m.description)}</textarea>
     ${showDate ? `<label>Date</label><input id="m-date" type="date" value="${esc(m.done_on || today())}">` : ''}
     <div class="acts">
@@ -434,8 +510,8 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
-  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.ce ? 'e' : S.settings ? 's' : '';
+  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
+  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
   app.innerHTML = `<div class="wrap"><header><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
@@ -524,18 +600,25 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
-  if (g('data-cancel')) { S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (t.classList.contains('modal')) { S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
   if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
   if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
   if (g('data-cmove')) return moveRank(g('data-cmove').dataset.cmove, Number(g('data-cmove').dataset.dir));
-  if (g('data-cadd')) { S.cm = { id: null, category: g('data-cadd').dataset.cadd, title: '', progress: '', total: '', status: 'active', incur: true, done: false, year: new Date().getFullYear() }; return render(); }
+  if (g('data-cadd')) { S.cm = { id: null, category: g('data-cadd').dataset.cadd, title: '', progress: '', total: '', status: g('data-cadd').dataset.cst || 'active', incur: true, done: false, year: new Date().getFullYear() }; return render(); }
   if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, progress: i.progress || '', total: i.total || '', status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
   if (g('data-csave')) return saveCur();
   if (g('data-cdel')) return delCur();
   if (g('data-roll')) { S.wheel = { n: 5, res: [] }; return render(); }
   if (g('data-wroll')) return doRoll();
+  if (g('data-mroll')) { const o = mapped(S.modal.category), t = o && pickFrom(o.current_cat); if (t == null) return toast('Nothing to pick from'); $('#m-desc').value = t; S.modal.description = t; return; }
+  if (g('data-stab')) { S.stab = g('data-stab').dataset.stab; return render(); }
+  if (g('data-rlk')) { const x = S.rogue.find(r => r.id == g('data-rlk').dataset.rlk); S.re = { id: x.id, name: x.name, active: x.active, weight: Number(x.weight) }; return render(); }
+  if (g('data-rsave')) return saveRogue();
+  if (g('data-rdel')) return delRogue();
+  if (g('data-radd')) return addRogue();
+  if (g('data-rcancel')) { S.re = null; return render(); }
   if (g('data-wcur')) return rollCurrent();
   if (g('data-ecat')) return openCatEdit(g('data-ecat').dataset.ecat);
   if (g('data-esave')) return saveCatEdit();
@@ -557,9 +640,11 @@ document.addEventListener('click', e => {
   if (g('data-finish')) { const en = S.entries.find(x => x.id == g('data-finish').dataset.finish); return openModal(en, { finish: true }); }
   if (g('data-edit')) { const en = S.entries.find(x => x.id == g('data-edit').dataset.edit); return openModal(en); }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat(); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat();
+  if (e.key === 'Enter' && e.target.id === 'r-new') addRogue(); });
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
+  if (e.target.dataset.ract) return toggleRogue(e.target);
   if (e.target.dataset.rf !== undefined) { const r = S.wheel.res[Number(e.target.dataset.rf)], f = S.entries.find(x => x.id == e.target.value);
     if (f) { r.desc = f.description; r.src = 'future'; r.fid = f.id; } else { if (r.src === 'future') { r.desc = ''; r.src = ''; } r.fid = null; } return render(); }
   if (e.target.id === 'c-done') { readCm(); if (S.cm.done && !S.cm.year) S.cm.year = new Date().getFullYear(); return render(); }
