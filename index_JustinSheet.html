@@ -100,7 +100,7 @@ const db = supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
 let _mk = '';
-const S = { pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -163,13 +163,15 @@ function priorityCard() {
 function home() { return priorityCard(); }
 
 function wheel() {
-  const d = by('done').sort((a, b) => (a.done_on || '').localeCompare(b.done_on || '') || a.sort_order - b.sort_order);
-  const p = by('priority'), q = norm(S.q);
+  const w = S.wcat, keep = x => !w || x.category === w;
+  const d = by('done').filter(keep).sort((a, b) => (a.done_on || '').localeCompare(b.done_on || '') || a.sort_order - b.sort_order);
+  const p = by('priority').filter(keep), q = norm(S.q);
   let first = true;
   const rows = [...d, ...p].map((e, i) => [e, i + 1])
     .filter(([e]) => !q || norm(e.category).includes(q) || norm(e.description).includes(q))
-    .map(([e, n]) => { const isP = e.status === 'priority'; const cls = isP ? 'pr' + (first ? ' first-p' : '') : ''; if (isP) first = false; return rowHtml(e, n, 'dc', cls); }).join('');
-  return `<div class="card"><div class="head"><h2>Wheel</h2><span class="cat">${d.length.toLocaleString()} completed · ${p.length} priority</span></div>${rows || '<div class="cat">No matches.</div>'}</div>`;
+    .map(([e, n]) => { const isP = e.status === 'priority'; const cls = isP ? 'pr' + (first ? ' first-p' : '') : ''; if (isP) first = false; return rowHtml(e, n, 'dcf', cls); }).join('');
+  return `<div class="card"><div class="head"><h2>${w ? esc(w) : 'Wheel'}</h2><span class="cat">${d.length.toLocaleString()} completed · ${p.length} priority</span></div>${rows || '<div class="cat">No matches.</div>'}
+    ${w ? '<div class="acts"><button class="btn alt" data-catback>← Back to all</button></div>' : ''}</div>`;
 }
 
 function settingsHtml() {
@@ -632,8 +634,8 @@ document.addEventListener('click', e => {
   if (g('data-settings')) { S.settings = true; return render(); }
   if (g('data-addcat')) return addCat();
   if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; S.pcat = null; return render(); }
-  if (g('data-catf')) { S.pcat = g('data-catf').dataset.catf; return render(); }
-  if (g('data-catback')) { S.pcat = null; return render(); }
+  if (g('data-catf')) { if (S.tab === 'wheel') { S.wcat = g('data-catf').dataset.catf; S.anchor = true; } else S.pcat = g('data-catf').dataset.catf; return render(); }
+  if (g('data-catback')) { if (S.tab === 'wheel') { S.wcat = null; S.anchor = true; } else S.pcat = null; return render(); }
   if (g('data-bulk')) { S.bulk = { status: g('data-bulk').dataset.bulk }; return render(); }
   if (g('data-fill')) return fillLines();
   if (g('data-bsave')) return saveBulk();
