@@ -71,6 +71,7 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .rr input,.rr select{margin-top:6px;font-size:.85rem;padding:6px 9px}
 .rr .x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1.1rem}
 .wro{display:flex;gap:8px;font-size:.85rem;padding:2px 0;border-top:1px solid var(--line)}.wro span:first-child{flex:1}
+.row .c1[data-catf]{cursor:pointer}.row .c1[data-catf]:hover{color:var(--accent)}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:1.6rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:6}
 .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
 .btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
@@ -99,7 +100,7 @@ const db = supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
 let _mk = '';
-const S = { re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -138,7 +139,7 @@ function categories(extra) { const l = allCats().filter(n => visible(n) || n ===
 
 /* ---------- views ---------- */
 function rowHtml(e, n, cols = '', cls = '') {
-  return `<div class="row ${cls}" data-edit="${e.id}"><div class="c0">${n}</div><div class="c1 ${e.status}">${esc(e.category) || '—'}</div>
+  return `<div class="row ${cls}" data-edit="${e.id}"><div class="c0">${n}</div><div class="c1 ${e.status}"${cols.includes('f') && e.category ? ` data-catf="${esc(e.category)}" title="Show only this category"` : ''}>${esc(e.category) || '—'}</div>
     <div class="c2 ${e.description ? '' : 'empty-desc'}">${esc(e.description) || '—'}</div>
     ${cols.includes('d') ? `<div class="c3"><span class="dl">${fmt(e.done_on)}</span><span class="ds">${fmtS(e.done_on)}</span></div>` : ''}
     ${cols.includes('c') ? (e.status === 'priority' ? `<button class="chk" title="Mark done" data-finish="${e.id}">✓</button>` : '<span class="chk-sp"></span>') : ''}</div>`;
@@ -146,18 +147,20 @@ function rowHtml(e, n, cols = '', cls = '') {
 const thHtml = cols => `<div class="row th"><div class="c0">#</div><div class="c1">Wheel spin</div><div class="c2">What</div>${cols.includes('d') ? '<div class="c3">Date</div>' : ''}${cols.includes('c') ? '<span class="chk-sp"></span>' : ''}</div>`;
 
 function priorityCard() {
-  const fut = S.sub === 'future', st = fut ? 'future' : 'priority', cols = fut ? '' : 'c';
-  const list = by(st);
+  const fut = S.sub === 'future', st = fut ? 'future' : 'priority', cols = fut ? '' : 'cf';
+  let list = by(st);
+  const filt = !fut && S.pcat;
   if (fut) list.sort((a, b) => (a.category || '~').localeCompare(b.category || '~') || a.sort_order - b.sort_order);
+  if (filt) list = list.filter(e => e.category === S.pcat);
   const t = (k, l, n) => `<button class="${S.sub === k ? 'on' : ''}" data-sub="${k}">${l} (${n})</button>`;
   return `<div class="card"><div class="head"><div class="seg" style="margin:0">${t('now', 'Priority', by('priority').length)}${t('future', 'Future', by('future').length)}</div>
     <div class="acts" style="margin:0"><button class="btn alt" data-roll>Roll</button><button class="btn alt" data-bulk="${st}">Bulk add</button><button class="btn" data-add="${st}">Add</button></div></div>
-    ${thHtml(cols)}${list.map((e, i) => rowHtml(e, i + 1, cols)).join('') || '<div class="cat">Nothing here yet.</div>'}</div>`;
+    ${filt ? `<div class="cat" style="margin-bottom:6px">Showing only <b>${esc(S.pcat)}</b> (${list.length})</div>` : ''}
+    ${thHtml(cols)}${list.map((e, i) => rowHtml(e, i + 1, cols)).join('') || '<div class="cat">Nothing here yet.</div>'}
+    ${filt ? '<div class="acts"><button class="btn alt" data-catback>← Back to all priority</button></div>' : ''}</div>`;
 }
 
-function home() {
-  return priorityCard() + `<div class="grid"><div class="card soon">Room for more</div><div class="card soon">Room for more</div></div>`;
-}
+function home() { return priorityCard(); }
 
 function wheel() {
   const d = by('done').sort((a, b) => (a.done_on || '').localeCompare(b.done_on || '') || a.sort_order - b.sort_order);
@@ -628,7 +631,9 @@ document.addEventListener('click', e => {
   if (g('data-wdel')) { S.wheel.n = Number($('#w-n').value) || S.wheel.n; S.wheel.res.splice(Number(g('data-wdel').dataset.wdel), 1); return render(); }
   if (g('data-settings')) { S.settings = true; return render(); }
   if (g('data-addcat')) return addCat();
-  if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; return render(); }
+  if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; S.pcat = null; return render(); }
+  if (g('data-catf')) { S.pcat = g('data-catf').dataset.catf; return render(); }
+  if (g('data-catback')) { S.pcat = null; return render(); }
   if (g('data-bulk')) { S.bulk = { status: g('data-bulk').dataset.bulk }; return render(); }
   if (g('data-fill')) return fillLines();
   if (g('data-bsave')) return saveBulk();
