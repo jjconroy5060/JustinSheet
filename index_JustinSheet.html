@@ -79,10 +79,10 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .bk-bar .chip.dim{opacity:.45}
 .btn.on{background:var(--accent);color:var(--accent-ink)}
 .bk-scroll{display:flex;align-items:flex-start;gap:8px;overflow:auto;max-height:calc(100vh - 190px);min-height:320px;padding:0 2px 12px}
-.bk-sec{flex:1 1 0;min-width:270px;font-size:.8rem;line-height:1.3;color:#1b1b1b;background:rgba(127,127,127,.12);border-radius:14px;overflow:clip;padding-bottom:8px}
+.bk-sec{flex:1 1 0;min-width:260px;font-size:.8rem;line-height:1.3;color:#1b1b1b;background:rgba(127,127,127,.12);border-radius:14px;overflow:clip;padding-bottom:8px}
 .bk-sticky{position:sticky;top:0;z-index:3;background:#000}
-.bk-r{display:grid;grid-template-columns:minmax(0,1fr) 50px 58px 42px;align-items:center;padding:3px 8px;gap:4px;cursor:pointer;margin:0 6px;border-radius:7px}
-.ln .bk-r{grid-template-columns:minmax(0,1fr) 52px 40px}
+.bk-r{display:grid;grid-template-columns:minmax(0,1fr) 54px 56px;align-items:center;padding:3px 7px;gap:3px;cursor:pointer;margin:0 6px;border-radius:7px}
+.ln .bk-r{grid-template-columns:minmax(0,1fr) 56px}
 .bk-r>span:nth-child(n+2){text-align:right;white-space:nowrap}
 .bk-r .t{display:flex;align-items:center;gap:4px;min-width:0}
 .bk-r .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -94,9 +94,9 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .bk-grp{background:#161616;color:#fff;font-weight:700;margin-top:8px;margin-bottom:2px}
 .bk-subh{background:#6b6b6b;color:#fff;font-weight:700;margin:5px 6px 2px 16px}
 .bk-bk{margin-top:2px;margin-bottom:0}
-.bk-s1{background:#d9ead3}.bk-s2{background:#fff2cc}.bk-s3{background:#c9daf8}.bk-s4{background:#f4cccc}.bk-s5{background:#e7e2d8}.bk-s6{background:#d9d2e9}
+.bk-s1{background:#d9ead3}.bk-s2{background:#fff2cc}.bk-s3{background:#c9daf8}.bk-s4{background:#f4cccc}.bk-s5{background:#e7e2d8}.bk-s6{background:#cdb3ef}
 .mg .bk-r{grid-template-columns:minmax(0,1fr) 38px 36px 36px;padding:3px 6px;gap:3px}
-.mg{min-width:225px}
+.mg{min-width:260px}
 .mg.wrapped{flex:2 1 0;min-width:460px}
 .bk-sec.bwrapped{flex:2 1 0;min-width:520px}
 .mg .unsure{color:#b3261e;font-weight:700;text-decoration:underline dotted}
@@ -422,18 +422,18 @@ function booksView() {
   const keys = LNV ? bookTree('Light Novels').filter(g => g.name).map(g => `Light Novels|${g.name}`) : BSEC.slice(0, 5).flatMap(sec => bookTree(sec).filter(g => g.name).map(g => `${sec}|${g.name}`));
   const allCollapsed = keys.length && keys.every(isClosed);
   const mv = a => S.bord ? `<span class="bk-mv">${[-1, 1].map(d => `<button ${a} data-dir="${d}" title="Move ${d < 0 ? 'up' : 'down'}">${d < 0 ? '▲' : '▼'}</button>`).join('')}</span>` : '';
-  const row = b => `<div class="bk-r bk-bk bk-s${b.status}" data-bedit="${b.id}"><span class="t">${mv(`data-bmv="book" data-bid="${b.id}"`)}<span class="tt" title="${esc(b.title)}">${esc(b.title)}</span></span><span>${b.section === 'Light Novels' ? (b.pages ?? '') : kfmt(b.words)}</span>${b.section === 'Light Novels' ? '' : `<span>${rfmt(b.rating)}</span>`}<span>${b.status}</span></div>`;
+  const row = b => `<div class="bk-r bk-bk bk-s${b.status}" data-bedit="${b.id}"><span class="t">${mv(`data-bmv="book" data-bid="${b.id}"`)}<span class="tt" title="${esc(b.title)}">${esc(b.title)}</span></span><span>${b.section === 'Light Novels' ? (b.pages ?? '') : kfmt(b.words)}</span>${b.section === 'Light Novels' ? '' : `<span>${rfmt(b.rating)}</span>`}</div>`;
   const head = (cls, label, list, ln, key, sec, grp, sub, closed, noEdit) => {
     const a = agg(list, ln), at = `data-bsec="${esc(sec)}" data-bgrp="${esc(grp || '')}" data-bsub="${esc(sub || '')}"`;
     const lvl = noEdit ? '' : cls === 'bk-grp' ? 'grp' : cls === 'bk-subh' ? 'sub' : (cls === 'bk-title' && grp) ? 'grp' : '';
-    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${closed ? 'expand' : 'collapse'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? `<span class="cr">${closed ? '▸' : '▾'}</span>` : ''}<span class="tt" title="${esc(label)}">${esc(label)}</span>${lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`;
+    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${closed ? 'expand' : 'collapse'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? `<span class="cr">${closed ? '▸' : '▾'}</span>` : ''}<span class="tt" title="${esc(label)}">${esc(label)}</span>${lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}</div>`;
   };
   const bodyOf = (sec, g, ln) => g.subs.map(sb => {
     const bks = sb.books.filter(match); if (!bks.length) return '';
     const sk = sb.name ? `${sec}|${g.name}|${sb.name}` : null, sc = sk && !filtering && isClosed(sk);
     return (sb.name ? head('bk-subh', sb.name, sb.books, ln, sk, sec, g.name, sb.name, sc) : '') + (sc ? '' : bks.map(row).join(''));
   }).join('');
-  const lab = (t, ln) => `<div class="bk-r bk-lab"><span class="t">${t}</span><span>${ln ? 'Pgs.' : 'Words'}</span>${ln ? '' : '<span>Rating</span>'}<span>N</span></div>`;
+  const lab = (t, ln) => `<div class="bk-r bk-lab"><span class="t">${t}</span><span>${ln ? 'Pgs.' : 'Words'}</span>${ln ? '' : '<span>Rating</span>'}</div>`;
   let cards;
   if (LNV) {
     cards = lnTree().map(g => {
@@ -613,6 +613,7 @@ function mangaModalHtml() {
     <div style="display:flex;gap:8px"><div style="flex:1"><label>Chapters read</label><input id="m-read" type="number" min="0" value="${esc(m.read)}"></div>
     <div style="flex:1"><label>Total chapters</label><input id="m-tot" type="number" min="0" value="${esc(m.total)}"></div></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="m-ong" type="checkbox" style="width:auto" ${m.ongoing ? 'checked' : ''}> Still ongoing</label>
+    <label>Times read</label><input id="m-reads" type="number" min="0" step="1" value="${esc(m.reads)}" placeholder="optional">
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="m-uns" type="checkbox" style="width:auto" ${m.unsure ? 'checked' : ''}> Not sure how far I read (shows a red ?)</label>
     <label>Status</label><select id="m-status">${Object.entries(MST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
     <div class="acts"><button class="btn" data-msave>Save</button>${m.id ? '<button class="btn danger" data-mdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
@@ -622,13 +623,13 @@ function readScores() {
     if (l === '__new__') { const n = document.querySelector(`.scn[data-i="${i}"]`); l = n && n.value.trim() ? n.value : '__new__'; }
     return [l, $('#m-sc' + i).value, $('#m-sx' + i).value]; });
 }
-const readMm = () => Object.assign(S.mm, { category: $('#m-cat').value, title: $('#m-title').value, year: $('#m-year').value, rating: $('#m-rate').value, read: $('#m-read').value, total: $('#m-tot').value, ongoing: $('#m-ong').checked, unsure: $('#m-uns').checked, status: Number($('#m-status').value), scores: readScores() });
+const readMm = () => Object.assign(S.mm, { category: $('#m-cat').value, title: $('#m-title').value, year: $('#m-year').value, rating: $('#m-rate').value, read: $('#m-read').value, total: $('#m-tot').value, ongoing: $('#m-ong').checked, unsure: $('#m-uns').checked, reads: $('#m-reads').value, status: Number($('#m-status').value), scores: readScores() });
 async function saveManga() {
   const m = readMm(), title = m.title.trim(); if (!title) return toast('Add a title first');
   if (mFilled(m.scores) && m.scores.some(x => x[1] !== '' && (!String(x[0]).trim() || x[0] === '__new__'))) return toast('Give every scored criterion a name');
   const num = v => String(v).trim() === '' ? null : Number(v), sum = mScoreSum(m.scores), rating = sum != null ? sum : num(m.rating);
   if (rating != null && !(rating >= 0 && rating <= 10)) return toast('Rating must be between 0 and 10');
-  const payload = { category: m.category, title, year: num(m.year), rating, chs_read: num(m.read), chs_total: m.ongoing ? null : num(m.total), ongoing: !!m.ongoing, read_unsure: !!m.unsure, status: m.status, scores: sum != null ? m.scores.filter(x => String(x[0]).trim() && x[0] !== '__new__').map(x => [String(x[0]).trim(), x[1] === '' ? null : Number(x[1]), Number(x[2])]) : null };
+  const payload = { category: m.category, title, year: num(m.year), rating, chs_read: num(m.read), chs_total: m.ongoing ? null : num(m.total), ongoing: !!m.ongoing, read_unsure: !!m.unsure, reads: String(m.reads).trim() === '' ? null : Number(m.reads), status: m.status, scores: sum != null ? m.scores.filter(x => String(x[0]).trim() && x[0] !== '__new__').map(x => [String(x[0]).trim(), x[1] === '' ? null : Number(x[1]), Number(x[2])]) : null };
   const res = m.id ? await db.from('manga').update(payload).eq('id', m.id).select().single() : await db.from('manga').insert(payload).select().single();
   if (res.error) return toast('Save failed: ' + res.error.message);
   S.manga = S.manga.filter(x => x.id !== res.data.id).concat(res.data); S.mm = null; render();
@@ -1028,8 +1029,8 @@ document.addEventListener('click', e => {
   if (g('data-bkey')) { const k = g('data-bkey').dataset.bkey, was = isClosed(k); S.bshut.delete(k); S.bopen.delete(k); (was ? S.bopen : S.bshut).add(k); saveSets(); return render(); }
   if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', grpNew: false, sub: b.sub || '', subNew: false, year: b.year ?? '', reads: b.reads ?? '', size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
   if (g('data-mst')) { const v = Number(g('data-mst').dataset.mst); S.mst = S.mst === v ? null : v; return render(); }
-  if (g('data-madd')) { S.mm = { id: null, category: MCATS[0], title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, unsure: false, status: 6, scores: mBlank(MCATS[0]) }; return render(); }
-  if (g('data-medit')) { const x = S.manga.find(v => v.id == g('data-medit').dataset.medit); S.mm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', read: x.chs_read ?? '', total: x.chs_total ?? '', ongoing: x.ongoing, unsure: !!x.read_unsure, status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? MMAX[y[0]] ?? 10]) : mBlank(x.category) }; return render(); }
+  if (g('data-madd')) { S.mm = { id: null, category: MCATS[0], title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, unsure: false, reads: '', status: 6, scores: mBlank(MCATS[0]) }; return render(); }
+  if (g('data-medit')) { const x = S.manga.find(v => v.id == g('data-medit').dataset.medit); S.mm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', read: x.chs_read ?? '', total: x.chs_total ?? '', ongoing: x.ongoing, unsure: !!x.read_unsure, reads: x.reads ?? '', status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? MMAX[y[0]] ?? 10]) : mBlank(x.category) }; return render(); }
   if (g('data-scadd')) { readMm(); S.mm.scores.push(['__new__', '', 10]); return render(); }
   if (g('data-scdel')) { readMm(); S.mm.scores.splice(Number(g('data-scdel').dataset.scdel), 1); return render(); }
   if (g('data-msave')) return saveManga();
