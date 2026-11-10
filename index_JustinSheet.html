@@ -100,8 +100,13 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .mg.wrapped{flex:2 1 0;min-width:460px}
 .mg .unsure{color:#b3261e;font-weight:700;text-decoration:underline dotted}
 .bk-s-unsure{background:#fff;border:2px dashed #b3261e !important;color:#b3261e}
-.scgrid{display:grid;grid-template-columns:1fr 70px;gap:6px 10px;align-items:center;margin-top:6px}
-.scgrid label{margin:0}
+.scgrid{display:grid;grid-template-columns:minmax(0,1fr) 56px 14px 52px 22px;gap:6px 6px;align-items:center;margin-top:6px}
+.scgrid input,.scgrid select{padding:6px 8px}
+.scgrid .sl{text-align:center;opacity:.6}
+.scgrid .xx{background:none;border:0;cursor:pointer;color:var(--mute);font-size:1rem}
+.sc.over{border-color:#b3261e;color:#b3261e}
+.scok{margin-top:8px;font-size:.85rem;font-weight:600}.scok.good{color:#2e7d32}.scok.warn{color:#b26a00}
+
 details.sc summary{cursor:pointer;margin-top:12px;font-weight:600}
 .mg-body.w2{column-count:2;column-gap:8px;padding-bottom:2px}
 .mg-body.w2>*{break-inside:avoid}.mg-body.w2>.bk-grp{break-after:avoid;margin-top:5px}
@@ -495,13 +500,23 @@ function parseSize(t) {
 /* ---------------- Manga ---------------- */
 const MCATS = ['Action/Adventure', 'Romance/Comedy', 'Slice of Life/Comedy', 'Sports/Hobby', 'Drama/Other'];
 const MST = { 1: 'Reading', 2: 'Current', 3: 'Paused', 4: 'Finished', 5: 'Dropped', 6: 'Not started', 7: 'Catch up' };
+/* each criterion has its own out-of; a full set adds up to 100, so rating = points ÷ 10 */
+const MMAX = { Story: 20, World: 5, Setting: 5, Protagonists: 20, 'Side Characters': 10, Antagonists: 10, Romance: 10, Comedy: 10, Drama: 10, Art: 10, Pacing: 5, Enjoyment: 10, Action: 10, Vibes: 10 };
 const MPARTS = {
   'Action/Adventure': ['Story', 'World', 'Protagonists', 'Side Characters', 'Antagonists', 'Art', 'Pacing', 'Enjoyment', 'Action'],
   'Romance/Comedy': ['Story', 'Setting', 'Protagonists', 'Side Characters', 'Romance', 'Art', 'Pacing', 'Enjoyment', 'Comedy'],
   'Slice of Life/Comedy': ['Story', 'Setting', 'Protagonists', 'Side Characters', 'Comedy', 'Art', 'Pacing', 'Enjoyment', 'Vibes'],
   'Sports/Hobby': ['Story', 'Setting', 'Protagonists', 'Side Characters', 'Antagonists', 'Art', 'Pacing', 'Enjoyment', 'Action'],
   'Drama/Other': ['Story', 'Setting', 'Protagonists', 'Side Characters', 'Drama', 'Art', 'Pacing', 'Enjoyment', 'Romance'] };
-const mScoreSum = sc => { const v = (sc || []).map(x => x[1]).filter(x => x !== '' && x != null && !isNaN(Number(x))); return v.length ? Math.round(v.reduce((a, b) => a + Number(b), 0)) / 10 : null; };
+const mBlank = cat => MPARTS[cat].map(l => [l, '', MMAX[l]]);
+const mCriteria = () => { const m = { ...MMAX }; S.manga.forEach(x => (Array.isArray(x.scores) ? x.scores : []).forEach(y => { const l = String(y[0] || '').trim(); if (l && !(l in m)) m[l] = y[2] || 10; })); return m; };
+const mFilled = sc => (sc || []).some(x => x[1] !== '' && x[1] != null && !isNaN(Number(x[1])));
+const mMaxSum = sc => (sc || []).reduce((a, x) => a + (Number(x[2]) || 0), 0);
+const mScoreSum = sc => { if (!mFilled(sc)) return null; const mx = mMaxSum(sc), pts = sc.reduce((a, x) => a + (x[1] === '' || x[1] == null || isNaN(Number(x[1])) ? 0 : Number(x[1])), 0); return mx > 0 ? Math.round(pts / mx * 100) / 10 : null; };
+function mScoreInfo(sc) {
+  const mx = mMaxSum(sc), pts = sc.reduce((a, x) => a + (x[1] === '' || isNaN(Number(x[1])) ? 0 : Number(x[1])), 0), t = mScoreSum(sc);
+  return { line: t != null ? `Score ${pts} / ${mx} → rating ${t.toFixed(1)}` : `Criteria add up to ${mx}`, ok: mx === 100, mx };
+}
 const mrf = r => r == null ? '' : Number(r).toFixed(1) + '<span class="star">★</span>';
 const mgList = cat => S.manga.filter(m => m.category === cat).sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.id - b.id);   /* by year, newest-added last within a year */
 const mgDecade = y => y == null ? 'No year' : Math.floor(y / 10) * 10 + 's';
@@ -542,8 +557,12 @@ function mangaModalHtml() {
     <label>Title</label><input id="m-title" value="${esc(m.title)}">
     <div style="display:flex;gap:8px"><div style="flex:1"><label>Year</label><input id="m-year" type="number" value="${esc(m.year)}" placeholder="2024"></div>
     <div style="flex:1"><label>Rating (0–10)</label><input id="m-rate" type="number" min="0" max="10" step="0.1" value="${esc(m.rating)}" ${tot != null ? 'readonly' : ''}></div></div>
-    <details class="sc" ${tot != null ? 'open' : ''}><summary>Rating breakdown <span class="cat" id="m-sctot">${tot != null ? '· total ' + tot.toFixed(1) + ' (rating = total ÷ 10)' : '· optional, fills the rating for you'}</span></summary>
-      <div class="scgrid">${m.scores.map((x, i) => `<label for="m-sc${i}">${esc(x[0])}</label><input class="sc" id="m-sc${i}" type="number" min="0" step="1" value="${esc(x[1])}">`).join('')}</div></details>
+    <details class="sc" ${mFilled(m.scores) ? 'open' : ''}><summary>Rating breakdown <span class="cat">· optional, fills the rating for you</span></summary>
+      <div class="scgrid">${m.scores.map((x, i) => { const crit = mCriteria(), lab = String(x[0] || ''), isNew = x[0] === '__new__' || (lab !== '' && !(lab in crit)), over = x[1] !== '' && Number(x[1]) > Number(x[2]);
+        return `<div style="min-width:0"><select class="scl" data-i="${i}">${Object.keys(crit).map(c => `<option value="${esc(c)}" ${c === lab ? 'selected' : ''}>${esc(c)}</option>`).join('')}<option value="__new__" ${isNew ? 'selected' : ''}>Custom…</option></select>${isNew ? `<input class="scn" data-i="${i}" placeholder="Name" value="${esc(lab === '__new__' ? '' : lab)}" style="margin-top:4px">` : ''}</div>
+        <input class="sc ${over ? 'over' : ''}" id="m-sc${i}" type="number" min="0" step="1" value="${esc(x[1])}"><span class="sl">/</span><input class="scx" id="m-sx${i}" type="number" min="1" step="1" value="${esc(x[2])}" title="Out of"><button class="xx" data-scdel="${i}" title="Remove">×</button>`; }).join('')}</div>
+      <div style="margin-top:6px"><button class="btn alt" data-scadd type="button">+ Add criterion</button></div>
+      <div class="scok ${mScoreInfo(m.scores).ok ? 'good' : 'warn'}" id="m-scok">${mScoreInfo(m.scores).ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + mMaxSum(m.scores) + ', not 100 · '}${mScoreInfo(m.scores).line}</div></details>
     <div style="display:flex;gap:8px"><div style="flex:1"><label>Chapters read</label><input id="m-read" type="number" min="0" value="${esc(m.read)}"></div>
     <div style="flex:1"><label>Total chapters</label><input id="m-tot" type="number" min="0" value="${esc(m.total)}"></div></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="m-ong" type="checkbox" style="width:auto" ${m.ongoing ? 'checked' : ''}> Still ongoing</label>
@@ -551,12 +570,18 @@ function mangaModalHtml() {
     <label>Status</label><select id="m-status">${Object.entries(MST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
     <div class="acts"><button class="btn" data-msave>Save</button>${m.id ? '<button class="btn danger" data-mdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
-const readMm = () => Object.assign(S.mm, { category: $('#m-cat').value, title: $('#m-title').value, year: $('#m-year').value, rating: $('#m-rate').value, read: $('#m-read').value, total: $('#m-tot').value, ongoing: $('#m-ong').checked, unsure: $('#m-uns').checked, status: Number($('#m-status').value), scores: S.mm.scores.map((x, i) => [x[0], $('#m-sc' + i).value]) });
+function readScores() {
+  return S.mm.scores.map((x, i) => { const sel = document.querySelector(`.scl[data-i="${i}"]`); let l = sel ? sel.value : x[0];
+    if (l === '__new__') { const n = document.querySelector(`.scn[data-i="${i}"]`); l = n && n.value.trim() ? n.value : '__new__'; }
+    return [l, $('#m-sc' + i).value, $('#m-sx' + i).value]; });
+}
+const readMm = () => Object.assign(S.mm, { category: $('#m-cat').value, title: $('#m-title').value, year: $('#m-year').value, rating: $('#m-rate').value, read: $('#m-read').value, total: $('#m-tot').value, ongoing: $('#m-ong').checked, unsure: $('#m-uns').checked, status: Number($('#m-status').value), scores: readScores() });
 async function saveManga() {
   const m = readMm(), title = m.title.trim(); if (!title) return toast('Add a title first');
+  if (mFilled(m.scores) && m.scores.some(x => x[1] !== '' && (!String(x[0]).trim() || x[0] === '__new__'))) return toast('Give every scored criterion a name');
   const num = v => String(v).trim() === '' ? null : Number(v), sum = mScoreSum(m.scores), rating = sum != null ? sum : num(m.rating);
   if (rating != null && !(rating >= 0 && rating <= 10)) return toast('Rating must be between 0 and 10');
-  const payload = { category: m.category, title, year: num(m.year), rating, chs_read: num(m.read), chs_total: m.ongoing ? null : num(m.total), ongoing: !!m.ongoing, read_unsure: !!m.unsure, status: m.status, scores: sum != null ? m.scores.map(x => [x[0], x[1] === '' ? null : Number(x[1])]) : null };
+  const payload = { category: m.category, title, year: num(m.year), rating, chs_read: num(m.read), chs_total: m.ongoing ? null : num(m.total), ongoing: !!m.ongoing, read_unsure: !!m.unsure, status: m.status, scores: sum != null ? m.scores.filter(x => String(x[0]).trim() && x[0] !== '__new__').map(x => [String(x[0]).trim(), x[1] === '' ? null : Number(x[1]), Number(x[2])]) : null };
   const res = m.id ? await db.from('manga').update(payload).eq('id', m.id).select().single() : await db.from('manga').insert(payload).select().single();
   if (res.error) return toast('Save failed: ' + res.error.message);
   S.manga = S.manga.filter(x => x.id !== res.data.id).concat(res.data); S.mm = null; render();
@@ -953,8 +978,10 @@ document.addEventListener('click', e => {
   if (g('data-bkey')) { const k = g('data-bkey').dataset.bkey, was = isClosed(k); S.bshut.delete(k); S.bopen.delete(k); (was ? S.bopen : S.bshut).add(k); saveSets(); return render(); }
   if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', grpNew: false, sub: b.sub || '', subNew: false, size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
   if (g('data-mst')) { const v = Number(g('data-mst').dataset.mst); S.mst = S.mst === v ? null : v; return render(); }
-  if (g('data-madd')) { S.mm = { id: null, category: MCATS[0], title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, unsure: false, status: 6, scores: MPARTS[MCATS[0]].map(l => [l, '']) }; return render(); }
-  if (g('data-medit')) { const x = S.manga.find(v => v.id == g('data-medit').dataset.medit); S.mm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', read: x.chs_read ?? '', total: x.chs_total ?? '', ongoing: x.ongoing, unsure: !!x.read_unsure, status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '']) : MPARTS[x.category].map(l => [l, '']) }; return render(); }
+  if (g('data-madd')) { S.mm = { id: null, category: MCATS[0], title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, unsure: false, status: 6, scores: mBlank(MCATS[0]) }; return render(); }
+  if (g('data-medit')) { const x = S.manga.find(v => v.id == g('data-medit').dataset.medit); S.mm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', read: x.chs_read ?? '', total: x.chs_total ?? '', ongoing: x.ongoing, unsure: !!x.read_unsure, status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? MMAX[y[0]] ?? 10]) : mBlank(x.category) }; return render(); }
+  if (g('data-scadd')) { readMm(); S.mm.scores.push(['__new__', '', 10]); return render(); }
+  if (g('data-scdel')) { readMm(); S.mm.scores.splice(Number(g('data-scdel').dataset.scdel), 1); return render(); }
   if (g('data-msave')) return saveManga();
   if (g('data-mdel')) return delManga();
   if (g('data-mkey')) { const k = g('data-mkey').dataset.mkey, [c, d] = k.split('|'), band = mgBands(mgList(c)).find(b => b.name === d), was = mgClosed(c, band); S.mshut.delete(k); S.mopen.delete(k); (was ? S.mopen : S.mshut).add(k); saveSets(); return render(); }
@@ -997,7 +1024,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
   if (e.key === 'Enter' && e.target.id === 'r-new') addRogue(); });
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
-  if (e.target.id === 'm-cat') { readMm(); if (mScoreSum(S.mm.scores) == null) S.mm.scores = MPARTS[S.mm.category].map(l => [l, '']); return render(); }
+  if (e.target.id === 'm-cat') { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
+  if (e.target.classList.contains('scl')) { readMm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.mm.scores[i][2] = MMAX[v] ?? mCriteria()[v] ?? 10; return render(); }
   if (e.target.id === 'b-sec') { const sec = e.target.value; readBm(); const m = S.bm; m.section = sec; if (sec === 'Light Novels') m.rating = ''; if (!m.grpNew && !bookTree(sec).some(x => x.name === m.grp)) { m.grp = ''; m.sub = ''; m.subNew = false; } return render(); }
   if (e.target.id === 'b-grps' || e.target.id === 'b-subs') { const g = e.target.id === 'b-grps'; readBm(); if (g) { S.bm.sub = ''; S.bm.subNew = false; } render(); const n = $(g ? '#b-grp' : '#b-sub'); if (n && n.offsetParent) n.focus(); return; }
   if (e.target.dataset.ract) return toggleRogue(e.target);
@@ -1009,7 +1037,9 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'b-grp' || e.target.id === 'b-sub') return refreshPos();
-  if (e.target.classList.contains('sc')) { const sc = S.mm.scores.map((x, i) => [x[0], $('#m-sc' + i).value]), t = mScoreSum(sc), r = $('#m-rate'); r.readOnly = t != null; if (t != null) r.value = t.toFixed(1); $('#m-sctot').textContent = t != null ? '· total ' + t.toFixed(1) + ' (rating = total ÷ 10)' : '· optional, fills the rating for you'; return; }
+  if (e.target.classList.contains('sc') || e.target.classList.contains('scx')) { const sc = readScores(), t = mScoreSum(sc), r = $('#m-rate'), info = mScoreInfo(sc); r.readOnly = t != null; if (t != null) r.value = t.toFixed(1);
+    sc.forEach((x, i) => $('#m-sc' + i).classList.toggle('over', x[1] !== '' && Number(x[1]) > Number(x[2])));
+    const ok = $('#m-scok'); ok.className = 'scok ' + (info.ok ? 'good' : 'warn'); ok.textContent = (info.ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + info.mx + ', not 100 · ') + info.line; return; }
   if (e.target.id === 'mq') { S.mq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#mq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
   if (e.target.id === 'bq') { S.bq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#bq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
   if (e.target.dataset.ri !== undefined) { const r = S.wheel.res[Number(e.target.dataset.ri)], v = e.target.value; r.desc = v; r.src = v.trim() ? 'typed' : '';
