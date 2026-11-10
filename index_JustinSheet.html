@@ -426,7 +426,7 @@ function booksView() {
   const head = (cls, label, list, ln, key, sec, grp, sub, closed, noEdit) => {
     const a = agg(list, ln), at = `data-bsec="${esc(sec)}" data-bgrp="${esc(grp || '')}" data-bsub="${esc(sub || '')}"`;
     const lvl = noEdit ? '' : cls === 'bk-grp' ? 'grp' : cls === 'bk-subh' ? 'sub' : (cls === 'bk-title' && grp) ? 'grp' : '';
-    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${closed ? 'expand' : 'collapse'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? `<span class="cr">${closed ? '▸' : '▾'}</span>` : ''}<span class="tt" title="${esc(label)}">${esc(label)}${lvl === 'grp' && grpYear(list) ? ` <span style="opacity:.6;font-weight:400">· ${grpYear(list)}</span>` : ''}</span>${lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`;
+    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${closed ? 'expand' : 'collapse'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? `<span class="cr">${closed ? '▸' : '▾'}</span>` : ''}<span class="tt" title="${esc(label)}">${esc(label)}</span>${lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`;
   };
   const bodyOf = (sec, g, ln) => g.subs.map(sb => {
     const bks = sb.books.filter(match); if (!bks.length) return '';
@@ -459,14 +459,29 @@ function booksView() {
 }
 
 /* titles that spill onto a second line get a smaller font; if even that is not enough they are cut with … (hover shows the full title) */
+/* in a column that wraps into two halves, a series/decade that carries over gets a "… cont." header at the top of the second half */
+function markCont() {
+  if (S.tab !== 'books' && S.tab !== 'manga') return;
+  document.querySelectorAll('.bk-scroll .cont').forEach(e => e.remove());
+  document.querySelectorAll('.bk-scroll .mg-body.w2').forEach(body => {
+    for (let n = 0; n < 4; n++) {
+      const mid = body.getBoundingClientRect().left + body.clientWidth / 2, kids = [...body.children].filter(c => !c.classList.contains('cont'));
+      const first = kids.find(c => c.getBoundingClientRect().left > mid); if (!first || first.classList.contains('bk-grp')) break;
+      const prev = body.querySelector('.cont'); if (prev && prev.nextElementSibling === first) break;
+      let h = first.previousElementSibling; while (h && !h.classList.contains('bk-grp')) h = h.previousElementSibling; if (!h) break;
+      const name = (h.querySelector('.tt') ? h.querySelector('.tt').textContent : '').replace(/ · \d+$/, '').replace(/ cont\.$/, '');
+      const d = document.createElement('div'); d.className = 'bk-r bk-grp cont'; d.innerHTML = '<span class="t"><span class="tt"></span></span>'; d.querySelector('.tt').textContent = name + ' cont.'; body.insertBefore(d, first);
+    }
+  });
+}
 function fitTitles() {
   if (S.tab !== 'books' && S.tab !== 'manga') return;
   const els = [...document.querySelectorAll('.bk-scroll .tt')]; els.forEach(e => { e.style.fontSize = ''; });
   els.filter(e => e.clientWidth > 0 && e.scrollWidth > e.clientWidth + 1).map(e => [e, parseFloat(getComputedStyle(e).fontSize), e.clientWidth / e.scrollWidth])
     .forEach(([e, f, r]) => { e.style.fontSize = Math.max(8.5, Math.floor(f * r * 97) / 100) + 'px'; });
 }
-let _fitT; window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeout(fitTitles, 150); });
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTitles());
+let _fitT; window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeout(() => { markCont(); fitTitles(); }, 150); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { markCont(); fitTitles(); });
 
 function posOptions(m) {
   const ln = m.section === 'Light Novels', grp = nn((m.grp || '').trim()) || (ln ? 'Standalones' : null), sub = grp ? nn((m.sub || '').trim()) : null, old = m.id ? S.books.find(b => b.id === m.id) : null, yr = String(m.year).trim() !== '' ? Number(m.year) : null;
@@ -905,7 +920,7 @@ function render() {
     ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : S.tab === 'books' ? booksView() : S.tab === 'manga' ? mangaView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
   if (bpos) { const n = document.querySelector('.bk-scroll'); if (n) { n.scrollLeft = bpos[0]; n.scrollTop = bpos[1]; } }
-  if (S.tab === 'books' || S.tab === 'manga') fitTitles();
+  if (S.tab === 'books' || S.tab === 'manga') { markCont(); fitTitles(); }
   const sh1 = document.querySelector('.sheet'); if (sh1 && mk === _mk) sh1.scrollTop = sy0; _mk = mk;
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
