@@ -80,19 +80,22 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .btn.on{background:var(--accent);color:var(--accent-ink)}
 .bk-scroll{display:flex;align-items:flex-start;gap:8px;overflow:auto;max-height:calc(100vh - 190px);min-height:320px;padding:0 2px 12px}
 .bk-sec{flex:1 1 0;min-width:270px;font-size:.8rem;line-height:1.3;color:#1b1b1b;background:rgba(127,127,127,.12);border-radius:14px;overflow:clip;padding-bottom:8px}
-.bk-sec.ln{flex:0 1 560px}
-.bk-sticky{position:sticky;top:0;z-index:3;background:#4a3358}
+.bk-sticky{position:sticky;top:0;z-index:3;background:#000}
 .bk-r{display:grid;grid-template-columns:minmax(0,1fr) 50px 58px 42px;align-items:center;padding:3px 8px;gap:4px;cursor:pointer;margin:0 6px;border-radius:7px}
-.ln .bk-r{grid-template-columns:minmax(0,1fr) 60px 46px}
+.ln .bk-r{grid-template-columns:minmax(0,1fr) 52px 40px}
 .bk-r>span:nth-child(n+2){text-align:right;white-space:nowrap}
-.bk-r .t{overflow-wrap:anywhere}
-.bk-lab,.bk-title{margin:0;border-radius:0;background:#4a3358;color:#fff;font-weight:700;cursor:default}
+.bk-r .t{display:flex;align-items:center;gap:4px;min-width:0}
+.bk-r .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bk-r .cr{flex:none}
+.star{color:#f2b01e;text-shadow:0 0 1px rgba(0,0,0,.6)}
+.bk-lab,.bk-title{margin:0;border-radius:0;background:#000;color:#fff;font-weight:700;cursor:default}
+.bk-title[data-bkey]{cursor:pointer}
 .bk-lab{font-size:.72rem;color:rgba(255,255,255,.75);padding-bottom:0}
-.bk-grp{background:#6b4a7a;color:#fff;font-weight:700;margin-top:8px;margin-bottom:2px}
-.bk-subh{background:#94789f;color:#fff;font-weight:700;margin:5px 6px 2px 16px}
+.bk-grp{background:#161616;color:#fff;font-weight:700;margin-top:8px;margin-bottom:2px}
+.bk-subh{background:#6b6b6b;color:#fff;font-weight:700;margin:5px 6px 2px 16px}
 .bk-bk{margin-top:2px;margin-bottom:0}
-.bk-s1{background:#d9ead3}.bk-s2{background:#fff2cc}.bk-s3{background:#c9daf8}.bk-s4{background:#f4cccc}.bk-s5{background:#ccc}.bk-s6{background:#d9d2e9}
-.bk-plus{background:none;border:0;color:inherit;cursor:pointer;font-weight:700;padding:0 3px;opacity:.7}
+.bk-s1{background:#d9ead3}.bk-s2{background:#fff2cc}.bk-s3{background:#c9daf8}.bk-s4{background:#f4cccc}.bk-s5{background:#e7e2d8}.bk-s6{background:#d9d2e9}
+.bk-plus{background:none;border:0;color:inherit;cursor:pointer;font-weight:700;padding:0 3px;opacity:.6;flex:none}
 .bk-plus:hover{opacity:1}
 .bk-mv{white-space:nowrap;margin-right:4px}
 .bk-mv button{background:rgba(0,0,0,.16);border:0;border-radius:4px;color:inherit;cursor:pointer;font-size:.6rem;padding:1px 5px;margin-right:2px}
@@ -125,7 +128,9 @@ const db = supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
 let _mk = '';
-const S = { books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bcol: new Set(), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+function loadSet(n) { try { return new Set(JSON.parse(localStorage.getItem(n) || '[]')); } catch (e) { return new Set(); } }
+function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); } catch (e) { /* storage unavailable */ } }
+const S = { books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -315,7 +320,7 @@ const BST = { 1: 'Reading', 2: 'Paused', 3: 'Finished', 4: 'Dropped', 5: 'Not st
 const sizeOf = b => b.section === 'Light Novels' ? b.pages : b.words;
 const kfmt = n => n == null ? '' : n >= 1000 ? Math.round(n / 1000).toLocaleString() + 'k' : String(n);
 const nfmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n || 0);
-const rfmt = r => r == null ? '' : Number(r).toFixed(2) + '★';
+const rfmt = r => r == null ? '' : Number(r).toFixed(2) + '<span class="star">★</span>';
 const nn = v => (v == null || v === '') ? null : v;
 const secBooks = sec => S.books.filter(b => b.section === sec).sort((a, b) => a.sort_order - b.sort_order);
 function agg(list, ln) {
@@ -365,43 +370,67 @@ function moveBlock(sec, grp, sub, dir) {
   setOrders(renumber(sec, tree.flatMap(g => g.subs.flatMap(x => x.books))));
 }
 
+/* a series starts closed when nothing in it is finished, or everything in it is finished or dropped */
+const defaultClosed = list => !list.some(b => b.status === 3) || list.every(b => b.status === 3 || b.status === 4);
+const keyBooks = key => { const [sec, grp] = key.split('|'); return S.books.filter(b => b.section === sec && nn(b.grp) === grp); };
+const isClosed = key => S.bshut.has(key) || (!S.bopen.has(key) && key.split('|').length === 2 && defaultClosed(keyBooks(key)));
 function booksView() {
   if (S.bkErr) return `<div class="card">Couldn’t load Books: ${esc(S.bkErr)}<br><span class="cat">Run 8_books.sql in the Supabase SQL Editor first.</span></div>`;
-  const SECS = S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5), pool = S.books.filter(b => SECS.includes(b.section));
-  const q = norm(S.bq), st = S.bst, match = b => (!st || b.status === st) && (!q || norm(b.title).includes(q));
+  const LNV = S.bsub === 'ln', SECS = LNV ? ['Light Novels'] : BSEC.slice(0, 5), pool = S.books.filter(b => SECS.includes(b.section));
+  const q = norm(S.bq), st = S.bst, filtering = !!(q || st), match = b => (!st || b.status === st) && (!q || norm(b.title).includes(q));
   const cnt = k => pool.filter(b => b.status === k).length;
   const chips = Object.entries(BST).map(([k, l]) => `<button class="chip bk-s${k} ${st == k ? 'sel' : st ? 'dim' : ''}" data-bst="${k}">${l} (${cnt(+k)})</button>`).join('');
-  const groupsAll = SECS.flatMap(sec => bookTree(sec).filter(g => g.name).map(g => `${sec}|${g.name}`));
-  const allCollapsed = groupsAll.length && groupsAll.every(k => S.bcol.has(k));
+  const lnTree = () => { const t = bookTree('Light Novels').filter(g => g.name); if (!t.some(g => g.name === 'Standalones')) t.push({ name: 'Standalones', subs: [], all: [], virtual: true }); return t; };
+  const keys = LNV ? bookTree('Light Novels').filter(g => g.name).map(g => `Light Novels|${g.name}`) : BSEC.slice(0, 5).flatMap(sec => bookTree(sec).filter(g => g.name).map(g => `${sec}|${g.name}`));
+  const allCollapsed = keys.length && keys.every(isClosed);
   const mv = a => S.bord ? `<span class="bk-mv">${[-1, 1].map(d => `<button ${a} data-dir="${d}" title="Move ${d < 0 ? 'up' : 'down'}">${d < 0 ? '▲' : '▼'}</button>`).join('')}</span>` : '';
-  const row = b => `<div class="bk-r bk-bk bk-s${b.status}" data-bedit="${b.id}"><span class="t">${mv(`data-bmv="book" data-bid="${b.id}"`)}${esc(b.title)}</span><span>${b.section === 'Light Novels' ? (b.pages ?? '') : kfmt(b.words)}</span>${b.section === 'Light Novels' ? '' : `<span>${rfmt(b.rating)}</span>`}<span>${b.status}</span></div>`;
-  const head = (cls, label, list, ln, key, sec, grp, sub) => {
-    const a = agg(list, ln), open = !S.bcol.has(key), at = `data-bsec="${esc(sec)}" data-bgrp="${esc(grp || '')}" data-bsub="${esc(sub || '')}"`;
-    const lvl = cls === 'bk-grp' ? 'grp' : cls === 'bk-subh' ? 'sub' : '';
-    const ctl = `<button class="bk-plus" data-badd ${at} title="Add a book here">+</button>` + (lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : '');
-    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${open ? 'collapse' : 'expand'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? (open ? '▾ ' : '▸ ') : ''}${esc(label)} ${ctl}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`;
+  const row = b => `<div class="bk-r bk-bk bk-s${b.status}" data-bedit="${b.id}"><span class="t">${mv(`data-bmv="book" data-bid="${b.id}"`)}<span class="tt" title="${esc(b.title)}">${esc(b.title)}</span></span><span>${b.section === 'Light Novels' ? (b.pages ?? '') : kfmt(b.words)}</span>${b.section === 'Light Novels' ? '' : `<span>${rfmt(b.rating)}</span>`}<span>${b.status}</span></div>`;
+  const head = (cls, label, list, ln, key, sec, grp, sub, closed, noEdit) => {
+    const a = agg(list, ln), at = `data-bsec="${esc(sec)}" data-bgrp="${esc(grp || '')}" data-bsub="${esc(sub || '')}"`;
+    const lvl = noEdit ? '' : cls === 'bk-grp' ? 'grp' : cls === 'bk-subh' ? 'sub' : (cls === 'bk-title' && grp) ? 'grp' : '';
+    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${closed ? 'expand' : 'collapse'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? `<span class="cr">${closed ? '▸' : '▾'}</span>` : ''}<span class="tt" title="${esc(label)}">${esc(label)}</span>${lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`;
   };
-  const secs = SECS.map(sec => {
-    const ln = sec === 'Light Novels', tree = bookTree(sec), all = secBooks(sec);
-    const body = tree.map(g => {
-      const gk = g.name ? `${sec}|${g.name}` : null;
-      const kids = g.subs.map(sb => {
-        const bks = sb.books.filter(match); if (!bks.length) return '';
-        const sk = sb.name ? `${sec}|${g.name}|${sb.name}` : null;
-        return (sb.name ? head('bk-subh', sb.name, sb.books, ln, sk, sec, g.name, sb.name) : '') + (sk && S.bcol.has(sk) ? '' : bks.map(row).join(''));
-      }).join('');
-      if (!kids) return '';
-      return (g.name ? head('bk-grp', g.name, g.all, ln, gk, sec, g.name, '') : '') + (gk && S.bcol.has(gk) ? '' : kids);
-    }).join('');
-    return `<div class="bk-sec ${ln ? 'ln' : ''}"><div class="bk-sticky"><div class="bk-r bk-lab"><span class="t">${sec === 'Brandon Sanderson' ? 'Books List' : ln ? 'Light Novels List' : ''}</span><span>${ln ? 'Pgs.' : 'Words'}</span>${ln ? '' : '<span>Rating</span>'}<span>N</span></div>${head('bk-title', sec, all, ln, null, sec, '', '')}</div>${body || '<div class="bk-r bk-bk bk-s5" style="cursor:default">Nothing here.</div>'}</div>`;
+  const bodyOf = (sec, g, ln) => g.subs.map(sb => {
+    const bks = sb.books.filter(match); if (!bks.length) return '';
+    const sk = sb.name ? `${sec}|${g.name}|${sb.name}` : null, sc = sk && !filtering && isClosed(sk);
+    return (sb.name ? head('bk-subh', sb.name, sb.books, ln, sk, sec, g.name, sb.name, sc) : '') + (sc ? '' : bks.map(row).join(''));
   }).join('');
-  return `<div class="bk-bar"><div class="seg sm" style="margin:0"><button class="${S.bsub === 'books' ? 'on' : ''}" data-bsubtab="books">Books (${S.books.filter(b => b.section !== 'Light Novels').length})</button><button class="${S.bsub === 'ln' ? 'on' : ''}" data-bsubtab="ln">Light Novels (${S.books.filter(b => b.section === 'Light Novels').length})</button></div><button class="btn" data-badd data-bsec="" data-bgrp="" data-bsub="">Add book</button>${chips}
+  const lab = (t, ln) => `<div class="bk-r bk-lab"><span class="t">${t}</span><span>${ln ? 'Pgs.' : 'Words'}</span>${ln ? '' : '<span>Rating</span>'}<span>N</span></div>`;
+  let cards;
+  if (LNV) {
+    cards = lnTree().map(g => {
+      const bks = g.all.filter(match); if (filtering && !bks.length) return '';
+      const key = g.virtual ? null : `Light Novels|${g.name}`, closed = key && !filtering && isClosed(key);
+      return `<div class="bk-sec ln"><div class="bk-sticky">${lab(g === lnTree()[0] ? 'Light Novels' : '', true)}${head('bk-title', g.name, g.all, true, key, 'Light Novels', g.name, '', closed, g.virtual)}</div>${closed ? '' : (bodyOf('Light Novels', g, true) || (g.virtual ? '<div class="bk-r bk-bk bk-s5" style="cursor:default">Nothing here yet.</div>' : ''))}</div>`;
+    }).join('');
+  } else {
+    cards = SECS.map(sec => {
+      const tree = bookTree(sec), all = secBooks(sec);
+      const body = tree.map(g => {
+        const gk = g.name ? `${sec}|${g.name}` : null, closed = gk && !filtering && isClosed(gk), kids = bodyOf(sec, g, false);
+        if (!kids) return '';
+        return (g.name ? head('bk-grp', g.name, g.all, false, gk, sec, g.name, '', closed) : '') + (closed ? '' : kids);
+      }).join('');
+      return `<div class="bk-sec"><div class="bk-sticky">${lab(sec === 'Brandon Sanderson' ? 'Books List' : '', false)}${head('bk-title', sec, all, false, null, sec, '', '', false, true)}</div>${body || '<div class="bk-r bk-bk bk-s5" style="cursor:default">Nothing here.</div>'}</div>`;
+    }).join('');
+  }
+  return `<div class="bk-bar"><div class="seg sm" style="margin:0"><button class="${S.bsub === 'books' ? 'on' : ''}" data-bsubtab="books">Books (${S.books.filter(b => b.section !== 'Light Novels').length})</button><button class="${S.bsub === 'ln' ? 'on' : ''}" data-bsubtab="ln">Light Novels (${S.books.filter(b => b.section === 'Light Novels').length})</button></div><button class="btn" data-badd>Add book</button>${chips}
     <input id="bq" placeholder="Search books" value="${esc(S.bq)}" style="width:200px"><button class="btn alt" data-bcolall>${allCollapsed ? 'Expand all' : 'Collapse all'}</button><button class="btn alt ${S.bord ? 'on' : ''}" data-bord>${S.bord ? 'Done reordering' : 'Reorder'}</button>
-    <span class="cat">${pool.length} ${S.bsub === 'ln' ? 'volumes' : 'books'} · ${cnt(3)} finished</span></div><div class="bk-scroll">${secs}</div>`;
+    <span class="cat">${pool.length} ${LNV ? 'volumes' : 'books'} · ${cnt(3)} finished</span></div><div class="bk-scroll">${cards}</div>`;
 }
 
+/* titles that spill onto a second line get a smaller font; if even that is not enough they are cut with … (hover shows the full title) */
+function fitTitles() {
+  if (S.tab !== 'books') return;
+  const els = [...document.querySelectorAll('.bk-scroll .tt')]; els.forEach(e => { e.style.fontSize = ''; });
+  els.filter(e => e.clientWidth > 0 && e.scrollWidth > e.clientWidth + 1).map(e => [e, parseFloat(getComputedStyle(e).fontSize), e.clientWidth / e.scrollWidth])
+    .forEach(([e, f, r]) => { e.style.fontSize = Math.max(8.5, Math.floor(f * r * 97) / 100) + 'px'; });
+}
+let _fitT; window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeout(fitTitles, 150); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTitles());
+
 function posOptions(m) {
-  const grp = nn((m.grp || '').trim()), sub = grp ? nn((m.sub || '').trim()) : null, old = m.id ? S.books.find(b => b.id === m.id) : null;
+  const ln = m.section === 'Light Novels', grp = nn((m.grp || '').trim()) || (ln ? 'Standalones' : null), sub = grp ? nn((m.sub || '').trim()) : null, old = m.id ? S.books.find(b => b.id === m.id) : null;
   const moved = !old || old.section !== m.section || nn(old.grp) !== grp || nn(old.sub) !== sub;
   const list = secBooks(m.section).filter(b => b.id !== m.id && nn(b.grp) === grp && nn(b.sub) === sub), opts = [];
   if (!moved) opts.push(['keep', 'Keep current position']);
@@ -411,16 +440,23 @@ function posOptions(m) {
   return { opts, moved, grp, sub, def: moved ? 'end' : 'keep' };
 }
 const posHtml = (m, po) => po.opts.map(([v, l]) => `<option value="${esc(v)}" ${v === m.pos ? 'selected' : ''}>${esc(l)}</option>`).join('');
-const subList = m => { const g = bookTree(m.section).find(x => x.name === nn((m.grp || '').trim())); return [...new Set((g ? g.subs : []).map(x => x.name).filter(Boolean))]; };
+const subList = m => { const g = bookTree(m.section).find(x => x.name === (nn((m.grp || '').trim()) || (m.section === 'Light Novels' ? 'Standalones' : null))); return [...new Set((g ? g.subs : []).map(x => x.name).filter(Boolean))]; };
 
 function bookModalHtml() {
-  const m = S.bm, ln = m.section === 'Light Novels', tree = bookTree(m.section), po = posOptions(m);
-  if (!po.opts.some(o => o[0] === m.pos)) m.pos = po.def;
+  const m = S.bm, ln = m.section === 'Light Novels', tree = bookTree(m.section);
+  const grps = tree.filter(x => x.name).map(x => x.name); if (ln && !grps.includes('Standalones')) grps.push('Standalones');
+  if (ln && !m.grp && !m.grpNew) m.grp = grps[0];
+  const gsel = m.grpNew ? '__new__' : !m.grp ? '' : grps.includes(m.grp) ? m.grp : '__new__';
+  const subs = subList(m), ssel = m.subNew ? '__new__' : !m.sub ? '' : subs.includes(m.sub) ? m.sub : '__new__';
+  const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`;
+  const po = posOptions(m); if (!po.opts.some(o => o[0] === m.pos)) m.pos = po.def;
   return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit book' : 'Add book'}</h2>
     <label>Section</label><select id="b-sec">${BSEC.map(x => `<option ${x === m.section ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
     <label>Title</label><input id="b-title" value="${esc(m.title)}">
-    <label>Series / group</label><input id="b-grp" list="dl-grp" value="${esc(m.grp)}" placeholder="Leave blank for none"><datalist id="dl-grp">${tree.filter(x => x.name).map(x => `<option value="${esc(x.name)}">`).join('')}</datalist>
-    <label>Sub-group (optional)</label><input id="b-sub" list="dl-sub" value="${esc(m.sub)}"><datalist id="dl-sub">${subList(m).map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+    <label>${ln ? 'Series' : 'Series / group'}</label><select id="b-grps">${ln ? '' : opt('', '(None)', gsel)}${grps.map(x => opt(x, x, gsel)).join('')}${opt('__new__', 'New… (type your own)', gsel)}</select>
+    <input id="b-grp" placeholder="New series name" value="${gsel === '__new__' ? esc(m.grp) : ''}" style="margin-top:6px;${gsel === '__new__' ? '' : 'display:none'}">
+    ${(m.grp || '').trim() || ln ? `<label>Sub-series (optional)</label><select id="b-subs">${opt('', '(None)', ssel)}${subs.map(x => opt(x, x, ssel)).join('')}${opt('__new__', 'New… (type your own)', ssel)}</select>
+    <input id="b-sub" placeholder="New sub-series name" value="${ssel === '__new__' ? esc(m.sub) : ''}" style="margin-top:6px;${ssel === '__new__' ? '' : 'display:none'}">` : ''}
     <label>Position in the list</label><select id="b-pos">${posHtml(m, po)}</select>
     <div style="display:flex;gap:8px"><div style="flex:1"><label>${ln ? 'Pages' : 'Words'}</label><input id="b-size" value="${esc(m.size)}" placeholder="${ln ? '240' : '212000 or 212k'}"></div>
     ${ln ? '' : `<div style="flex:1"><label>Rating</label><input id="b-rate" type="number" min="0" max="5" step="0.25" value="${esc(m.rating)}"></div>`}</div>
@@ -428,12 +464,14 @@ function bookModalHtml() {
     <div class="acts"><button class="btn" data-bsave>Save</button>${m.id ? '<button class="btn danger" data-bdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 function readBm() {
-  const m = S.bm; m.section = $('#b-sec').value; m.title = $('#b-title').value; m.grp = $('#b-grp').value; m.sub = $('#b-sub').value;
+  const m = S.bm; m.section = $('#b-sec').value; m.title = $('#b-title').value;
+  const gs = $('#b-grps').value; m.grpNew = gs === '__new__'; m.grp = m.grpNew ? ($('#b-grp') ? $('#b-grp').value : '') : gs;
+  const ss = $('#b-subs') ? $('#b-subs').value : ''; m.subNew = ss === '__new__'; m.sub = m.subNew ? ($('#b-sub') ? $('#b-sub').value : '') : ss;
   m.size = $('#b-size').value; m.rating = $('#b-rate') ? $('#b-rate').value : m.rating; m.status = Number($('#b-status').value); m.pos = $('#b-pos') ? $('#b-pos').value : m.pos; return m;
 }
-function refreshPos() {   /* group or sub-group typed: refresh the position list and sub-group suggestions without redrawing the form */
+function refreshPos() {   /* a new series name is being typed: refresh the position list without redrawing the form */
   const m = readBm(), po = posOptions(m); if (!po.opts.some(o => o[0] === m.pos)) m.pos = po.def;
-  $('#b-pos').innerHTML = posHtml(m, po); $('#dl-sub').innerHTML = subList(m).map(x => `<option value="${esc(x)}">`).join('');
+  $('#b-pos').innerHTML = posHtml(m, po);
 }
 function parseSize(t) {
   t = String(t || '').trim().toLowerCase().replace(/,/g, ''); if (!t) return { v: null };
@@ -474,7 +512,7 @@ async function saveRename() {
   let q = db.from('books').update(grpLevel ? { grp: name } : { sub: name }).eq('section', r.sec).eq('grp', grpLevel ? r.name : r.grp); if (!grpLevel) q = q.eq('sub', r.name);
   const { error } = await q; if (error) return toast('Rename failed: ' + error.message);
   S.books.forEach(x => { if (hit(x)) { if (grpLevel) x.grp = name; else x.sub = name; } });
-  S.bcol = new Set([...S.bcol].filter(k => !k.startsWith(`${r.sec}|${grpLevel ? r.name : r.grp}`)));
+  const pre = `${r.sec}|${grpLevel ? r.name : r.grp}`; S.bshut = new Set([...S.bshut].filter(k => !k.startsWith(pre))); S.bopen = new Set([...S.bopen].filter(k => !k.startsWith(pre))); saveSets();
   S.bren = null; render(); toast('Renamed');
 }
 
@@ -720,6 +758,7 @@ function render() {
     ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : S.tab === 'books' ? booksView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
   if (bpos) { const n = document.querySelector('.bk-scroll'); if (n) { n.scrollLeft = bpos[0]; n.scrollTop = bpos[1]; } }
+  if (S.tab === 'books') fitTitles();
   const sh1 = document.querySelector('.sheet'); if (sh1 && mk === _mk) sh1.scrollTop = sy0; _mk = mk;
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
@@ -820,10 +859,10 @@ document.addEventListener('click', e => {
   if (g('data-bren')) { const a = g('data-bren').dataset; S.bren = { level: a.bren, sec: a.bsec, grp: a.bgrp, name: a.bren === 'grp' ? a.bgrp : a.bsub }; return render(); }
   if (g('data-brsave')) return saveRename();
   if (g('data-bord')) { S.bord = !S.bord; return render(); }
-  if (g('data-bcolall')) { const keys = (S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5)).flatMap(sec => bookTree(sec).filter(x => x.name).map(x => `${sec}|${x.name}`)); const all = keys.every(k => S.bcol.has(k)); S.bcol = all ? new Set() : new Set(keys); return render(); }
-  if (g('data-badd')) { const a = g('data-badd').dataset; S.bm = { id: null, section: a.bsec || (S.bsub === 'ln' ? 'Light Novels' : BSEC[0]), title: '', grp: a.bgrp || '', sub: a.bsub || '', size: '', rating: '', status: 5 }; return render(); }
-  if (g('data-bkey')) { const k = g('data-bkey').dataset.bkey; S.bcol.has(k) ? S.bcol.delete(k) : S.bcol.add(k); const sc = document.querySelector('.bk-scroll'), x = sc.scrollLeft, y = sc.scrollTop; render(); const n = document.querySelector('.bk-scroll'); n.scrollLeft = x; n.scrollTop = y; return; }
-  if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', sub: b.sub || '', size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
+  if (g('data-bcolall')) { const keys = (S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5)).flatMap(sec => bookTree(sec).filter(x => x.name).map(x => `${sec}|${x.name}`)); const all = keys.every(isClosed); keys.forEach(k => { S.bshut.delete(k); S.bopen.delete(k); (all ? S.bopen : S.bshut).add(k); }); saveSets(); return render(); }
+  if (g('data-badd')) { S.bm = { id: null, section: S.bsub === 'ln' ? 'Light Novels' : BSEC[0], title: '', grp: '', grpNew: false, sub: '', subNew: false, size: '', rating: '', status: 5 }; return render(); }
+  if (g('data-bkey')) { const k = g('data-bkey').dataset.bkey, was = isClosed(k); S.bshut.delete(k); S.bopen.delete(k); (was ? S.bopen : S.bshut).add(k); saveSets(); return render(); }
+  if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', grpNew: false, sub: b.sub || '', subNew: false, size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
   if (g('data-bsave')) return saveBook();
   if (g('data-bdel')) return delBook();
   if (g('data-mroll')) { const o = mapped(S.modal.category), t = o && pickFrom(o.current_cat); if (t == null) return toast('Nothing to pick from'); $('#m-desc').value = t; S.modal.description = t; return; }
@@ -860,7 +899,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
   if (e.key === 'Enter' && e.target.id === 'r-new') addRogue(); });
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
-  if (e.target.id === 'b-sec') { const sec = e.target.value; readBm(); S.bm.section = sec; if (sec === 'Light Novels') S.bm.rating = ''; return render(); }
+  if (e.target.id === 'b-sec') { const sec = e.target.value; readBm(); const m = S.bm; m.section = sec; if (sec === 'Light Novels') m.rating = ''; if (!m.grpNew && !bookTree(sec).some(x => x.name === m.grp)) { m.grp = ''; m.sub = ''; m.subNew = false; } return render(); }
+  if (e.target.id === 'b-grps' || e.target.id === 'b-subs') { const g = e.target.id === 'b-grps'; readBm(); if (g) { S.bm.sub = ''; S.bm.subNew = false; } render(); const n = $(g ? '#b-grp' : '#b-sub'); if (n && n.offsetParent) n.focus(); return; }
   if (e.target.dataset.ract) return toggleRogue(e.target);
   if (e.target.dataset.rf !== undefined) { const r = S.wheel.res[Number(e.target.dataset.rf)], f = S.entries.find(x => x.id == e.target.value);
     if (f) { r.desc = f.description; r.src = 'future'; r.fid = f.id; } else { if (r.src === 'future') { r.desc = ''; r.src = ''; } r.fid = null; } return render(); }
