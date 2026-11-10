@@ -98,6 +98,7 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .mg .bk-r{grid-template-columns:minmax(0,1fr) 38px 36px 36px;padding:3px 6px;gap:3px}
 .mg{min-width:225px}
 .mg.wrapped{flex:2 1 0;min-width:460px}
+.bk-sec.bwrapped{flex:2 1 0;min-width:520px}
 .mg .unsure{color:#b3261e;font-weight:700;text-decoration:underline dotted}
 .bk-s-unsure{background:#fff;border:2px dashed #b3261e !important;color:#b3261e}
 .scgrid{display:grid;grid-template-columns:minmax(0,1fr) 56px 14px 52px 22px;gap:6px 6px;align-items:center;margin-top:6px}
@@ -147,8 +148,8 @@ const db = supabase.createClient(
 );
 let _mk = '';
 function loadSet(n) { try { return new Set(JSON.parse(localStorage.getItem(n) || '[]')); } catch (e) { return new Set(); } }
-function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
-const S = { manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); localStorage.setItem('bk_wrap', S.bwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
+const S = { manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -337,8 +338,8 @@ async function delCat() {
 const BSEC = ['Brandon Sanderson', 'Fantasy Series', 'Sci-Fi Series', 'Standalones', 'Other Books', 'Light Novels'];
 const BST = { 1: 'Reading', 2: 'Paused', 3: 'Finished', 4: 'Dropped', 5: 'Not started', 6: 'Next' };
 const sizeOf = b => b.section === 'Light Novels' ? b.pages : b.words;
-const kfmt = n => n == null ? '' : n >= 1000 ? Math.round(n / 1000).toLocaleString() + 'k' : String(n);
-const nfmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n || 0);
+const kfmt = n => n == null ? '' : n >= 1e6 ? String(+(n / 1e6).toFixed(2)) + 'M' : n >= 1000 ? Math.round(n / 1000).toLocaleString() + 'k' : String(n);
+const nfmt = n => kfmt(n || 0);
 const rfmt = r => r == null ? '' : Number(r).toFixed(2) + '<span class="star">★</span>';
 const nn = v => (v == null || v === '') ? null : v;
 const secBooks = sec => S.books.filter(b => b.section === sec).sort((a, b) => a.sort_order - b.sort_order);
@@ -369,13 +370,31 @@ function planPlace(sec, selfId, grp, sub, pos) {
   const arr = secBooks(sec).filter(b => b.id !== selfId), same = x => nn(x.grp) === grp && nn(x.sub) === sub, inGrp = x => nn(x.grp) === grp;
   const lastIdx = f => { let r = -1; arr.forEach((x, i) => { if (f(x)) r = i; }); return r; };
   let at;
-  if (pos.startsWith('after:')) { const i = arr.findIndex(x => String(x.id) === pos.slice(6)); at = i < 0 ? arr.length : i + 1; }
+  if (pos === 'start') at = 0;
+  else if (pos.startsWith('after:')) { const i = arr.findIndex(x => String(x.id) === pos.slice(6)); at = i < 0 ? arr.length : i + 1; }
   else if (pos === 'first' && arr.findIndex(same) >= 0) at = arr.findIndex(same);
   else { let i = lastIdx(same); if (i < 0 && grp) i = lastIdx(inGrp); at = i < 0 ? arr.length : i + 1; }
   const prev = arr[at - 1], next = arr[at], lo = prev ? prev.sort_order : BSEC.indexOf(sec) * 10000 - 10, hi = next ? next.sort_order : lo + 20;
   if (hi - lo >= 2) return { so: Math.floor((lo + hi) / 2), others: [] };
   const all = arr.slice(); all.splice(at, 0, { self: true }); const nums = renumber(sec, all);
   return { so: nums[at].so, others: nums.filter(x => !x.b.self) };
+}
+const grpYear = list => { const y = list.map(b => b.year).filter(v => v != null); return y.length ? Math.min(...y) : null; };
+/* where a new series (or loose book) belongs by year: just before the first series that started later */
+function yearPos(sec, selfId, grp, yr) {
+  const arr = secBooks(sec).filter(b => b.id !== selfId), units = [], seen = new Set();   /* 'Standalones' is a catch-all kept at the end, so it is ignored here */
+  arr.forEach(b => { const g = nn(b.grp); if (g === 'Standalones') return; if (g == null) units.push({ y: b.year, first: b, last: b }); else if (!seen.has(g)) { seen.add(g); const l = arr.filter(x => nn(x.grp) === g); units.push({ y: grpYear(l), first: l[0], last: l[l.length - 1] }); } });
+  const u = units.find(x => x.y != null && x.y > yr);
+  if (!u) { const l = units[units.length - 1]; return l ? 'after:' + l.last.id : 'end'; }
+  const i = arr.indexOf(u.first); return i <= 0 ? 'start' : 'after:' + arr[i - 1].id;
+}
+function sortSeriesByYear() {
+  const rows = [];
+  (S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5)).forEach(sec => {
+    const tree = bookTree(sec), keyed = tree.filter(g => g.name && g.name !== 'Standalones' && grpYear(g.all) != null).sort((a, b) => grpYear(a.all) - grpYear(b.all)); let k = 0;
+    renumber(sec, tree.map(g => g.name && g.name !== 'Standalones' && grpYear(g.all) != null ? keyed[k++] : g).flatMap(g => g.subs.flatMap(x => x.books))).forEach(r => rows.push(r));
+  });
+  setOrders(rows); toast('Series sorted by year (series without a year stay where they are)');
 }
 function moveBook(id, dir) {
   const b = S.books.find(x => x.id == id); if (!b) return;
@@ -407,7 +426,7 @@ function booksView() {
   const head = (cls, label, list, ln, key, sec, grp, sub, closed, noEdit) => {
     const a = agg(list, ln), at = `data-bsec="${esc(sec)}" data-bgrp="${esc(grp || '')}" data-bsub="${esc(sub || '')}"`;
     const lvl = noEdit ? '' : cls === 'bk-grp' ? 'grp' : cls === 'bk-subh' ? 'sub' : (cls === 'bk-title' && grp) ? 'grp' : '';
-    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${closed ? 'expand' : 'collapse'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? `<span class="cr">${closed ? '▸' : '▾'}</span>` : ''}<span class="tt" title="${esc(label)}">${esc(label)}</span>${lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`;
+    return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${closed ? 'expand' : 'collapse'}"` : ''}><span class="t">${lvl ? mv(`data-bmv="${lvl}" ${at}`) : ''}${key ? `<span class="cr">${closed ? '▸' : '▾'}</span>` : ''}<span class="tt" title="${esc(label)}">${esc(label)}${lvl === 'grp' && grpYear(list) ? ` <span style="opacity:.6;font-weight:400">· ${grpYear(list)}</span>` : ''}</span>${lvl ? `<button class="bk-plus" data-bren="${lvl}" ${at} title="Rename">✎</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`;
   };
   const bodyOf = (sec, g, ln) => g.subs.map(sb => {
     const bks = sb.books.filter(match); if (!bks.length) return '';
@@ -430,11 +449,12 @@ function booksView() {
         if (!kids) return '';
         return (g.name ? head('bk-grp', g.name, g.all, false, gk, sec, g.name, '', closed) : '') + (closed ? '' : kids);
       }).join('');
-      return `<div class="bk-sec"><div class="bk-sticky">${lab(sec === 'Brandon Sanderson' ? 'Books List' : '', false)}${head('bk-title', sec, all, false, null, sec, '', '', false, true)}</div>${body || '<div class="bk-r bk-bk bk-s5" style="cursor:default">Nothing here.</div>'}</div>`;
+      const wrapped = S.bwrap && (body.match(/class="bk-r /g) || []).length > 70;
+      return `<div class="bk-sec ${wrapped ? 'bwrapped' : ''}"><div class="bk-sticky">${lab(sec === 'Brandon Sanderson' ? 'Books List' : '', false)}${head('bk-title', sec, all, false, null, sec, '', '', false, true)}</div><div class="mg-body ${wrapped ? 'w2' : ''}">${body || '<div class="bk-r bk-bk bk-s5" style="cursor:default">Nothing here.</div>'}</div></div>`;
     }).join('');
   }
   return `<div class="bk-bar"><div class="seg sm" style="margin:0"><button class="${S.bsub === 'books' ? 'on' : ''}" data-bsubtab="books">Books (${S.books.filter(b => b.section !== 'Light Novels').length})</button><button class="${S.bsub === 'ln' ? 'on' : ''}" data-bsubtab="ln">Light Novels (${S.books.filter(b => b.section === 'Light Novels').length})</button></div><button class="btn" data-badd>Add book</button>${chips}
-    <input id="bq" placeholder="Search books" value="${esc(S.bq)}" style="width:200px"><button class="btn alt" data-bcolall>${allCollapsed ? 'Expand all' : 'Collapse all'}</button><button class="btn alt ${S.bord ? 'on' : ''}" data-bord>${S.bord ? 'Done reordering' : 'Reorder'}</button>
+    <input id="bq" placeholder="Search books" value="${esc(S.bq)}" style="width:200px"><button class="btn alt" data-bcolall>${allCollapsed ? 'Expand all' : 'Collapse all'}</button><button class="btn alt ${S.bord ? 'on' : ''}" data-bord>${S.bord ? 'Done reordering' : 'Reorder'}</button>${LNV ? '' : `<button class="btn alt ${S.bwrap ? 'on' : ''}" data-bwrap title="Long columns flow into two side-by-side halves">Wrap long columns: ${S.bwrap ? 'on' : 'off'}</button>`}${S.bord ? '<button class="btn alt" data-bsortyr title="Put every series in order of the year its first book came out">Sort series by year</button>' : ''}
     <span class="cat">${pool.length} ${LNV ? 'volumes' : 'books'} · ${cnt(3)} finished</span></div><div class="bk-scroll">${cards}</div>`;
 }
 
@@ -449,14 +469,22 @@ let _fitT; window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT 
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTitles());
 
 function posOptions(m) {
-  const ln = m.section === 'Light Novels', grp = nn((m.grp || '').trim()) || (ln ? 'Standalones' : null), sub = grp ? nn((m.sub || '').trim()) : null, old = m.id ? S.books.find(b => b.id === m.id) : null;
+  const ln = m.section === 'Light Novels', grp = nn((m.grp || '').trim()) || (ln ? 'Standalones' : null), sub = grp ? nn((m.sub || '').trim()) : null, old = m.id ? S.books.find(b => b.id === m.id) : null, yr = String(m.year).trim() !== '' ? Number(m.year) : null;
   const moved = !old || old.section !== m.section || nn(old.grp) !== grp || nn(old.sub) !== sub;
-  const list = secBooks(m.section).filter(b => b.id !== m.id && nn(b.grp) === grp && nn(b.sub) === sub), opts = [];
+  const list = secBooks(m.section).filter(b => b.id !== m.id && nn(b.grp) === grp && nn(b.sub) === sub), opts = [], newSeries = !!grp && !secBooks(m.section).some(b => b.id !== m.id && nn(b.grp) === grp);
   if (!moved) opts.push(['keep', 'Keep current position']);
-  if (list.length) opts.push(['first', 'First in the list']);
-  list.forEach(b => opts.push(['after:' + b.id, 'After: ' + b.title]));
+  const byYear = yr != null && (newSeries || grp == null);
+  if (byYear) opts.push(['year', 'By year (' + yr + ') — automatic']);
+  if (newSeries) {
+    opts.push(['start', 'First in this list']);
+    const seen = new Set(); secBooks(m.section).filter(b => b.id !== m.id && nn(b.grp)).forEach(b => { seen.add(b.grp); }); 
+    [...seen].forEach(g => { const l = secBooks(m.section).filter(b => b.id !== m.id && b.grp === g); opts.push(['after:' + l[l.length - 1].id, 'After series: ' + g + (grpYear(l) ? ' (' + grpYear(l) + ')' : '')]); });
+  } else {
+    if (list.length) opts.push(['first', 'First in the list']);
+    list.forEach(b => opts.push(['after:' + b.id, 'After: ' + b.title]));
+  }
   opts.push(['end', 'At the end']);
-  return { opts, moved, grp, sub, def: moved ? 'end' : 'keep' };
+  return { opts, moved, grp, sub, def: moved ? (byYear ? 'year' : 'end') : 'keep' };
 }
 const posHtml = (m, po) => po.opts.map(([v, l]) => `<option value="${esc(v)}" ${v === m.pos ? 'selected' : ''}>${esc(l)}</option>`).join('');
 const subList = m => { const g = bookTree(m.section).find(x => x.name === (nn((m.grp || '').trim()) || (m.section === 'Light Novels' ? 'Standalones' : null))); return [...new Set((g ? g.subs : []).map(x => x.name).filter(Boolean))]; };
@@ -468,7 +496,7 @@ function bookModalHtml() {
   const gsel = m.grpNew ? '__new__' : !m.grp ? '' : grps.includes(m.grp) ? m.grp : '__new__';
   const subs = subList(m), ssel = m.subNew ? '__new__' : !m.sub ? '' : subs.includes(m.sub) ? m.sub : '__new__';
   const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`;
-  const po = posOptions(m); if (!po.opts.some(o => o[0] === m.pos)) m.pos = po.def;
+  const po = posOptions(m); if (!m.posTouched || !po.opts.some(o => o[0] === m.pos)) m.pos = po.def;
   return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit book' : 'Add book'}</h2>
     <label>Section</label><select id="b-sec">${BSEC.map(x => `<option ${x === m.section ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
     <label>Title</label><input id="b-title" value="${esc(m.title)}">
@@ -477,8 +505,9 @@ function bookModalHtml() {
     ${(m.grp || '').trim() || ln ? `<label>Sub-series (optional)</label><select id="b-subs">${opt('', '(None)', ssel)}${subs.map(x => opt(x, x, ssel)).join('')}${opt('__new__', 'New… (type your own)', ssel)}</select>
     <input id="b-sub" placeholder="New sub-series name" value="${ssel === '__new__' ? esc(m.sub) : ''}" style="margin-top:6px;${ssel === '__new__' ? '' : 'display:none'}">` : ''}
     <label>Position in the list</label><select id="b-pos">${posHtml(m, po)}</select>
-    <div style="display:flex;gap:8px"><div style="flex:1"><label>${ln ? 'Pages' : 'Words'}</label><input id="b-size" value="${esc(m.size)}" placeholder="${ln ? '240' : '212000 or 212k'}"></div>
+    <div style="display:flex;gap:8px"><div style="flex:1"><label>Year</label><input id="b-year" type="number" value="${esc(m.year)}" placeholder="first published"></div><div style="flex:1"><label>${ln ? 'Pages' : 'Words'}</label><input id="b-size" value="${esc(m.size)}" placeholder="${ln ? '240' : '212000 or 212k'}"></div>
     ${ln ? '' : `<div style="flex:1"><label>Rating</label><input id="b-rate" type="number" min="0" max="5" step="0.25" value="${esc(m.rating)}"></div>`}</div>
+    <label>Times read</label><input id="b-reads" type="number" min="0" step="1" value="${esc(m.reads)}" placeholder="optional">
     <label>Status</label><select id="b-status">${Object.entries(BST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
     <div class="acts"><button class="btn" data-bsave>Save</button>${m.id ? '<button class="btn danger" data-bdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
@@ -486,10 +515,10 @@ function readBm() {
   const m = S.bm; m.section = $('#b-sec').value; m.title = $('#b-title').value;
   const gs = $('#b-grps').value; m.grpNew = gs === '__new__'; m.grp = m.grpNew ? ($('#b-grp') ? $('#b-grp').value : '') : gs;
   const ss = $('#b-subs') ? $('#b-subs').value : ''; m.subNew = ss === '__new__'; m.sub = m.subNew ? ($('#b-sub') ? $('#b-sub').value : '') : ss;
-  m.size = $('#b-size').value; m.rating = $('#b-rate') ? $('#b-rate').value : m.rating; m.status = Number($('#b-status').value); m.pos = $('#b-pos') ? $('#b-pos').value : m.pos; return m;
+  m.year = $('#b-year').value; m.reads = $('#b-reads').value; m.size = $('#b-size').value; m.rating = $('#b-rate') ? $('#b-rate').value : m.rating; m.status = Number($('#b-status').value); m.pos = $('#b-pos') ? $('#b-pos').value : m.pos; return m;
 }
 function refreshPos() {   /* a new series name is being typed: refresh the position list without redrawing the form */
-  const m = readBm(), po = posOptions(m); if (!po.opts.some(o => o[0] === m.pos)) m.pos = po.def;
+  const m = readBm(), po = posOptions(m); if (!m.posTouched || !po.opts.some(o => o[0] === m.pos)) m.pos = po.def;
   $('#b-pos').innerHTML = posHtml(m, po);
 }
 function parseSize(t) {
@@ -600,8 +629,9 @@ async function saveBook() {
   const ln = m.section === 'Light Novels', sz = parseSize(m.size); if (sz.err) return toast('Enter a number like 212000 or 212k');
   const rating = !ln && String(m.rating).trim() !== '' ? Number(m.rating) : null; if (rating != null && !(rating >= 0 && rating <= 5)) return toast('Rating must be between 0 and 5');
   const po = posOptions(m), pos = po.opts.some(o => o[0] === m.pos) ? m.pos : po.def;
-  const payload = { section: m.section, grp: po.grp, sub: po.sub, title, words: ln ? null : sz.v, pages: ln ? sz.v : null, rating, status: m.status };
-  const plan = pos === 'keep' ? null : planPlace(m.section, m.id, po.grp, po.sub, pos); if (plan) payload.sort_order = plan.so;
+  const yr = String(m.year).trim() === '' ? null : Number(m.year); if (yr != null && !(yr >= 0 && yr <= 2200)) return toast('Enter a 4-digit year');
+  const payload = { section: m.section, grp: po.grp, sub: po.sub, title, words: ln ? null : sz.v, pages: ln ? sz.v : null, rating, status: m.status, year: yr, reads: String(m.reads).trim() === '' ? null : Number(m.reads) };
+  const plan = pos === 'keep' ? null : planPlace(m.section, m.id, po.grp, po.sub, pos === 'year' ? yearPos(m.section, m.id, po.grp, yr) : pos); if (plan) payload.sort_order = plan.so;
   const res = m.id ? await db.from('books').update(payload).eq('id', m.id).select().single() : await db.from('books').insert(payload).select().single();
   if (res.error) return toast('Save failed: ' + res.error.message);
   S.books = S.books.filter(b => b.id !== res.data.id).concat(res.data); S.bm = null;
@@ -975,11 +1005,13 @@ document.addEventListener('click', e => {
   if (g('data-bmv')) { const a = g('data-bmv').dataset, d = Number(a.dir); if (a.bmv === 'book') moveBook(a.bid, d); else if (a.bmv === 'grp') moveBlock(a.bsec, a.bgrp, null, d); else moveBlock(a.bsec, a.bgrp, a.bsub, d); return; }
   if (g('data-bren')) { const a = g('data-bren').dataset; S.bren = { level: a.bren, sec: a.bsec, grp: a.bgrp, name: a.bren === 'grp' ? a.bgrp : a.bsub }; return render(); }
   if (g('data-brsave')) return saveRename();
+  if (g('data-bsortyr')) return sortSeriesByYear();
+  if (g('data-bwrap')) { S.bwrap = !S.bwrap; saveSets(); return render(); }
   if (g('data-bord')) { S.bord = !S.bord; return render(); }
   if (g('data-bcolall')) { const keys = (S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5)).flatMap(sec => bookTree(sec).filter(x => x.name).map(x => `${sec}|${x.name}`)); const all = keys.every(isClosed); keys.forEach(k => { S.bshut.delete(k); S.bopen.delete(k); (all ? S.bopen : S.bshut).add(k); }); saveSets(); return render(); }
-  if (g('data-badd')) { S.bm = { id: null, section: S.bsub === 'ln' ? 'Light Novels' : BSEC[0], title: '', grp: '', grpNew: false, sub: '', subNew: false, size: '', rating: '', status: 5 }; return render(); }
+  if (g('data-badd')) { S.bm = { id: null, section: S.bsub === 'ln' ? 'Light Novels' : BSEC[0], title: '', grp: '', grpNew: false, sub: '', subNew: false, year: '', reads: '', size: '', rating: '', status: 5 }; return render(); }
   if (g('data-bkey')) { const k = g('data-bkey').dataset.bkey, was = isClosed(k); S.bshut.delete(k); S.bopen.delete(k); (was ? S.bopen : S.bshut).add(k); saveSets(); return render(); }
-  if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', grpNew: false, sub: b.sub || '', subNew: false, size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
+  if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', grpNew: false, sub: b.sub || '', subNew: false, year: b.year ?? '', reads: b.reads ?? '', size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
   if (g('data-mst')) { const v = Number(g('data-mst').dataset.mst); S.mst = S.mst === v ? null : v; return render(); }
   if (g('data-madd')) { S.mm = { id: null, category: MCATS[0], title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, unsure: false, status: 6, scores: mBlank(MCATS[0]) }; return render(); }
   if (g('data-medit')) { const x = S.manga.find(v => v.id == g('data-medit').dataset.medit); S.mm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', read: x.chs_read ?? '', total: x.chs_total ?? '', ongoing: x.ongoing, unsure: !!x.read_unsure, status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? MMAX[y[0]] ?? 10]) : mBlank(x.category) }; return render(); }
@@ -1030,6 +1062,7 @@ document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
   if (e.target.id === 'm-cat') { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
   if (e.target.classList.contains('scl')) { readMm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.mm.scores[i][2] = MMAX[v] ?? mCriteria()[v] ?? 10; return render(); }
+  if (e.target.id === 'b-pos') { S.bm.posTouched = true; return; }
   if (e.target.id === 'b-sec') { const sec = e.target.value; readBm(); const m = S.bm; m.section = sec; if (sec === 'Light Novels') m.rating = ''; if (!m.grpNew && !bookTree(sec).some(x => x.name === m.grp)) { m.grp = ''; m.sub = ''; m.subNew = false; } return render(); }
   if (e.target.id === 'b-grps' || e.target.id === 'b-subs') { const g = e.target.id === 'b-grps'; readBm(); if (g) { S.bm.sub = ''; S.bm.subNew = false; } render(); const n = $(g ? '#b-grp' : '#b-sub'); if (n && n.offsetParent) n.focus(); return; }
   if (e.target.dataset.ract) return toggleRogue(e.target);
@@ -1040,7 +1073,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
 });
 document.addEventListener('input', e => {
-  if (e.target.id === 'b-grp' || e.target.id === 'b-sub') return refreshPos();
+  if (e.target.id === 'b-grp' || e.target.id === 'b-sub' || e.target.id === 'b-year') return refreshPos();
   if (e.target.classList.contains('sc') || e.target.classList.contains('scx')) { const sc = readScores(), t = mScoreSum(sc), r = $('#m-rate'), info = mScoreInfo(sc); r.readOnly = t != null; if (t != null) r.value = t.toFixed(1);
     sc.forEach((x, i) => $('#m-sc' + i).classList.toggle('over', x[1] !== '' && Number(x[1]) > Number(x[2])));
     const ok = $('#m-scok'); ok.className = 'scok ' + (info.ok ? 'good' : 'warn'); ok.textContent = (info.ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + info.mx + ', not 100 · ') + info.line; return; }
