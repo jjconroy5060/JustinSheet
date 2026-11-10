@@ -110,7 +110,7 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 details.sc summary{cursor:pointer;margin-top:12px;font-weight:600}
 .mg-body.w2{column-count:2;column-gap:8px;padding-bottom:2px}
 .mg-body.w2>*{break-inside:avoid}.mg-body.w2>.bk-grp{break-after:avoid;margin-top:5px}
-.mg-s1{background:#d9ead3}.mg-s2{background:#d9d2e9}.mg-s3{background:#fff2cc}.mg-s4{background:#c9daf8}.mg-s5{background:#f4cccc}.mg-s6{background:#e7e2d8}.mg-s7{background:#f9cb9c}
+.mg-s1{background:#d9ead3}.mg-s2{background:#cdb3ef}.mg-s3{background:#fff2cc}.mg-s4{background:#c9daf8}.mg-s5{background:#f4cccc}.mg-s6{background:#e7e2d8}.mg-s7{background:#f9cb9c}
 .bk-plus{background:none;border:0;color:inherit;cursor:pointer;font-weight:700;padding:0 3px;opacity:.6;flex:none}
 .bk-plus:hover{opacity:1}
 .bk-mv{white-space:nowrap;margin-right:4px}
@@ -148,7 +148,7 @@ const db = supabase.createClient(
 let _mk = '';
 function loadSet(n) { try { return new Set(JSON.parse(localStorage.getItem(n) || '[]')); } catch (e) { return new Set(); } }
 function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
-const S = { manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -518,6 +518,7 @@ function mScoreInfo(sc) {
   return { line: t != null ? `Score ${pts} / ${mx} → rating ${t.toFixed(1)}` : `Criteria add up to ${mx}`, ok: mx === 100, mx };
 }
 const mrf = r => r == null ? '' : Number(r).toFixed(1) + '<span class="star">★</span>';
+const mNeedsRating = m => (m.status === 4 || m.status === 5) && m.rating == null;   /* finished or dropped, but never rated */
 const mgList = cat => S.manga.filter(m => m.category === cat).sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.id - b.id);   /* by year, newest-added last within a year */
 const mgDecade = y => y == null ? 'No year' : Math.floor(y / 10) * 10 + 's';
 const mgBands = list => { const out = []; list.forEach(m => { const d = mgDecade(m.year); let b = out.find(x => x.name === d); if (!b) out.push(b = { name: d, items: [] }); b.items.push(m); }); return out; };
@@ -527,12 +528,14 @@ function mgAgg(list) { const rs = list.filter(m => m.rating != null); return { r
 
 function mangaView() {
   if (S.mgErr) return `<div class="card">Couldn’t load Manga: ${esc(S.mgErr)}<br><span class="cat">Run 9_manga.sql in the Supabase SQL Editor first.</span></div>`;
-  const q = norm(S.mq), st = S.mst, filtering = !!(q || st || S.munsure), match = m => (!st || m.status === st) && (!q || norm(m.title).includes(q)) && (!S.munsure || m.read_unsure);
+  const nUns = S.manga.filter(m => m.read_unsure).length, nRate = S.manga.filter(mNeedsRating).length;
+  if (!nUns) S.munsure = false; if (!nRate) S.mrate = false;   /* a flag filter disappears once nothing is flagged */
+  const q = norm(S.mq), st = S.mst, filtering = !!(q || st || S.munsure || S.mrate), match = m => (!st || m.status === st) && (!q || norm(m.title).includes(q)) && (!S.munsure || m.read_unsure) && (!S.mrate || mNeedsRating(m));
   const cnt = k => S.manga.filter(m => m.status === k).length;
   const chips = Object.entries(MST).map(([k, l]) => `<button class="chip mg-s${k} ${st == k ? 'sel' : st ? 'dim' : ''}" data-mst="${k}">${l} (${cnt(+k)})</button>`).join('');
   const bandKeys = MCATS.flatMap(c => mgBands(mgList(c)).map(b => [c, b]));
   const allShut = bandKeys.length && bandKeys.every(([c, b]) => mgClosed(c, b));
-  const row = m => `<div class="bk-r bk-bk mg-s${m.status}" data-medit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : ''))}">${esc(m.title)}</span></span><span>${mrf(m.rating)}</span>${m.read_unsure ? `<span class="unsure" title="Not sure how far I read">${m.chs_read ?? ''}?</span>` : `<span>${m.chs_read ?? ''}</span>`}<span>${m.ongoing ? 'O' : (m.chs_total ?? '')}</span></div>`;
+  const row = m => `<div class="bk-r bk-bk mg-s${m.status}" data-medit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : ''))}">${esc(m.title)}</span></span>${mNeedsRating(m) ? '<span class="unsure" title="Finished/dropped but not rated yet">?</span>' : `<span>${mrf(m.rating)}</span>`}${m.read_unsure ? `<span class="unsure" title="Not sure how far I read">${m.chs_read ?? ''}?</span>` : `<span>${m.chs_read ?? ''}</span>`}<span>${m.ongoing ? 'O' : (m.chs_total ?? '')}</span></div>`;
   const cards = MCATS.map(cat => {
     const all = mgList(cat), a = mgAgg(all); let shown = 0;
     const body = mgBands(all).map(b => {
@@ -547,7 +550,7 @@ function mangaView() {
   }).join('');
   return `<div class="bk-bar"><button class="btn" data-madd>Add manga</button>${chips}
     <input id="mq" placeholder="Search manga" value="${esc(S.mq)}" style="width:200px"><button class="btn alt" data-mcolall>${allShut ? 'Expand all' : 'Collapse all'}</button>
-    <button class="btn alt ${S.mwrap ? 'on' : ''}" data-mwrap title="Long columns flow into two side-by-side halves, newest at the bottom of the second half">Wrap long columns: ${S.mwrap ? 'on' : 'off'}</button><button class="chip bk-s-unsure ${S.munsure ? 'sel' : ''}" data-munsure title="Manga where I wasn't sure how far I had read">Unsure how far (${S.manga.filter(m => m.read_unsure).length})</button>
+    <button class="btn alt ${S.mwrap ? 'on' : ''}" data-mwrap title="Long columns flow into two side-by-side halves, newest at the bottom of the second half">Wrap long columns: ${S.mwrap ? 'on' : 'off'}</button>${nUns ? `<button class="chip bk-s-unsure ${S.munsure ? 'sel' : ''}" data-munsure title="Manga where I wasn't sure how far I had read">Unsure how far (${nUns})</button>` : ''}${nRate ? `<button class="chip bk-s-unsure ${S.mrate ? 'sel' : ''}" data-mrate title="Finished or dropped, but no rating yet">Needs a rating (${nRate})</button>` : ''}
     <span class="cat">${S.manga.length} manga · ${cnt(4)} finished</span></div><div class="bk-scroll">${cards}</div>`;
 }
 function mangaModalHtml() {
@@ -988,6 +991,7 @@ document.addEventListener('click', e => {
   if (g('data-mcolall')) { const all = MCATS.flatMap(c => mgBands(mgList(c)).map(b => [c, b])), shut = all.every(([c, b]) => mgClosed(c, b)); all.forEach(([c, b]) => { const k = c + '|' + b.name; S.mshut.delete(k); S.mopen.delete(k); (shut ? S.mopen : S.mshut).add(k); }); saveSets(); return render(); }
   if (g('data-mwrap')) { S.mwrap = !S.mwrap; saveSets(); return render(); }
   if (g('data-munsure')) { S.munsure = !S.munsure; return render(); }
+  if (g('data-mrate')) { S.mrate = !S.mrate; return render(); }
   if (g('data-bsave')) return saveBook();
   if (g('data-bdel')) return delBook();
   if (g('data-mroll')) { const o = mapped(S.modal.category), t = o && pickFrom(o.current_cat); if (t == null) return toast('Nothing to pick from'); $('#m-desc').value = t; S.modal.description = t; return; }
