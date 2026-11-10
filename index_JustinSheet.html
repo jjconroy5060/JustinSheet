@@ -78,11 +78,11 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 .bk-bar .chip.sel{border-color:var(--ink)}
 .bk-bar .chip.dim{opacity:.45}
 .bk-scroll{display:flex;align-items:flex-start;gap:14px;overflow:auto;max-height:calc(100vh - 190px);min-height:320px;padding-bottom:12px}
-.bk-sec{flex:0 0 auto;width:430px;font-size:.8rem;line-height:1.3;color:#1b1b1b}
-.bk-sec.ln{width:330px}
+.bk-sec{flex:1 1 0;min-width:270px;font-size:.8rem;line-height:1.3;color:#1b1b1b}
+.bk-sec.ln{flex:0 1 560px}
 .bk-sticky{position:sticky;top:0;z-index:3}
-.bk-r{display:grid;grid-template-columns:minmax(0,1fr) 54px 62px 46px;align-items:center;padding:2px 6px;gap:4px;cursor:pointer}
-.ln .bk-r{grid-template-columns:minmax(0,1fr) 54px 46px}
+.bk-r{display:grid;grid-template-columns:minmax(0,1fr) 50px 58px 42px;align-items:center;padding:2px 6px;gap:4px;cursor:pointer}
+.ln .bk-r{grid-template-columns:minmax(0,1fr) 60px 46px}
 .bk-r>span:nth-child(n+2){text-align:right;white-space:nowrap}
 .bk-r .t{overflow-wrap:anywhere}
 .bk-lab{background:#ccc;font-weight:700;cursor:default}
@@ -121,7 +121,7 @@ const db = supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb3lkaW9tanpra3VrZnFmeXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3NTYxMTEsImV4cCI6MjEwOTMzMjExMX0.8rSgG9hrmYON9ot0d37ytCIo_vkhhdwU_DePGOvxPSM'
 );
 let _mk = '';
-const S = { books: [], bkErr: null, bm: null, bq: '', bst: null, bcol: new Set(), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { books: [], bkErr: null, bm: null, bsub: 'books', bq: '', bst: null, bcol: new Set(), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -314,7 +314,7 @@ const nfmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : n >= 1000 ? Math.roun
 const rfmt = r => r == null ? '' : Number(r).toFixed(2) + '★';
 function agg(list, ln) {
   const sz = list.reduce((a, b) => a + (sizeOf(b) || 0), 0), rs = list.filter(b => b.rating != null);
-  return { sz: ln ? String(sz.toLocaleString()) : kfmt(sz), rt: rs.length ? rfmt(rs.reduce((a, b) => a + Number(b.rating), 0) / rs.length) : '', fin: nfmt(list.filter(b => b.status === 3).reduce((a, b) => a + (sizeOf(b) || 0), 0)) };
+  return { sz: ln ? String(sz.toLocaleString()) : kfmt(sz), rt: rs.length ? rfmt(rs.reduce((a, b) => a + Number(b.rating), 0) / rs.length) : '', fin: (v => ln ? v.toLocaleString() : nfmt(v))(list.filter(b => b.status === 3).reduce((a, b) => a + (sizeOf(b) || 0), 0)) };
 }
 function bookTree(sec) {
   const groups = [];
@@ -327,15 +327,16 @@ function bookTree(sec) {
 }
 function booksView() {
   if (S.bkErr) return `<div class="card">Couldn’t load Books: ${esc(S.bkErr)}<br><span class="cat">Run 8_books.sql in the Supabase SQL Editor first.</span></div>`;
+  const SECS = S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5), pool = S.books.filter(b => SECS.includes(b.section));
   const q = norm(S.bq), st = S.bst, match = b => (!st || b.status === st) && (!q || norm(b.title).includes(q));
-  const cnt = k => S.books.filter(b => b.status === k).length;
+  const cnt = k => pool.filter(b => b.status === k).length;
   const chips = Object.entries(BST).map(([k, l]) => `<button class="chip bk-s${k} ${st == k ? 'sel' : st ? 'dim' : ''}" data-bst="${k}">${l} (${cnt(+k)})</button>`).join('');
-  const groupsAll = BSEC.flatMap(sec => bookTree(sec).filter(g => g.name).map(g => `${sec}|${g.name}`));
+  const groupsAll = SECS.flatMap(sec => bookTree(sec).filter(g => g.name).map(g => `${sec}|${g.name}`));
   const allCollapsed = groupsAll.length && groupsAll.every(k => S.bcol.has(k));
   const row = b => `<div class="bk-r bk-bk bk-s${b.status}" data-bedit="${b.id}"><span class="t">${esc(b.title)}</span><span>${b.section === 'Light Novels' ? (b.pages ?? '') : kfmt(b.words)}</span>${b.section === 'Light Novels' ? '' : `<span>${rfmt(b.rating)}</span>`}<span>${b.status}</span></div>`;
   const head = (cls, label, list, ln, key, add) => { const a = agg(list, ln), open = !S.bcol.has(key);
     return `<div class="bk-r ${cls}" ${key ? `data-bkey="${esc(key)}" title="Click to ${open ? 'collapse' : 'expand'}"` : ''}><span class="t">${key ? (open ? '▾ ' : '▸ ') : ''}${esc(label)} ${add ? `<button class="bk-plus" data-badd data-bsec="${esc(add[0])}" data-bgrp="${esc(add[1] || '')}" data-bsub="${esc(add[2] || '')}" title="Add a book here">+</button>` : ''}</span><span>${a.sz}</span>${ln ? '' : `<span>${a.rt}</span>`}<span>${a.fin}</span></div>`; };
-  const secs = BSEC.map(sec => {
+  const secs = SECS.map(sec => {
     const ln = sec === 'Light Novels', tree = bookTree(sec), all = S.books.filter(b => b.section === sec);
     const body = tree.map(g => {
       const gk = g.name ? `${sec}|${g.name}` : null;
@@ -347,11 +348,11 @@ function booksView() {
       if (!kids) return '';
       return (g.name ? head('bk-grp', g.name, g.all, ln, gk, [sec, g.name, '']) : '') + (gk && S.bcol.has(gk) ? '' : kids);
     }).join('');
-    return `<div class="bk-sec ${ln ? 'ln' : ''}"><div class="bk-sticky"><div class="bk-r bk-lab"><span class="t">${sec === BSEC[0] ? 'Books List' : ''}</span><span>${ln ? 'Pgs.' : 'Words'}</span>${ln ? '' : '<span>Rating</span>'}<span>N</span></div>${head('bk-title', sec, all, ln, null, [sec, '', ''])}</div>${body || '<div class="bk-r bk-bk" style="background:#eee;cursor:default">Nothing here.</div>'}</div>`;
+    return `<div class="bk-sec ${ln ? 'ln' : ''}"><div class="bk-sticky"><div class="bk-r bk-lab"><span class="t">${sec === 'Brandon Sanderson' ? 'Books List' : ln ? 'Light Novels List' : ''}</span><span>${ln ? 'Pgs.' : 'Words'}</span>${ln ? '' : '<span>Rating</span>'}<span>N</span></div>${head('bk-title', sec, all, ln, null, [sec, '', ''])}</div>${body || '<div class="bk-r bk-bk" style="background:#eee;cursor:default">Nothing here.</div>'}</div>`;
   }).join('');
-  return `<div class="bk-bar"><button class="btn" data-badd data-bsec="" data-bgrp="" data-bsub="">Add book</button>${chips}
+  return `<div class="bk-bar"><div class="seg sm" style="margin:0"><button class="${S.bsub === 'books' ? 'on' : ''}" data-bsubtab="books">Books (${S.books.filter(b => b.section !== 'Light Novels').length})</button><button class="${S.bsub === 'ln' ? 'on' : ''}" data-bsubtab="ln">Light Novels (${S.books.filter(b => b.section === 'Light Novels').length})</button></div><button class="btn" data-badd data-bsec="" data-bgrp="" data-bsub="">Add book</button>${chips}
     <input id="bq" placeholder="Search books" value="${esc(S.bq)}" style="width:200px"><button class="btn alt" data-bcolall>${allCollapsed ? 'Expand all' : 'Collapse all'}</button>
-    <span class="cat">${S.books.length} books · ${cnt(3)} finished</span></div><div class="bk-scroll">${secs}</div>`;
+    <span class="cat">${pool.length} ${S.bsub === 'ln' ? 'volumes' : 'books'} · ${cnt(3)} finished</span></div><div class="bk-scroll">${secs}</div>`;
 }
 
 function bookModalHtml() {
@@ -729,8 +730,9 @@ document.addEventListener('click', e => {
   if (g('data-roll')) { S.wheel = { n: 5, res: [] }; return render(); }
   if (g('data-wroll')) return doRoll();
   if (g('data-bst')) { const v = Number(g('data-bst').dataset.bst); S.bst = S.bst === v ? null : v; return render(); }
-  if (g('data-bcolall')) { const keys = BSEC.flatMap(sec => bookTree(sec).filter(x => x.name).map(x => `${sec}|${x.name}`)); const all = keys.every(k => S.bcol.has(k)); S.bcol = all ? new Set() : new Set(keys); return render(); }
-  if (g('data-badd')) { const a = g('data-badd').dataset; S.bm = { id: null, section: a.bsec || BSEC[0], title: '', grp: a.bgrp || '', sub: a.bsub || '', size: '', rating: '', status: 5 }; return render(); }
+  if (g('data-bsubtab')) { S.bsub = g('data-bsubtab').dataset.bsubtab; S.bst = null; return render(); }
+  if (g('data-bcolall')) { const keys = (S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5)).flatMap(sec => bookTree(sec).filter(x => x.name).map(x => `${sec}|${x.name}`)); const all = keys.every(k => S.bcol.has(k)); S.bcol = all ? new Set() : new Set(keys); return render(); }
+  if (g('data-badd')) { const a = g('data-badd').dataset; S.bm = { id: null, section: a.bsec || (S.bsub === 'ln' ? 'Light Novels' : BSEC[0]), title: '', grp: a.bgrp || '', sub: a.bsub || '', size: '', rating: '', status: 5 }; return render(); }
   if (g('data-bkey')) { const k = g('data-bkey').dataset.bkey; S.bcol.has(k) ? S.bcol.delete(k) : S.bcol.add(k); const sc = document.querySelector('.bk-scroll'), x = sc.scrollLeft, y = sc.scrollTop; render(); const n = document.querySelector('.bk-scroll'); n.scrollLeft = x; n.scrollTop = y; return; }
   if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', sub: b.sub || '', size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
   if (g('data-bsave')) return saveBook();
