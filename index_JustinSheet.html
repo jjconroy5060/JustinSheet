@@ -116,6 +116,8 @@ table.mx{border-collapse:collapse;font-size:.85rem;width:100%}table.mx td,table.
 details.sc summary{cursor:pointer;margin-top:12px;font-weight:600}
 .mg-body.w2{column-count:2;column-gap:8px;padding-bottom:2px}
 .mg-body.w2>*{break-inside:avoid}.mg-body.w2>.bk-grp{break-after:avoid;margin-top:5px}
+.gmx .bk-r{grid-template-columns:minmax(0,1fr) 40px 44px}
+.gm-s1{background:#d9ead3}.gm-s2{background:#fff2cc}.gm-s3{background:#d9d2e9}.gm-s4{background:#b4a7d6}.gm-s5{background:#c9daf8}.gm-s6{background:#f4cccc}.gm-s7{background:#e7e2d8}.gm-s8{background:#d9d9d9}
 .mg-s1{background:#d9ead3}.mg-s2{background:#cdb3ef}.mg-s3{background:#fff2cc}.mg-s4{background:#c9daf8}.mg-s5{background:#f4cccc}.mg-s6{background:#e7e2d8}.mg-s7{background:#f9cb9c}
 .bk-plus{background:none;border:0;color:inherit;cursor:pointer;font-weight:700;padding:0 3px;opacity:.6;flex:none}
 .bk-plus:hover{opacity:1}
@@ -153,8 +155,8 @@ const db = supabase.createClient(
 );
 let _mk = '';
 function loadSet(n) { try { return new Set(JSON.parse(localStorage.getItem(n) || '[]')); } catch (e) { return new Set(); } }
-function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); localStorage.setItem('bk_wrap', S.bwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
-const S = { manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); localStorage.setItem('ga_shut', JSON.stringify([...S.gshut])); localStorage.setItem('ga_open', JSON.stringify([...S.gopen])); localStorage.setItem('ga_wrap', S.gwrap ? '1' : '0'); localStorage.setItem('bk_wrap', S.bwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
+const S = { games: [], gaErr: null, gm: null, gq: '', gst: null, gunsure: false, grate: false, gshut: loadSet('ga_shut'), gopen: loadSet('ga_open'), gwrap: (() => { try { return localStorage.getItem('ga_wrap') !== '0'; } catch (e) { return true; } })(), manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -180,6 +182,7 @@ async function loadAll() {
   const c = await db.from('current_items').select('*').order('sort_order');
   S.current = c.data || []; S.curErr = c.error ? c.error.message : null;
   const bk = await db.from('books').select('*').order('sort_order').range(0, 999); S.books = bk.data || []; S.bkErr = bk.error ? bk.error.message : null;
+  const ga = await db.from('games').select('*').range(0, 999); S.games = ga.data || []; S.gaErr = ga.error ? ga.error.message : null;
   const mg = await db.from('manga').select('*').range(0, 999); S.manga = mg.data || []; S.mgErr = mg.error ? mg.error.message : null;
   const rg = await db.from('roguelikes').select('*').order('sort_order'); S.rogue = rg.data || [];
   S.loading = false; S.anchor = true; render();
@@ -466,7 +469,7 @@ function booksView() {
 /* titles that spill onto a second line get a smaller font; if even that is not enough they are cut with … (hover shows the full title) */
 /* in a column that wraps into two halves, a series/decade that carries over gets a "… cont." header at the top of the second half */
 function markCont() {
-  if (S.tab !== 'books' && S.tab !== 'manga') return;
+  if (S.tab !== 'books' && S.tab !== 'manga' && S.tab !== 'games') return;
   document.querySelectorAll('.bk-scroll .cont').forEach(e => e.remove());
   document.querySelectorAll('.bk-scroll .mg-body.w2').forEach(body => {
     for (let n = 0; n < 4; n++) {
@@ -480,7 +483,7 @@ function markCont() {
   });
 }
 function fitTitles() {
-  if (S.tab !== 'books' && S.tab !== 'manga') return;
+  if (S.tab !== 'books' && S.tab !== 'manga' && S.tab !== 'games') return;
   const els = [...document.querySelectorAll('.bk-scroll .tt')]; els.forEach(e => { e.style.fontSize = ''; });
   els.filter(e => e.clientWidth > 0 && e.scrollWidth > e.clientWidth + 1).map(e => [e, parseFloat(getComputedStyle(e).fontSize), e.clientWidth / e.scrollWidth])
     .forEach(([e, f, r]) => { e.style.fontSize = Math.max(8.5, Math.floor(f * r * 97) / 100) + 'px'; });
@@ -624,9 +627,10 @@ function mangaModalHtml() {
     <div class="acts"><button class="btn" data-msave>Save</button>${m.id ? '<button class="btn danger" data-mdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 function readScores() {
-  return S.mm.scores.map((x, i) => { const sel = document.querySelector(`.scl[data-i="${i}"]`); let l = sel ? sel.value : x[0];
+  const M = S.gm || S.mm, P = S.gm ? 'g' : 'm';
+  return M.scores.map((x, i) => { const sel = document.querySelector(`.scl[data-i="${i}"]`); let l = sel ? sel.value : x[0];
     if (l === '__new__') { const n = document.querySelector(`.scn[data-i="${i}"]`); l = n && n.value.trim() ? n.value : '__new__'; }
-    return [l, $('#m-sc' + i).value, $('#m-sx' + i).value]; });
+    return [l, $('#' + P + '-sc' + i).value, $('#' + P + '-sx' + i).value]; });
 }
 const readMm = () => Object.assign(S.mm, { category: $('#m-cat').value, title: $('#m-title').value, year: $('#m-year').value, rating: $('#m-rate').value, read: $('#m-read').value, total: $('#m-tot').value, ongoing: $('#m-ong').checked, unsure: $('#m-uns').checked, reads: $('#m-reads').value, status: Number($('#m-status').value), scores: readScores() });
 async function saveManga() {
@@ -643,6 +647,94 @@ async function delManga() {
   if (!confirm('Delete this manga?')) return;
   const { error } = await db.from('manga').delete().eq('id', S.mm.id); if (error) return toast('Delete failed: ' + error.message);
   S.manga = S.manga.filter(x => x.id !== S.mm.id); S.mm = null; render();
+}
+
+/* ---------------- Games ---------------- */
+const GCATS = ['Action/Adventure', 'Multiplayer/Sports', 'RPG/Strategy', 'Roguelikes', 'Puzzle/Building', 'Indie/Platformer/Other'];
+const GST = { 1: 'Playing', 2: 'Paused', 3: 'Finished', 4: 'Done planning', 5: '100% games', 6: 'Dropped', 7: 'Not started', 8: 'Not current' };
+const GMAX = { 'Story/Theme': 10, Setting: 10, Gameplay: 30, Characters: 10, Music: 5, 'Art/Graphics': 5, Pacing: 5, Originality: 5, Enjoyment: 10, Community: 20, Customization: 5, Variety: 10, Replayability: 10, 'Building/Puzzles': 20, Creativity: 10 };
+const GPARTS = {
+  'Action/Adventure': [['Story/Theme', 20], ['Setting', 10], ['Gameplay', 30], ['Characters', 10], ['Music', 5], ['Art/Graphics', 5], ['Pacing', 5], ['Originality', 5], ['Enjoyment', 10]],
+  'Multiplayer/Sports': [['Story/Theme', 10], ['Community', 20], ['Gameplay', 30], ['Customization', 5], ['Music', 5], ['Art/Graphics', 5], ['Variety', 10], ['Originality', 5], ['Enjoyment', 10]],
+  'RPG/Strategy': [['Story/Theme', 20], ['Setting', 10], ['Gameplay', 30], ['Characters', 10], ['Music', 5], ['Art/Graphics', 5], ['Pacing', 5], ['Originality', 5], ['Enjoyment', 10]],
+  'Roguelikes': [['Story/Theme', 10], ['Setting', 10], ['Gameplay', 30], ['Characters', 10], ['Music', 5], ['Art/Graphics', 5], ['Replayability', 10], ['Originality', 10], ['Enjoyment', 10]],
+  'Puzzle/Building': [['Story/Theme', 10], ['Setting', 10], ['Gameplay', 20], ['Building/Puzzles', 20], ['Music', 5], ['Art/Graphics', 5], ['Creativity', 10], ['Originality', 10], ['Enjoyment', 10]],
+  'Indie/Platformer/Other': [['Story/Theme', 20], ['Setting', 10], ['Gameplay', 30], ['Characters', 10], ['Music', 5], ['Art/Graphics', 5], ['Pacing', 5], ['Originality', 5], ['Enjoyment', 10]] };
+const gBlank = cat => GPARTS[cat].map(([l, x]) => [l, '', x]);
+const gCriteria = () => { const m = { ...GMAX }; S.games.forEach(x => (Array.isArray(x.scores) ? x.scores : []).forEach(y => { const l = String(y[0] || '').trim(); if (l && !(l in m)) m[l] = y[2] || 10; })); return m; };
+const gPlatforms = () => [...new Set(S.games.map(x => String(x.platform || '').trim()).filter(Boolean))].sort((a, b) => S.games.filter(x => x.platform === b).length - S.games.filter(x => x.platform === a).length);
+const gNeedsRating = m => [3, 4, 5, 6].includes(m.status) && m.rating == null;   /* finished or dropped, but never rated */
+const gList = cat => S.games.filter(m => m.category === cat).sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.id - b.id);
+const gDefaultClosed = list => list.every(m => [3, 4, 5, 6].includes(m.status));
+const gClosed = (cat, band) => { const k = cat + '|' + band.name; return S.gshut.has(k) || (!S.gopen.has(k) && gDefaultClosed(band.items)); };
+const gHrs = h => h == null || h === '' ? '' : Number(h).toLocaleString(undefined, { maximumFractionDigits: 1 });
+function gAgg(list) { const rs = list.filter(m => m.rating != null); return { rt: rs.length ? mrf(rs.reduce((a, m) => a + Number(m.rating), 0) / rs.length) : '', hr: gHrs(list.reduce((a, m) => a + (Number(m.hours) || 0), 0)) }; }
+
+function gamesView() {
+  if (S.gaErr) return `<div class="card">Couldn’t load Games: ${esc(S.gaErr)}<br><span class="cat">Run 14_games.sql in the Supabase SQL Editor first.</span></div>`;
+  const nUns = S.games.filter(m => m.hours_unsure).length, nRate = S.games.filter(gNeedsRating).length;
+  if (!nUns) S.gunsure = false; if (!nRate) S.grate = false;
+  const q = norm(S.gq), st = S.gst, filtering = !!(q || st || S.gunsure || S.grate), match = m => (!st || m.status === st) && (!q || norm(m.title).includes(q)) && (!S.gunsure || m.hours_unsure) && (!S.grate || gNeedsRating(m));
+  const cnt = k => S.games.filter(m => m.status === k).length;
+  const chips = Object.entries(GST).map(([k, l]) => `<button class="chip gm-s${k} ${st == k ? 'sel' : st ? 'dim' : ''}" data-gst="${k}">${l} (${cnt(+k)})</button>`).join('');
+  const bandKeys = GCATS.flatMap(c => mgBands(gList(c)).map(b => [c, b]));
+  const allShut = bandKeys.length && bandKeys.every(([c, b]) => gClosed(c, b));
+  const row = m => `<div class="bk-r bk-bk gm-s${m.status}" data-gedit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : '') + (m.platform ? ' · ' + m.platform : ''))}">${esc(m.title)}</span></span>${gNeedsRating(m) ? '<span class="unsure" title="Finished/dropped but not rated yet">?</span>' : `<span>${mrf(m.rating)}</span>`}${m.hours_unsure ? `<span class="unsure" title="Hours are an estimate">${gHrs(m.hours)}?</span>` : `<span>${gHrs(m.hours)}</span>`}</div>`;
+  const cards = GCATS.map(cat => {
+    const all = gList(cat), a = gAgg(all); let shown = 0;
+    const body = mgBands(all).map(b => {
+      const its = b.items.filter(match); if (!its.length) return '';
+      const closed = !filtering && gClosed(cat, b), ba = gAgg(b.items); shown += closed ? 1 : its.length + 1;
+      return `<div class="bk-r bk-grp" data-gkey="${esc(cat + '|' + b.name)}" title="Click to ${closed ? 'expand' : 'collapse'}"><span class="t"><span class="cr">${closed ? '▸' : '▾'}</span><span class="tt">${esc(b.name)} · ${b.items.length}</span></span><span>${ba.rt}</span><span>${ba.hr}</span></div>${closed ? '' : its.map(row).join('')}`;
+    }).join('');
+    const wrapped = S.gwrap && shown > 70;
+    return `<div class="bk-sec mg gmx ${wrapped ? 'wrapped' : ''}"><div class="bk-sticky"><div class="bk-r bk-lab"><span class="t">${cat === GCATS[0] ? 'Games List' : ''}</span><span>Rating</span><span>Hrs.</span></div>
+      <div class="bk-r bk-title"><span class="t"><span class="tt">${esc(cat)} · ${all.length}</span></span><span>${a.rt}</span><span>${a.hr}</span></div></div>
+      <div class="mg-body ${wrapped ? 'w2' : ''}">${body || '<div class="bk-r bk-bk gm-s7" style="cursor:default">Nothing here.</div>'}</div></div>`;
+  }).join('');
+  return `<div class="bk-bar"><button class="btn" data-gadd>Add game</button>${chips}
+    <input id="gq" placeholder="Search games" value="${esc(S.gq)}" style="width:200px"><button class="btn alt" data-gcolall>${allShut ? 'Expand all' : 'Collapse all'}</button>
+    <button class="btn alt ${S.gwrap ? 'on' : ''}" data-gwrap title="Long columns flow into two side-by-side halves, newest at the bottom of the second half">Wrap long columns: ${S.gwrap ? 'on' : 'off'}</button>${nUns ? `<button class="chip bk-s-unsure ${S.gunsure ? 'sel' : ''}" data-gunsure title="Games whose hours are an estimate">Estimated hours (${nUns})</button>` : ''}${nRate ? `<button class="chip bk-s-unsure ${S.grate ? 'sel' : ''}" data-grate title="Finished or dropped, but no rating yet">Needs a rating (${nRate})</button>` : ''}
+    <span class="cat">${S.games.length} games · ${gHrs(S.games.reduce((a, m) => a + (Number(m.hours) || 0), 0))} hrs</span></div><div class="bk-scroll">${cards}</div>`;
+}
+function gamesModalHtml() {
+  const m = S.gm, tot = mScoreSum(m.scores), plats = gPlatforms(), isNewP = m.plat === '__new__', crit = gCriteria();
+  return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit game' : 'Add game'}</h2>
+    <label>Category</label><select id="g-cat">${GCATS.map(c => `<option ${c === m.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+    <label>Title</label><input id="g-title" value="${esc(m.title)}">
+    <div style="display:flex;gap:8px"><div style="flex:1"><label>Year</label><input id="g-year" type="number" value="${esc(m.year)}" placeholder="2024"></div>
+    <div style="flex:1"><label>Rating (0–10)</label><input id="g-rate" type="number" min="0" max="10" step="0.1" value="${esc(m.rating)}" ${tot != null ? 'readonly' : ''}></div></div>
+    <label>Platform</label><select id="g-plat"><option value="" ${!m.plat ? 'selected' : ''}>—</option>${plats.map(p => `<option value="${esc(p)}" ${p === m.plat ? 'selected' : ''}>${esc(p)}</option>`).join('')}<option value="__new__" ${isNewP ? 'selected' : ''}>Add new platform…</option></select>${isNewP ? `<input id="g-platn" placeholder="New platform name" value="${esc(m.platNew || '')}" style="margin-top:4px">` : ''}
+    <details class="sc" ${mFilled(m.scores) ? 'open' : ''}><summary>Rating breakdown <span class="cat">· optional, fills the rating for you</span></summary>
+      <div class="scgrid">${m.scores.map((x, i) => { const lab = String(x[0] || ''), isNew = x[0] === '__new__' || (lab !== '' && !(lab in crit)), over = x[1] !== '' && Number(x[1]) > Number(x[2]);
+        return `<div style="min-width:0"><select class="scl" data-i="${i}">${Object.keys(crit).map(c => `<option value="${esc(c)}" ${c === lab ? 'selected' : ''}>${esc(c)}</option>`).join('')}<option value="__new__" ${isNew ? 'selected' : ''}>Custom…</option></select>${isNew ? `<input class="scn" data-i="${i}" placeholder="Name" value="${esc(lab === '__new__' ? '' : lab)}" style="margin-top:4px">` : ''}</div>
+        <input class="sc ${over ? 'over' : ''}" id="g-sc${i}" type="number" min="0" step="1" value="${esc(x[1])}"><span class="sl">/</span><input class="scx" id="g-sx${i}" type="number" min="1" step="1" value="${esc(x[2])}" title="Out of"><button class="xx" data-scdel="${i}" title="Remove">×</button>`; }).join('')}</div>
+      <div style="margin-top:6px"><button class="btn alt" data-scadd type="button">+ Add criterion</button></div>
+      <div class="scok ${mScoreInfo(m.scores).ok ? 'good' : 'warn'}" id="g-scok">${mScoreInfo(m.scores).ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + mMaxSum(m.scores) + ', not 100 · '}${mScoreInfo(m.scores).line}</div></details>
+    <div style="display:flex;gap:8px"><div style="flex:1"><label>Hours played</label><input id="g-hrs" type="number" min="0" step="0.1" value="${esc(m.hours)}"></div>
+    <div style="flex:1"><label>Times played</label><input id="g-plays" type="number" min="0" step="1" value="${esc(m.plays)}" placeholder="optional"></div></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="g-uns" type="checkbox" style="width:auto" ${m.unsure ? 'checked' : ''}> Hours are an estimate (shows a red ?)</label>
+    <label>Hours note</label><input id="g-note" value="${esc(m.note)}" placeholder="e.g. Estimate for PC time">
+    <label>Status</label><select id="g-status">${Object.entries(GST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
+    <div class="acts"><button class="btn" data-gsave>Save</button>${m.id ? '<button class="btn danger" data-gdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+}
+const readGm = () => Object.assign(S.gm, { category: $('#g-cat').value, title: $('#g-title').value, year: $('#g-year').value, rating: $('#g-rate').value, plat: $('#g-plat').value, platNew: $('#g-platn') ? $('#g-platn').value : S.gm.platNew, hours: $('#g-hrs').value, plays: $('#g-plays').value, unsure: $('#g-uns').checked, note: $('#g-note').value, status: Number($('#g-status').value), scores: readScores() });
+async function saveGame() {
+  const m = readGm(), title = m.title.trim(); if (!title) return toast('Add a title first');
+  if (mFilled(m.scores) && m.scores.some(x => x[1] !== '' && (!String(x[0]).trim() || x[0] === '__new__'))) return toast('Give every scored criterion a name');
+  const num = v => String(v).trim() === '' ? null : Number(v), sum = mScoreSum(m.scores), rating = sum != null ? sum : num(m.rating);
+  if (rating != null && !(rating >= 0 && rating <= 10)) return toast('Rating must be between 0 and 10');
+  const platform = m.plat === '__new__' ? (String(m.platNew || '').trim() || null) : (m.plat || null);
+  if (m.plat === '__new__' && !platform) return toast('Type the new platform’s name');
+  const payload = { category: m.category, title, year: num(m.year), rating, platform, hours: num(m.hours), hours_unsure: !!m.unsure, plays: num(m.plays), note: String(m.note || '').trim() || null, status: m.status, scores: sum != null ? m.scores.filter(x => String(x[0]).trim() && x[0] !== '__new__').map(x => [String(x[0]).trim(), x[1] === '' ? null : Number(x[1]), Number(x[2])]) : null };
+  const res = m.id ? await db.from('games').update(payload).eq('id', m.id).select().single() : await db.from('games').insert(payload).select().single();
+  if (res.error) return toast('Save failed: ' + res.error.message);
+  S.games = S.games.filter(x => x.id !== res.data.id).concat(res.data); S.gm = null; render();
+}
+async function delGame() {
+  if (!confirm('Delete this game?')) return;
+  const { error } = await db.from('games').delete().eq('id', S.gm.id); if (error) return toast('Delete failed: ' + error.message);
+  S.games = S.games.filter(x => x.id !== S.gm.id); S.gm = null; render();
 }
 
 async function saveBook() {
@@ -917,17 +1009,17 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
+  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
   const bsc = document.querySelector('.bk-scroll'), bpos = bsc && !S.bkreset ? [bsc.scrollLeft, bsc.scrollTop] : null; S.bkreset = false;
-  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
-  app.innerHTML = `<div class="wrap ${S.tab === 'books' || S.tab === 'manga' ? 'wide' : ''}"><header><h1>Justin’s Sheet</h1>
-    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button></nav>
+  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
+  app.innerHTML = `<div class="wrap ${S.tab === 'books' || S.tab === 'manga' || S.tab === 'games' ? 'wide' : ''}"><header><h1>Justin’s Sheet</h1>
+    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
-    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : S.tab === 'books' ? booksView() : S.tab === 'manga' ? mangaView() : wheel())}</div>
+    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : S.tab === 'books' ? booksView() : S.tab === 'manga' ? mangaView() : S.tab === 'games' ? gamesView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
   if (bpos) { const n = document.querySelector('.bk-scroll'); if (n) { n.scrollLeft = bpos[0]; n.scrollTop = bpos[1]; } }
-  if (S.tab === 'books' || S.tab === 'manga') { markCont(); fitTitles(); }
+  if (S.tab === 'books' || S.tab === 'manga' || S.tab === 'games') { markCont(); fitTitles(); }
   const sh1 = document.querySelector('.sheet'); if (sh1 && mk === _mk) sh1.scrollTop = sy0; _mk = mk;
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
@@ -1010,8 +1102,8 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.bren = null; S.bm = null; S.mm = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
-  if (g('data-cancel')) { S.bren = null; S.bm = null; S.mm = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (t.classList.contains('modal')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
   if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
   if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
@@ -1037,8 +1129,18 @@ document.addEventListener('click', e => {
   if (g('data-mst')) { const v = Number(g('data-mst').dataset.mst); S.mst = S.mst === v ? null : v; return render(); }
   if (g('data-madd')) { S.mm = { id: null, category: MCATS[0], title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, unsure: false, reads: '', status: 6, scores: mBlank(MCATS[0]) }; return render(); }
   if (g('data-medit')) { const x = S.manga.find(v => v.id == g('data-medit').dataset.medit); S.mm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', read: x.chs_read ?? '', total: x.chs_total ?? '', ongoing: x.ongoing, unsure: !!x.read_unsure, reads: x.reads ?? '', status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? MMAX[y[0]] ?? 10]) : mBlank(x.category) }; return render(); }
-  if (g('data-scadd')) { readMm(); S.mm.scores.push(['__new__', '', 10]); return render(); }
-  if (g('data-scdel')) { readMm(); S.mm.scores.splice(Number(g('data-scdel').dataset.scdel), 1); return render(); }
+  if (g('data-scadd')) { if (S.gm) { readGm(); S.gm.scores.push(['__new__', '', 10]); } else { readMm(); S.mm.scores.push(['__new__', '', 10]); } return render(); }
+  if (g('data-scdel')) { const i = Number(g('data-scdel').dataset.scdel); if (S.gm) { readGm(); S.gm.scores.splice(i, 1); } else { readMm(); S.mm.scores.splice(i, 1); } return render(); }
+  if (g('data-gst')) { const v = Number(g('data-gst').dataset.gst); S.gst = S.gst === v ? null : v; return render(); }
+  if (g('data-gadd')) { S.gm = { id: null, category: GCATS[0], title: '', year: new Date().getFullYear(), rating: '', plat: '', platNew: '', hours: '', plays: '', unsure: false, note: '', status: 7, scores: gBlank(GCATS[0]) }; return render(); }
+  if (g('data-gedit')) { const x = S.games.find(v => v.id == g('data-gedit').dataset.gedit); S.gm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', plat: x.platform || '', platNew: '', hours: x.hours ?? '', plays: x.plays ?? '', unsure: !!x.hours_unsure, note: x.note || '', status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? GMAX[y[0]] ?? 10]) : gBlank(x.category) }; return render(); }
+  if (g('data-gsave')) return saveGame();
+  if (g('data-gdel')) return delGame();
+  if (g('data-gkey')) { const k = g('data-gkey').dataset.gkey, [c, d] = k.split('|'), band = mgBands(gList(c)).find(b => b.name === d), was = gClosed(c, band); S.gshut.delete(k); S.gopen.delete(k); (was ? S.gopen : S.gshut).add(k); saveSets(); return render(); }
+  if (g('data-gcolall')) { const all = GCATS.flatMap(c => mgBands(gList(c)).map(b => [c, b])), shut = all.every(([c, b]) => gClosed(c, b)); all.forEach(([c, b]) => { const k = c + '|' + b.name; S.gshut.delete(k); S.gopen.delete(k); (shut ? S.gopen : S.gshut).add(k); }); saveSets(); return render(); }
+  if (g('data-gwrap')) { S.gwrap = !S.gwrap; saveSets(); return render(); }
+  if (g('data-gunsure')) { S.gunsure = !S.gunsure; return render(); }
+  if (g('data-grate')) { S.grate = !S.grate; return render(); }
   if (g('data-msave')) return saveManga();
   if (g('data-mdel')) return delManga();
   if (g('data-mkey')) { const k = g('data-mkey').dataset.mkey, [c, d] = k.split('|'), band = mgBands(mgList(c)).find(b => b.name === d), was = mgClosed(c, band); S.mshut.delete(k); S.mopen.delete(k); (was ? S.mopen : S.mshut).add(k); saveSets(); return render(); }
@@ -1085,7 +1187,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
   if (e.target.id === 'm-cat' && S.mm) { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
-  if (e.target.classList.contains('scl')) { readMm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.mm.scores[i][2] = MMAX[v] ?? mCriteria()[v] ?? 10; return render(); }
+  if (e.target.id === 'g-cat' && S.gm) { readGm(); if (!mFilled(S.gm.scores)) S.gm.scores = gBlank(S.gm.category); return render(); }
+  if (e.target.id === 'g-plat' && S.gm) { readGm(); return render(); }
+  if (e.target.classList.contains('scl') && S.gm) { readGm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.gm.scores[i][2] = GMAX[v] ?? gCriteria()[v] ?? 10; return render(); }
+  if (e.target.classList.contains('scl') && S.mm) { readMm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.mm.scores[i][2] = MMAX[v] ?? mCriteria()[v] ?? 10; return render(); }
   if (e.target.id === 'b-pos') { S.bm.posTouched = true; return; }
   if (e.target.id === 'b-sec') { const sec = e.target.value; readBm(); const m = S.bm; m.section = sec; if (sec === 'Light Novels') m.rating = ''; if (!m.grpNew && !bookTree(sec).some(x => x.name === m.grp)) { m.grp = ''; m.sub = ''; m.subNew = false; } return render(); }
   if (e.target.id === 'b-grps' || e.target.id === 'b-subs') { const g = e.target.id === 'b-grps'; readBm(); if (g) { S.bm.sub = ''; S.bm.subNew = false; } render(); const n = $(g ? '#b-grp' : '#b-sub'); if (n && n.offsetParent) n.focus(); return; }
@@ -1097,10 +1202,11 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'b-grp' || e.target.id === 'b-sub' || e.target.id === 'b-year') return refreshPos();
-  if (e.target.classList.contains('sc') || e.target.classList.contains('scx')) { const sc = readScores(), t = mScoreSum(sc), r = $('#m-rate'), info = mScoreInfo(sc); r.readOnly = t != null; if (t != null) r.value = t.toFixed(1);
-    sc.forEach((x, i) => $('#m-sc' + i).classList.toggle('over', x[1] !== '' && Number(x[1]) > Number(x[2])));
-    const ok = $('#m-scok'); ok.className = 'scok ' + (info.ok ? 'good' : 'warn'); ok.textContent = (info.ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + info.mx + ', not 100 · ') + info.line; return; }
+  if (e.target.classList.contains('sc') || e.target.classList.contains('scx')) { const P = S.gm ? 'g' : 'm', sc = readScores(), t = mScoreSum(sc), r = $('#' + P + '-rate'), info = mScoreInfo(sc); r.readOnly = t != null; if (t != null) r.value = t.toFixed(1);
+    sc.forEach((x, i) => $('#' + P + '-sc' + i).classList.toggle('over', x[1] !== '' && Number(x[1]) > Number(x[2])));
+    const ok = $('#' + P + '-scok'); ok.className = 'scok ' + (info.ok ? 'good' : 'warn'); ok.textContent = (info.ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + info.mx + ', not 100 · ') + info.line; return; }
   if (e.target.id === 'mq') { S.mq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#mq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
+  if (e.target.id === 'gq') { S.gq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#gq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
   if (e.target.id === 'bq') { S.bq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#bq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
   if (e.target.dataset.ri !== undefined) { const r = S.wheel.res[Number(e.target.dataset.ri)], v = e.target.value; r.desc = v; r.src = v.trim() ? 'typed' : '';
     if (r.fid) { const f = S.entries.find(x => x.id === r.fid); if (!f || f.description !== v) r.fid = null; } return; } if (e.target.id === 'q') { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
