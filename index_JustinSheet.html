@@ -888,7 +888,7 @@ function bulkHtml() {
 
 function modalHtml() {
   const m = S.modal, cats = categories(m.category);
-  const futures = m.status !== 'done' ? by('future').filter(f => f.id !== m.id && f.category === m.category) : [];
+  const futures = m.status !== 'done' && (!String(m.description || '').trim() || m.pick) ? by('future').filter(f => f.id !== m.id && f.category === m.category) : [];   /* only offered while "What" is empty */
   const showDate = m.status === 'done' || m.finish;
   return `<div class="modal" data-close><div class="sheet">
     <h2>${m.id ? 'Edit item' : 'Add item'}</h2>
