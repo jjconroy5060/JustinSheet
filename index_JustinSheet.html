@@ -118,6 +118,11 @@ details.sc summary{cursor:pointer;margin-top:12px;font-weight:600}
 .mg-body.w2>*{break-inside:avoid}.mg-body.w2>.bk-grp{break-after:avoid;margin-top:5px}
 .gmx .bk-r{grid-template-columns:minmax(0,1fr) 40px 44px}
 .gm-s1{background:#c3e0b8}.gm-s2{background:#fff2cc}.gm-s3{background:#a9c4f2}.gm-s4{background:#7fd1d6}.gm-s5{background:#8aa6e6}.gm-s6{background:#f4cccc}.gm-s7{background:#c3ccd4}.gm-s8{background:#e3cfa6}
+.mu .bk-r{grid-template-columns:minmax(0,1fr) 44px 58px;padding:3px 6px;gap:3px}
+.mu-alb{background:#d9d3c9;font-weight:700;cursor:pointer}.mu-song{padding-left:16px !important}.mu-song.nc>span:nth-child(2){opacity:.5;text-decoration:line-through}
+.mu-l1{background:#c3ccd4}.mu-l2{background:#fff2cc}.mu-l3{background:#a9c4f2}
+.mu-alb .ed{font-weight:400;opacity:.5;margin-left:6px;cursor:pointer}.mu-alb .ed:hover{opacity:1}
+.usgrid{display:grid;grid-template-columns:minmax(0,1fr) 56px 62px 54px 24px 24px;gap:4px;align-items:center;margin-bottom:3px}.usgrid input,.usgrid select{padding:5px 6px;font-size:.82rem;min-width:0}.usgrid.hd{font-size:.68rem;opacity:.65;margin-bottom:2px}
 .md-s1{background:#c3e0b8}.md-s2{background:#fff2cc}.md-s3{background:#bddcf0}.md-s4{background:#a9c4f2}.md-s5{background:#e2d9f3}.md-s6{background:#f4cccc}.md-s7{background:#c3ccd4}
 .mg-s1{background:#c3e0b8}.mg-s2{background:#cdb3ef}.mg-s3{background:#fff2cc}.mg-s4{background:#a9c4f2}.mg-s5{background:#f4cccc}.mg-s6{background:#c3ccd4}.mg-s7{background:#f9cb9c}
 .bk-plus{background:none;border:0;color:inherit;cursor:pointer;font-weight:700;padding:0 3px;opacity:.6;flex:none}
@@ -156,8 +161,8 @@ const db = supabase.createClient(
 );
 let _mk = '';
 function loadSet(n) { try { return new Set(JSON.parse(localStorage.getItem(n) || '[]')); } catch (e) { return new Set(); } }
-function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); localStorage.setItem('ga_shut', JSON.stringify([...S.gshut])); localStorage.setItem('ga_open', JSON.stringify([...S.gopen])); localStorage.setItem('ga_wrap', S.gwrap ? '1' : '0'); localStorage.setItem('md_shut', JSON.stringify([...S.mdshut])); localStorage.setItem('md_open', JSON.stringify([...S.mdopen])); localStorage.setItem('md_wrap', S.mdwrap ? '1' : '0'); localStorage.setItem('bk_wrap', S.bwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
-const S = { media: [], mdErr: null, mdm: null, mdq: '', mdst: null, mdrate: false, mdsub: 'shows', mdshut: loadSet('md_shut'), mdopen: loadSet('md_open'), mdwrap: (() => { try { return localStorage.getItem('md_wrap') !== '0'; } catch (e) { return true; } })(), games: [], gaErr: null, gm: null, gq: '', gst: null, gunsure: false, grate: false, gshut: loadSet('ga_shut'), gopen: loadSet('ga_open'), gwrap: (() => { try { return localStorage.getItem('ga_wrap') !== '0'; } catch (e) { return true; } })(), manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); localStorage.setItem('ga_shut', JSON.stringify([...S.gshut])); localStorage.setItem('ga_open', JSON.stringify([...S.gopen])); localStorage.setItem('ga_wrap', S.gwrap ? '1' : '0'); localStorage.setItem('md_shut', JSON.stringify([...S.mdshut])); localStorage.setItem('md_open', JSON.stringify([...S.mdopen])); localStorage.setItem('md_wrap', S.mdwrap ? '1' : '0'); localStorage.setItem('mu_open', JSON.stringify([...S.muopen])); localStorage.setItem('mu_ashut', JSON.stringify([...S.muashut])); localStorage.setItem('bk_wrap', S.bwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
+const S = { malb: [], msong: [], muErr: null, mum: null, muq: '', muopen: loadSet('mu_open'), muashut: loadSet('mu_ashut'), media: [], mdErr: null, mdm: null, mdq: '', mdst: null, mdrate: false, mdsub: 'shows', mdshut: loadSet('md_shut'), mdopen: loadSet('md_open'), mdwrap: (() => { try { return localStorage.getItem('md_wrap') !== '0'; } catch (e) { return true; } })(), games: [], gaErr: null, gm: null, gq: '', gst: null, gunsure: false, grate: false, gshut: loadSet('ga_shut'), gopen: loadSet('ga_open'), gwrap: (() => { try { return localStorage.getItem('ga_wrap') !== '0'; } catch (e) { return true; } })(), manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -183,6 +188,7 @@ async function loadAll() {
   const c = await db.from('current_items').select('*').order('sort_order');
   S.current = c.data || []; S.curErr = c.error ? c.error.message : null;
   const bk = await db.from('books').select('*').order('sort_order').range(0, 999); S.books = bk.data || []; S.bkErr = bk.error ? bk.error.message : null;
+  await loadMusic();
   const md = await db.from('media').select('*').range(0, 999); S.media = md.data || []; S.mdErr = md.error ? md.error.message : null;
   const ga = await db.from('games').select('*').range(0, 999); S.games = ga.data || []; S.gaErr = ga.error ? ga.error.message : null;
   const mg = await db.from('manga').select('*').range(0, 999); S.manga = mg.data || []; S.mgErr = mg.error ? mg.error.message : null;
@@ -471,7 +477,7 @@ function booksView() {
 /* titles that spill onto a second line get a smaller font; if even that is not enough they are cut with … (hover shows the full title) */
 /* in a column that wraps into two halves, a series/decade that carries over gets a "… cont." header at the top of the second half */
 function markCont() {
-  if (!['books', 'manga', 'games', 'media'].includes(S.tab)) return;
+  if (!['books', 'manga', 'games', 'media', 'music'].includes(S.tab)) return;
   document.querySelectorAll('.bk-scroll .cont').forEach(e => e.remove());
   document.querySelectorAll('.bk-scroll .mg-body.w2').forEach(body => {
     for (let n = 0; n < 4; n++) {
@@ -485,7 +491,7 @@ function markCont() {
   });
 }
 function fitTitles() {
-  if (!['books', 'manga', 'games', 'media'].includes(S.tab)) return;
+  if (!['books', 'manga', 'games', 'media', 'music'].includes(S.tab)) return;
   const els = [...document.querySelectorAll('.bk-scroll .tt')]; els.forEach(e => { e.style.fontSize = ''; });
   els.filter(e => e.clientWidth > 0 && e.scrollWidth > e.clientWidth + 1).map(e => [e, parseFloat(getComputedStyle(e).fontSize), e.clientWidth / e.scrollWidth])
     .forEach(([e, f, r]) => { e.style.fontSize = Math.max(8.5, Math.floor(f * r * 97) / 100) + 'px'; });
@@ -836,6 +842,131 @@ async function delMedia() {
   S.media = S.media.filter(x => x.id !== S.mdm.id); S.mdm = null; render();
 }
 
+/* ---------------- Music (genres > artists > albums > songs) ---------------- */
+const MUG = ['Alternative', 'Indie', 'Rock', 'Pop/Electronic', 'Soul', 'Hip Hop', 'Other'];
+const MUL = { 1: 'No listens', 2: 'Have heard', 3: 'Know lyrics' };
+async function loadMusic() {
+  const a = await db.from('music_albums').select('*').range(0, 999), so = await db.from('music_songs').select('*').order('sort_order').range(0, 4999);
+  S.malb = a.data || []; S.msong = so.data || []; S.muErr = a.error ? a.error.message : so.error ? so.error.message : null;
+}
+const muSecs = x => { x = Math.round(x); const h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60), s = x % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`; };
+const muParse = t => { t = String(t || '').trim(); if (!t) return { v: null }; const p = t.split(':'); if (p.length > 3 || p.some(x => !/^\d+$/.test(x))) return { err: true }; if (p.length === 1) return { v: +p[0] }; if (p.length === 2) return +p[1] < 60 ? { v: +p[0] * 60 + +p[1] } : { err: true }; return +p[1] < 60 && +p[2] < 60 ? { v: +p[0] * 3600 + +p[1] * 60 + +p[2] } : { err: true }; };
+/* album rating = average of counted song ratings x 0.6 + average of Themes/Lyrics/Culture x 0.4; blank until both parts exist */
+function muCalc(songs, t, l, c) {
+  const rs = songs.filter(x => x.counts !== false && x.rating != null && x.rating !== '').map(x => Number(x.rating)), tl = [t, l, c];
+  if (!rs.length || tl.some(v => v == null || v === '' || isNaN(Number(v)))) return null;
+  const sa = rs.reduce((a, b) => a + b, 0) / rs.length, ta = tl.reduce((a, b) => a + Number(b), 0) / 3;
+  return { sa, ta, r: sa * 0.6 + ta * 0.4 };
+}
+const muSongs = id => S.msong.filter(x => x.album_id === id).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+const muAlbR = a => { const c = muCalc(muSongs(a.id), a.themes, a.lyrics, a.culture); return c ? c.r : null; };
+const muAlbSecs = a => muSongs(a.id).reduce((n, x) => n + (x.secs || 0), 0);
+const muAvg = list => { const r = list.map(muAlbR).filter(v => v != null); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; };
+const muRf = r => r == null ? '' : r.toFixed(2) + '<span class="star">★</span>';
+const muSrf = r => r == null ? '' : Number(r).toFixed(1) + '<span class="star">★</span>';
+const muArtists = g => { const by = {}; S.malb.filter(a => a.genre === g).forEach(a => (by[a.artist] = by[a.artist] || []).push(a)); return Object.entries(by).map(([name, albs]) => ({ name, year: albs.map(a => a.artist_year).filter(Boolean).sort()[0] ?? 9999, albs: albs.sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.id - b.id) })).sort((a, b) => a.year - b.year || a.name.localeCompare(b.name)); };
+
+function musicView() {
+  if (S.muErr) return `<div class="card">Couldn’t load Music: ${esc(S.muErr)}<br><span class="cat">Run 16_music.sql in the Supabase SQL Editor first.</span></div>`;
+  const q = norm(S.muq), allOpen = S.malb.length && S.malb.every(a => S.muopen.has(a.id));
+  const cards = MUG.map(g => {
+    const arts = muArtists(g), all = S.malb.filter(a => a.genre === g), secs = all.reduce((n, a) => n + muAlbSecs(a), 0);
+    const body = arts.map(ar => {
+      const albs = ar.albs.filter(a => !q || norm(ar.name).includes(q) || norm(a.title).includes(q) || muSongs(a.id).some(x => norm(x.title).includes(q)));
+      if (!albs.length) return '';
+      const ashut = !q && S.muashut.has(ar.name + '|' + g);
+      const head = `<div class="bk-r bk-grp" data-muakey="${esc(ar.name + '|' + g)}" title="Click to ${ashut ? 'expand' : 'collapse'}"><span class="t"><span class="cr">${ashut ? '▸' : '▾'}</span><span class="tt">${esc(ar.name)} · ${ar.albs.length}</span></span><span>${muRf(muAvg(ar.albs))}</span><span>${muSecs(ar.albs.reduce((n, a) => n + muAlbSecs(a), 0))}</span></div>`;
+      if (ashut) return head;
+      return head + albs.map(a => {
+        const open = S.muopen.has(a.id) || (q && !norm(a.title).includes(q) && !norm(ar.name).includes(q)), ss = muSongs(a.id), r = muAlbR(a), sec = muAlbSecs(a);
+        const rows = open ? ss.filter(x => !q || norm(ar.name).includes(q) || norm(a.title).includes(q) || norm(x.title).includes(q)).map(x => `<div class="bk-r bk-bk mu-song mu-l${x.listen} ${x.counts === false ? 'nc' : ''}" data-muedit="${a.id}" title="${x.counts === false ? 'Not counted in the album rating' : ''}"><span class="t"><span class="tt">${esc(x.title)}</span></span><span>${muSrf(x.rating)}</span><span>${x.secs != null ? muSecs(x.secs) : ''}</span></div>`).join('') : '';
+        return `<div class="bk-r bk-bk mu-alb" data-mutog="${a.id}" title="${esc(a.title + (a.year ? ' (' + a.year + ')' : ''))}"><span class="t"><span class="cr">${open ? '▾' : '▸'}</span><span class="tt">${esc(a.title)}</span><span class="ed" data-muedit="${a.id}" title="Edit album">✎</span></span><span>${muRf(r)}</span><span>${sec ? muSecs(sec) : ''}</span></div>${rows}`;
+      }).join('');
+    }).join('');
+    return `<div class="bk-sec mu"><div class="bk-sticky"><div class="bk-r bk-lab"><span class="t">${g === MUG[0] ? 'Music List' : ''}</span><span>Rating</span><span>Time</span></div>
+      <div class="bk-r bk-title"><span class="t"><span class="tt">${esc(g)} · ${all.length}</span></span><span>${muRf(muAvg(all))}</span><span>${secs ? muSecs(secs) : ''}</span></div></div>
+      <div>${body || '<div class="bk-r bk-bk mu-l1" style="cursor:default">Nothing here.</div>'}</div></div>`;
+  }).join('');
+  return `<div class="bk-bar"><button class="btn" data-muadd>Add album</button>
+    <span class="chip mu-l1" style="cursor:default">No listens</span><span class="chip mu-l2" style="cursor:default">Have heard</span><span class="chip mu-l3" style="cursor:default">Know lyrics</span>
+    <input id="muq" placeholder="Search artist, album or song" value="${esc(S.muq)}" style="width:230px"><button class="btn alt" data-mucolall>${allOpen ? 'Collapse all albums' : 'Expand all albums'}</button>
+    <span class="cat">${S.malb.length} albums · ${S.msong.length} songs</span></div><div class="bk-scroll">${cards}</div>`;
+}
+function musicModalHtml() {
+  const m = S.mum, arts = [...new Set(S.malb.filter(a => a.genre === m.genre).map(a => a.artist))], isNewA = m.artist === '__new__';
+  return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit album' : 'Add album'}</h2>
+    <label>Genre</label><select id="u-genre">${MUG.map(g => `<option ${g === m.genre ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>
+    <label>Artist</label><select id="u-art">${arts.map(a => `<option value="${esc(a)}" ${a === m.artist ? 'selected' : ''}>${esc(a)}</option>`).join('')}<option value="__new__" ${isNewA || !arts.length ? 'selected' : ''}>New artist…</option></select>${isNewA || !arts.length ? `<input id="u-artn" placeholder="Artist name" value="${esc(m.artistNew || '')}" style="margin-top:4px">` : ''}
+    <div style="display:flex;gap:8px"><div style="flex:1"><label>Artist year (first album/formed)</label><input id="u-ayr" type="number" value="${esc(m.artistYear)}"></div><div style="flex:1"><label>Album year</label><input id="u-year" type="number" value="${esc(m.year)}"></div></div>
+    <label>Album title</label><input id="u-title" value="${esc(m.title)}">
+    <label>Themes · Lyrics · Culture (0–5)</label>
+    <div style="display:flex;gap:8px"><input id="u-t" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Themes" value="${esc(m.t)}"><input id="u-l" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Lyrics" value="${esc(m.l)}"><input id="u-c" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Culture" value="${esc(m.c)}"></div>
+    <div class="scok good" id="u-prev" style="margin-top:6px"></div>
+    <label style="margin-top:10px">Songs</label>
+    <div class="usgrid hd"><span>Title</span><span>M:SS</span><span>Rating</span><span>Listen</span><span title="Counts toward the album rating">Cnt</span><span></span></div>
+    ${m.songs.map((x, i) => `<div class="usgrid"><input class="us-t" data-i="${i}" value="${esc(x.title)}"><input class="us-m uin" data-i="${i}" value="${esc(x.time)}" placeholder="4:21"><input class="us-r uin" data-i="${i}" type="number" min="0" max="5" step="0.1" value="${esc(x.rating)}"><select class="us-l" data-i="${i}">${[1, 2, 3].map(k => `<option value="${k}" ${x.listen == k ? 'selected' : ''} title="${MUL[k]}">${k}</option>`).join('')}</select><input class="us-c uin" data-i="${i}" type="checkbox" style="width:auto" ${x.counts ? 'checked' : ''} title="Count this song's rating toward the album rating"><button class="xx" data-musdel="${i}" title="Remove song">×</button></div>`).join('')}
+    <div style="margin-top:6px"><button class="btn alt" data-musadd type="button">+ Add song</button> <span class="cat">Listen: 1 No listens · 2 Have heard · 3 Know lyrics</span></div>
+    <details class="sc" style="margin-top:8px" ${m.id ? '' : 'open'}><summary>Paste a whole track list <span class="cat">· one song per line, title and time</span></summary>
+      <textarea id="u-paste" rows="6" placeholder="Look Your Back! - 4:59&#10;A Seagull &amp; Clouds - 4:56&#10;Flying Beagle - 6:31" style="width:100%;margin-top:6px;font:inherit;padding:8px;border:1px solid var(--line,#ccc);border-radius:8px"></textarea>
+      <div style="margin-top:4px"><button class="btn alt" data-mupaste type="button">Add these songs</button> <span class="cat">Time can come before or after the title. Numbers and “plays” lines are ignored.</span></div></details>
+    <div class="acts"><button class="btn" data-musave>Save</button>${m.id ? '<button class="btn danger" data-mudel>Delete album</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+}
+function readUm() {
+  const m = S.mum, art = $('#u-art').value;
+  m.genre = $('#u-genre').value; m.artist = art; if ($('#u-artn')) m.artistNew = $('#u-artn').value;
+  m.artistYear = $('#u-ayr').value; m.year = $('#u-year').value; m.title = $('#u-title').value; m.t = $('#u-t').value; m.l = $('#u-l').value; m.c = $('#u-c').value;
+  m.songs.forEach((x, i) => { const q = s => document.querySelector(`.${s}[data-i="${i}"]`); x.title = q('us-t').value; x.time = q('us-m').value; x.rating = q('us-r').value; x.listen = Number(q('us-l').value); x.counts = q('us-c').checked; });
+  return m;
+}
+function muPreview() {
+  const m = readUm(), n = v => v === '' ? null : Number(v), c = muCalc(m.songs.map(x => ({ rating: n(x.rating), counts: x.counts })), n(m.t), n(m.l), n(m.c)), el = $('#u-prev'); if (!el) return;
+  const cnt = m.songs.filter(x => x.counts && x.rating !== '').length;
+  el.className = 'scok ' + (c ? 'good' : 'warn');
+  el.textContent = c ? `Album rating ${c.r.toFixed(2)} = songs avg ${c.sa.toFixed(2)} (${cnt} counted) × 0.6 + Themes/Lyrics/Culture avg ${c.ta.toFixed(2)} × 0.4` : 'Album rating shows once at least one counted song is rated and Themes, Lyrics and Culture are all filled.';
+}
+/* one song per line: "Title - 4:21", "4:21 Title", "3. Title 4:21"; lines like "1.9M plays" are skipped */
+function muParseList(text) {
+  const out = [];
+  String(text || '').split(/\r?\n/).map(l => l.trim()).filter(l => l && !/plays?\s*$/i.test(l) && !/^[\d.,]+[KMB]?\s*(plays?|views?)?$/i.test(l)).forEach(l => {
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(l) && out.length && !out[out.length - 1].time) { out[out.length - 1].time = l; return; }   /* a time on its own line belongs to the song above */
+    const r = muParseLine(l); if (r) out.push(r);
+  });
+  return out;
+}
+function muParseLine(l) {
+  return [l].map(l => {
+    const tm = [...l.matchAll(/(?<![\d:])(\d{1,2}:\d{2}(?::\d{2})?)(?![\d:])/g)], last = tm[tm.length - 1];
+    let title = last ? (l.slice(0, last.index) + ' ' + l.slice(last.index + last[0].length)) : l;
+    title = title.replace(/^\s*\d{1,3}\s*[.)\-–—:]?\s+/, '').replace(/[\s|,\-–—:\t]+$/, '').replace(/^[\s|,\-–—:\t]+/, '').replace(/\s{2,}/g, ' ').trim();
+    return title ? { id: null, title, time: last ? last[1] : '', rating: '', listen: 1, counts: true } : null;
+  })[0];
+}
+async function saveMusic() {
+  const m = readUm(), title = m.title.trim(), art = (m.artist === '__new__' || !S.malb.some(a => a.genre === m.genre && a.artist === m.artist) ? (m.artist === '__new__' ? m.artistNew : m.artist) : m.artist) || '';
+  if (!title) return toast('Add an album title first'); if (!String(art).trim()) return toast('Add the artist name');
+  const num = v => String(v).trim() === '' ? null : Number(v);
+  for (const k of ['t', 'l', 'c']) { const v = num(m[k]); if (v != null && !(v >= 0 && v <= 5)) return toast('Themes / Lyrics / Culture must be 0–5'); }
+  const songs = []; for (const [i, x] of m.songs.entries()) { if (!String(x.title).trim()) continue; const t = muParse(x.time); if (t.err) return toast(`Song "${x.title}": time should look like 4:21`); const r = num(x.rating); if (r != null && !(r >= 0 && r <= 5)) return toast(`Song "${x.title}": rating must be 0–5`); songs.push({ id: x.id, title: String(x.title).trim(), secs: t.v, rating: r, listen: x.listen, counts: !!x.counts }); }
+  const payload = { genre: m.genre, artist: String(art).trim(), artist_year: num(m.artistYear), title, year: num(m.year), themes: num(m.t), lyrics: num(m.l), culture: num(m.c) };
+  const res = m.id ? await db.from('music_albums').update(payload).eq('id', m.id).select().single() : await db.from('music_albums').insert(payload).select().single();
+  if (res.error) return toast('Save failed: ' + res.error.message);
+  const aid = res.data.id;
+  if (payload.artist_year != null) await db.from('music_albums').update({ artist_year: payload.artist_year }).eq('genre', payload.genre).eq('artist', payload.artist);
+  const keep = songs.filter(x => x.id).map(x => x.id), gone = muSongs(aid).map(x => x.id).filter(id => !keep.includes(id));
+  if (gone.length) { const d = await db.from('music_songs').delete().in('id', gone); if (d.error) return toast('Save failed: ' + d.error.message); }
+  for (const [i, x] of songs.entries()) {
+    const row = { sort_order: i, title: x.title, secs: x.secs, rating: x.rating, listen: x.listen, counts: x.counts };
+    const w = x.id ? await db.from('music_songs').update(row).eq('id', x.id) : await db.from('music_songs').insert({ ...row, album_id: aid });
+    if (w.error) return toast('Save failed: ' + w.error.message);
+  }
+  S.mum = null; await loadMusic(); render();
+}
+async function delMusic() {
+  if (!confirm('Delete this album and its songs?')) return;
+  const { error } = await db.from('music_albums').delete().eq('id', S.mum.id); if (error) return toast('Delete failed: ' + error.message);
+  S.mum = null; await loadMusic(); render();
+}
+
 async function saveBook() {
   const m = readBm(), title = m.title.trim(); if (!title) return toast('Add a title first');
   const ln = m.section === 'Light Novels', sz = parseSize(m.size); if (sz.err) return toast('Enter a number like 212000 or 212k');
@@ -1108,17 +1239,18 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
+  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.mum ? musicModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
   const bsc = document.querySelector('.bk-scroll'), bpos = bsc && !S.bkreset ? [bsc.scrollLeft, bsc.scrollTop] : null; S.bkreset = false;
-  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
-  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media'].includes(S.tab) ? 'wide' : ''}"><header><h1>Justin’s Sheet</h1>
-    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button><button class="${S.tab === 'media' ? 'on' : ''}" data-tab="media">Media</button></nav>
+  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.mum ? 'u' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
+  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music'].includes(S.tab) ? 'wide' : ''}"><header><h1>Justin’s Sheet</h1>
+    <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button><button class="${S.tab === 'media' ? 'on' : ''}" data-tab="media">Media</button><button class="${S.tab === 'music' ? 'on' : ''}" data-tab="music">Music</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
-    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : S.tab === 'books' ? booksView() : S.tab === 'manga' ? mangaView() : S.tab === 'games' ? gamesView() : S.tab === 'media' ? mediaView() : wheel())}</div>
+    ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : S.tab === 'books' ? booksView() : S.tab === 'manga' ? mangaView() : S.tab === 'games' ? gamesView() : S.tab === 'media' ? mediaView() : S.tab === 'music' ? musicView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
   if (bpos) { const n = document.querySelector('.bk-scroll'); if (n) { n.scrollLeft = bpos[0]; n.scrollTop = bpos[1]; } }
-  if (['books', 'manga', 'games', 'media'].includes(S.tab)) { markCont(); fitTitles(); }
+  if (['books', 'manga', 'games', 'media', 'music'].includes(S.tab)) { markCont(); fitTitles(); }
+  if (S.mum) muPreview();
   const sh1 = document.querySelector('.sheet'); if (sh1 && mk === _mk) sh1.scrollTop = sy0; _mk = mk;
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
 }
@@ -1201,8 +1333,8 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
-  if (g('data-cancel')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (t.classList.contains('modal')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
   if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
   if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
@@ -1228,6 +1360,16 @@ document.addEventListener('click', e => {
   if (g('data-mst')) { const v = Number(g('data-mst').dataset.mst); S.mst = S.mst === v ? null : v; return render(); }
   if (g('data-madd')) { S.mm = { id: null, category: MCATS[0], title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, unsure: false, reads: '', status: 6, scores: mBlank(MCATS[0]) }; return render(); }
   if (g('data-medit')) { const x = S.manga.find(v => v.id == g('data-medit').dataset.medit); S.mm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', read: x.chs_read ?? '', total: x.chs_total ?? '', ongoing: x.ongoing, unsure: !!x.read_unsure, reads: x.reads ?? '', status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? MMAX[y[0]] ?? 10]) : mBlank(x.category) }; return render(); }
+  if (g('data-muedit')) { const a = S.malb.find(v => v.id == g('data-muedit').dataset.muedit); S.mum = { id: a.id, genre: a.genre, artist: a.artist, artistNew: '', artistYear: a.artist_year ?? '', year: a.year ?? '', title: a.title, t: a.themes ?? '', l: a.lyrics ?? '', c: a.culture ?? '', songs: muSongs(a.id).map(x => ({ id: x.id, title: x.title, time: x.secs != null ? muSecs(x.secs) : '', rating: x.rating ?? '', listen: x.listen, counts: x.counts !== false })) }; return render(); }
+  if (g('data-mutog')) { const id = Number(g('data-mutog').dataset.mutog); S.muopen.has(id) ? S.muopen.delete(id) : S.muopen.add(id); saveSets(); return render(); }
+  if (g('data-muakey')) { const k = g('data-muakey').dataset.muakey; S.muashut.has(k) ? S.muashut.delete(k) : S.muashut.add(k); saveSets(); return render(); }
+  if (g('data-mucolall')) { const all = S.malb.length && S.malb.every(a => S.muopen.has(a.id)); S.muopen.clear(); if (!all) S.malb.forEach(a => S.muopen.add(a.id)); saveSets(); return render(); }
+  if (g('data-muadd')) { S.mum = { id: null, genre: MUG[0], artist: muArtists(MUG[0])[0]?.name || '__new__', artistNew: '', artistYear: '', year: new Date().getFullYear(), title: '', t: '', l: '', c: '', songs: [{ id: null, title: '', time: '', rating: '', listen: 1, counts: true }] }; return render(); }
+  if (g('data-musadd')) { readUm(); S.mum.songs.push({ id: null, title: '', time: '', rating: '', listen: 1, counts: true }); render(); const ins = document.querySelectorAll('.us-t'); if (ins.length) ins[ins.length - 1].focus(); return; }
+  if (g('data-musdel')) { readUm(); S.mum.songs.splice(Number(g('data-musdel').dataset.musdel), 1); return render(); }
+  if (g('data-mupaste')) { const add = muParseList($('#u-paste').value); if (!add.length) return toast('Paste some songs first'); readUm(); const sg = S.mum.songs.filter(x => String(x.title).trim() || x.time || x.rating !== ''); S.mum.songs = sg.concat(add); render(); return toast(add.length + ' songs added — check them, then Save'); }
+  if (g('data-musave')) return saveMusic();
+  if (g('data-mudel')) return delMusic();
   if (g('data-mdsubtab')) { S.mdsub = g('data-mdsubtab').dataset.mdsubtab; S.mdst = null; S.mdq = ''; S.bkreset = true; return render(); }
   if (g('data-mdst')) { const v = Number(g('data-mdst').dataset.mdst); S.mdst = S.mdst === v ? null : v; return render(); }
   if (g('data-mdadd')) { const cat = S.mdsub === 'movies' ? DMOV : DCATS[0]; S.mdm = { id: null, category: cat, title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, mins: '', status: 7, scores: dBlank(cat) }; return render(); }
@@ -1295,6 +1437,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
   if (e.target.id === 'm-cat' && S.mm) { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
+  if (S.mum && (e.target.id === 'u-genre' || e.target.id === 'u-art')) { readUm(); if (e.target.id === 'u-genre') { const a = [...new Set(S.malb.filter(x => x.genre === S.mum.genre).map(x => x.artist))]; if (!a.includes(S.mum.artist)) S.mum.artist = a[0] || '__new__'; } return render(); }
+  if (S.mum && e.target.classList.contains('us-l')) return muPreview();
   if (e.target.id === 'd-cat' && S.mdm) { readDm(); if (!mFilled(S.mdm.scores)) S.mdm.scores = dBlank(S.mdm.category); return render(); }
   if (e.target.classList.contains('scl') && S.mdm) { readDm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.mdm.scores[i][2] = DMAX[v] ?? dCriteria()[v] ?? 10; return render(); }
   if (e.target.id === 'g-cat' && S.gm) { readGm(); if (!mFilled(S.gm.scores)) S.gm.scores = gBlank(S.gm.category); return render(); }
@@ -1316,6 +1460,8 @@ document.addEventListener('input', e => {
     sc.forEach((x, i) => $('#' + P + '-sc' + i).classList.toggle('over', x[1] !== '' && Number(x[1]) > Number(x[2])));
     const ok = $('#' + P + '-scok'); ok.className = 'scok ' + (info.ok ? 'good' : 'warn'); ok.textContent = (info.ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + info.mx + ', not 100 · ') + info.line; return; }
   if (e.target.id === 'mq') { S.mq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#mq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
+  if (S.mum && (e.target.classList.contains('uin') || e.target.classList.contains('us-c'))) return muPreview();
+  if (e.target.id === 'muq') { S.muq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#muq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
   if (e.target.id === 'mdq') { S.mdq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#mdq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
   if (e.target.id === 'gq') { S.gq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#gq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
   if (e.target.id === 'bq') { S.bq = e.target.value; const pos = e.target.selectionStart, sc = document.querySelector('.bk-scroll'), y = sc ? sc.scrollTop : 0; render(); const q = $('#bq'); q.focus(); q.setSelectionRange(pos, pos); const n = document.querySelector('.bk-scroll'); if (n) n.scrollTop = y; return; }
