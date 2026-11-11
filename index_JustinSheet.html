@@ -12,6 +12,11 @@
 :root{--bg:#f7f4f8;--card:#fff;--ink:#2a2030;--mute:#7a6f82;--line:#e4dce8;--accent:#7b4a8a;--accent-ink:#fff;--prio:#d393a1;--fut:#c09fc2;--done:#8aa68f;--danger:#b4474f}
 @media(prefers-color-scheme:dark){:root{--bg:#1a141d;--card:#251d29;--ink:#efe8f2;--mute:#a597ad;--line:#3a2f40;--accent:#c09fc2;--accent-ink:#1a141d;--prio:#d393a1;--fut:#8e6f93;--done:#7b9a82;--danger:#e0707a}}
 *{box-sizing:border-box}
+.futlist{max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:6px}
+.futlist div{padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--line);font-size:.92rem}
+.futlist div:last-child{border-bottom:0}
+.futlist div:hover{background:rgba(127,127,127,.12)}
+.futlist div.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.45 ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
 h1,h2,h3{margin:0;line-height:1.2}
@@ -890,13 +895,14 @@ function modalHtml() {
     ${!m.id ? `<label>Add to</label><select id="m-status">${[['priority', 'Priority'], ['future', 'Future'], ['done', 'Done']].map(([k, l]) => `<option value="${k}" ${m.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
     <label>Category</label>
     <select id="m-cat"><option value="">No category</option>${cats.map(c => `<option ${c === m.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
-    ${futures.length ? `<label>Choose from Future (${futures.length})</label><select id="m-pick"><option value="">Pick one…</option>${futures.map(f => `<option value="${f.id}">${esc(f.description)}</option>`).join('')}</select>` : ''}
+    ${futures.length ? `<label>In Future for ${esc(m.category)} (${futures.length}) — tap one to use it</label><div class="futlist">${futures.map(f => `<div data-pickf="${f.id}" class="${m.pick == f.id ? 'on' : ''}">${esc(f.description)}</div>`).join('')}</div>` : ''}
     ${m.status !== 'done' && mapped(m.category) ? `<button class="btn alt" data-mroll style="margin-top:10px">${mapped(m.category).current_cat === 'roguelike' ? 'Roll a roguelike' : 'Roll from Current'}</button>` : ''}
     <label>What</label><textarea id="m-desc" rows="3">${esc(m.description)}</textarea>
     ${showDate ? `<label>Date</label><input id="m-date" type="date" value="${esc(m.done_on || today())}">` : ''}
     <div class="acts">
       <button class="btn" data-save="${m.finish ? 'done' : m.status}">${m.finish ? 'Save as done' : 'Save'}</button>
       ${m.status === 'priority' && !m.finish ? '<button class="btn alt" data-save="done">Mark done</button>' : ''}
+      ${m.status === 'priority' && m.id && !m.finish ? '<button class="btn alt" data-save="future">Move to Future</button>' : ''}
       ${m.status === 'future' ? '<button class="btn alt" data-save="priority">Move to Priority</button>' : ''}
       ${m.status === 'done' ? '<button class="btn alt" data-save="priority">Back to Priority</button>' : ''}
       ${m.id ? '<button class="btn danger" data-del>Delete</button>' : ''}
@@ -927,14 +933,14 @@ function render() {
 }
 
 /* ---------- actions ---------- */
-function openModal(e, opts = {}) { S.modal = { id: e.id || null, category: e.category || '', description: e.description || '', status: e.status, done_on: e.done_on || '', finish: !!opts.finish }; render(); }
+function openModal(e, opts = {}) { S.modal = { pick: null, id: e.id || null, category: e.category || '', description: e.description || '', status: e.status, done_on: e.done_on || '', finish: !!opts.finish }; render(); }
 
 async function save(status) {
   const m = S.modal;
   const category = $('#m-cat').value || null, description = $('#m-desc').value.trim() || null;
   const done_on = status === 'done' ? ($('#m-date')?.value || today()) : null;
   if (status === 'done' && !category && !description) return toast('Add a category or what you did first');
-  const pick = $('#m-pick')?.value;
+  const pick = m.pick;
   const payload = { category, description, status, done_on };
   let res;
   if (m.id) res = await db.from('log_entries').update(payload).eq('id', m.id).select().single();
@@ -1064,6 +1070,8 @@ document.addEventListener('click', e => {
   if (g('data-bulk')) { S.bulk = { status: g('data-bulk').dataset.bulk }; return render(); }
   if (g('data-fill')) return fillLines();
   if (g('data-bsave')) return saveBulk();
+  if (g('data-pickf')) { const m = S.modal, id = g('data-pickf').dataset.pickf, f = S.entries.find(x => x.id == id); if (!f) return;
+    const was = m.pick == id; m.pick = was ? null : f.id; $('#m-desc').value = was ? '' : (f.description || ''); document.querySelectorAll('.futlist div').forEach(d => d.classList.toggle('on', m.pick != null && d.dataset.pickf == m.pick)); return; }
   if (g('data-save')) return save(g('data-save').dataset.save);
   if (g('data-del')) return del();
   if (g('data-tab')) { S.tab = g('data-tab').dataset.tab; S.bkreset = true; S.anchor = S.tab === 'wheel'; render(); if (S.tab !== 'wheel') window.scrollTo(0, 0); return; }
@@ -1076,7 +1084,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
   if (e.key === 'Enter' && e.target.id === 'r-new') addRogue(); });
 document.addEventListener('change', e => {
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
-  if (e.target.id === 'm-cat') { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
+  if (e.target.id === 'm-cat' && S.mm) { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
   if (e.target.classList.contains('scl')) { readMm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.mm.scores[i][2] = MMAX[v] ?? mCriteria()[v] ?? 10; return render(); }
   if (e.target.id === 'b-pos') { S.bm.posTouched = true; return; }
   if (e.target.id === 'b-sec') { const sec = e.target.value; readBm(); const m = S.bm; m.section = sec; if (sec === 'Light Novels') m.rating = ''; if (!m.grpNew && !bookTree(sec).some(x => x.name === m.grp)) { m.grp = ''; m.sub = ''; m.subNew = false; } return render(); }
@@ -1085,8 +1093,7 @@ document.addEventListener('change', e => {
   if (e.target.dataset.rf !== undefined) { const r = S.wheel.res[Number(e.target.dataset.rf)], f = S.entries.find(x => x.id == e.target.value);
     if (f) { r.desc = f.description; r.src = 'future'; r.fid = f.id; } else { if (r.src === 'future') { r.desc = ''; r.src = ''; } r.fid = null; } return render(); }
   if (e.target.id === 'c-done') { readCm(); if (S.cm.done && !S.cm.year) S.cm.year = new Date().getFullYear(); return render(); }
-  if (e.target.id === 'm-cat' || e.target.id === 'm-status') { const m = S.modal; m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
-  if (e.target.id === 'm-pick') { const f = S.entries.find(x => x.id == e.target.value); if (f) $('#m-desc').value = f.description || ''; }
+  if (S.modal && (e.target.id === 'm-cat' || e.target.id === 'm-status')) { const m = S.modal; if (e.target.id === 'm-cat' && m.pick) { const pf = S.entries.find(x => x.id == m.pick); if (pf && $('#m-desc').value === (pf.description || '')) $('#m-desc').value = ''; m.pick = null; } m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'b-grp' || e.target.id === 'b-sub' || e.target.id === 'b-year') return refreshPos();
