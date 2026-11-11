@@ -117,7 +117,7 @@ details.sc summary{cursor:pointer;margin-top:12px;font-weight:600}
 .mg-body.w2{column-count:2;column-gap:8px;padding-bottom:2px}
 .mg-body.w2>*{break-inside:avoid}.mg-body.w2>.bk-grp{break-after:avoid;margin-top:5px}
 .gmx .bk-r{grid-template-columns:minmax(0,1fr) 40px 44px}
-.gm-s1{background:#d9ead3}.gm-s2{background:#fff2cc}.gm-s3{background:#d9d2e9}.gm-s4{background:#b4a7d6}.gm-s5{background:#c9daf8}.gm-s6{background:#f4cccc}.gm-s7{background:#e7e2d8}.gm-s8{background:#d9d9d9}
+.gm-s1{background:#d9ead3}.gm-s2{background:#ffe990}.gm-s3{background:#b794f0}.gm-s4{background:#7fd1d6}.gm-s5{background:#c9daf8}.gm-s6{background:#f4cccc}.gm-s7{background:#f0d8b0}.gm-s8{background:#d9d9d9}
 .mg-s1{background:#d9ead3}.mg-s2{background:#cdb3ef}.mg-s3{background:#fff2cc}.mg-s4{background:#c9daf8}.mg-s5{background:#f4cccc}.mg-s6{background:#e7e2d8}.mg-s7{background:#f9cb9c}
 .bk-plus{background:none;border:0;color:inherit;cursor:pointer;font-weight:700;padding:0 3px;opacity:.6;flex:none}
 .bk-plus:hover{opacity:1}
@@ -651,7 +651,7 @@ async function delManga() {
 
 /* ---------------- Games ---------------- */
 const GCATS = ['Action/Adventure', 'Multiplayer/Sports', 'RPG/Strategy', 'Roguelikes', 'Puzzle/Building', 'Indie/Platformer/Other'];
-const GST = { 1: 'Playing', 2: 'Paused', 3: 'Finished', 4: 'Done planning', 5: '100% games', 6: 'Dropped', 7: 'Not started', 8: 'Not current' };
+const GST = { 1: 'Playing', 2: 'Paused', 3: 'Finished', 4: '100% Future', 5: '100% games', 6: 'Dropped', 7: 'Not started', 8: 'Not current' };
 const GMAX = { 'Story/Theme': 10, Setting: 10, Gameplay: 30, Characters: 10, Music: 5, 'Art/Graphics': 5, Pacing: 5, Originality: 5, Enjoyment: 10, Community: 20, Customization: 5, Variety: 10, Replayability: 10, 'Building/Puzzles': 20, Creativity: 10 };
 const GPARTS = {
   'Action/Adventure': [['Story/Theme', 20], ['Setting', 10], ['Gameplay', 30], ['Characters', 10], ['Music', 5], ['Art/Graphics', 5], ['Pacing', 5], ['Originality', 5], ['Enjoyment', 10]],
@@ -672,14 +672,14 @@ function gAgg(list) { const rs = list.filter(m => m.rating != null); return { rt
 
 function gamesView() {
   if (S.gaErr) return `<div class="card">Couldn’t load Games: ${esc(S.gaErr)}<br><span class="cat">Run 14_games.sql in the Supabase SQL Editor first.</span></div>`;
-  const nUns = S.games.filter(m => m.hours_unsure).length, nRate = S.games.filter(gNeedsRating).length;
-  if (!nUns) S.gunsure = false; if (!nRate) S.grate = false;
-  const q = norm(S.gq), st = S.gst, filtering = !!(q || st || S.gunsure || S.grate), match = m => (!st || m.status === st) && (!q || norm(m.title).includes(q)) && (!S.gunsure || m.hours_unsure) && (!S.grate || gNeedsRating(m));
+  const nRate = S.games.filter(gNeedsRating).length;
+  if (!nRate) S.grate = false;
+  const q = norm(S.gq), st = S.gst, filtering = !!(q || st || S.grate), match = m => (!st || m.status === st) && (!q || norm(m.title).includes(q)) && (!S.grate || gNeedsRating(m));
   const cnt = k => S.games.filter(m => m.status === k).length;
   const chips = Object.entries(GST).map(([k, l]) => `<button class="chip gm-s${k} ${st == k ? 'sel' : st ? 'dim' : ''}" data-gst="${k}">${l} (${cnt(+k)})</button>`).join('');
   const bandKeys = GCATS.flatMap(c => mgBands(gList(c)).map(b => [c, b]));
   const allShut = bandKeys.length && bandKeys.every(([c, b]) => gClosed(c, b));
-  const row = m => `<div class="bk-r bk-bk gm-s${m.status}" data-gedit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : '') + (m.platform ? ' · ' + m.platform : ''))}">${esc(m.title)}</span></span>${gNeedsRating(m) ? '<span class="unsure" title="Finished/dropped but not rated yet">?</span>' : `<span>${mrf(m.rating)}</span>`}${m.hours_unsure ? `<span class="unsure" title="Hours are an estimate">${gHrs(m.hours)}?</span>` : `<span>${gHrs(m.hours)}</span>`}</div>`;
+  const row = m => `<div class="bk-r bk-bk gm-s${m.status}" data-gedit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : '') + (m.platform ? ' · ' + m.platform : ''))}">${esc(m.title)}</span></span>${gNeedsRating(m) ? '<span class="unsure" title="Finished/dropped but not rated yet">?</span>' : `<span>${mrf(m.rating)}</span>`}<span>${gHrs(m.hours)}</span></div>`;
   const cards = GCATS.map(cat => {
     const all = gList(cat), a = gAgg(all); let shown = 0;
     const body = mgBands(all).map(b => {
@@ -694,7 +694,7 @@ function gamesView() {
   }).join('');
   return `<div class="bk-bar"><button class="btn" data-gadd>Add game</button>${chips}
     <input id="gq" placeholder="Search games" value="${esc(S.gq)}" style="width:200px"><button class="btn alt" data-gcolall>${allShut ? 'Expand all' : 'Collapse all'}</button>
-    <button class="btn alt ${S.gwrap ? 'on' : ''}" data-gwrap title="Long columns flow into two side-by-side halves, newest at the bottom of the second half">Wrap long columns: ${S.gwrap ? 'on' : 'off'}</button>${nUns ? `<button class="chip bk-s-unsure ${S.gunsure ? 'sel' : ''}" data-gunsure title="Games whose hours are an estimate">Estimated hours (${nUns})</button>` : ''}${nRate ? `<button class="chip bk-s-unsure ${S.grate ? 'sel' : ''}" data-grate title="Finished or dropped, but no rating yet">Needs a rating (${nRate})</button>` : ''}
+    <button class="btn alt ${S.gwrap ? 'on' : ''}" data-gwrap title="Long columns flow into two side-by-side halves, newest at the bottom of the second half">Wrap long columns: ${S.gwrap ? 'on' : 'off'}</button>${nRate ? `<button class="chip bk-s-unsure ${S.grate ? 'sel' : ''}" data-grate title="Finished or dropped, but no rating yet">Needs a rating (${nRate})</button>` : ''}
     <span class="cat">${S.games.length} games · ${gHrs(S.games.reduce((a, m) => a + (Number(m.hours) || 0), 0))} hrs</span></div><div class="bk-scroll">${cards}</div>`;
 }
 function gamesModalHtml() {
@@ -713,7 +713,7 @@ function gamesModalHtml() {
       <div class="scok ${mScoreInfo(m.scores).ok ? 'good' : 'warn'}" id="g-scok">${mScoreInfo(m.scores).ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + mMaxSum(m.scores) + ', not 100 · '}${mScoreInfo(m.scores).line}</div></details>
     <div style="display:flex;gap:8px"><div style="flex:1"><label>Hours played</label><input id="g-hrs" type="number" min="0" step="0.1" value="${esc(m.hours)}"></div>
     <div style="flex:1"><label>Times played</label><input id="g-plays" type="number" min="0" step="1" value="${esc(m.plays)}" placeholder="optional"></div></div>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="g-uns" type="checkbox" style="width:auto" ${m.unsure ? 'checked' : ''}> Hours are an estimate (shows a red ?)</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="g-uns" type="checkbox" style="width:auto" ${m.unsure ? 'checked' : ''}> Hours are an estimate (just a note, not shown in the list)</label>
     <label>Hours note</label><input id="g-note" value="${esc(m.note)}" placeholder="e.g. Estimate for PC time">
     <label>Status</label><select id="g-status">${Object.entries(GST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
     <div class="acts"><button class="btn" data-gsave>Save</button>${m.id ? '<button class="btn danger" data-gdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
@@ -1139,7 +1139,6 @@ document.addEventListener('click', e => {
   if (g('data-gkey')) { const k = g('data-gkey').dataset.gkey, [c, d] = k.split('|'), band = mgBands(gList(c)).find(b => b.name === d), was = gClosed(c, band); S.gshut.delete(k); S.gopen.delete(k); (was ? S.gopen : S.gshut).add(k); saveSets(); return render(); }
   if (g('data-gcolall')) { const all = GCATS.flatMap(c => mgBands(gList(c)).map(b => [c, b])), shut = all.every(([c, b]) => gClosed(c, b)); all.forEach(([c, b]) => { const k = c + '|' + b.name; S.gshut.delete(k); S.gopen.delete(k); (shut ? S.gopen : S.gshut).add(k); }); saveSets(); return render(); }
   if (g('data-gwrap')) { S.gwrap = !S.gwrap; saveSets(); return render(); }
-  if (g('data-gunsure')) { S.gunsure = !S.gunsure; return render(); }
   if (g('data-grate')) { S.grate = !S.grate; return render(); }
   if (g('data-msave')) return saveManga();
   if (g('data-mdel')) return delManga();
