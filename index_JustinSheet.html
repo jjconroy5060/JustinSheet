@@ -294,11 +294,21 @@ function rowHtml(e, n, cols = '', cls = '') {
 }
 const thHtml = cols => `<div class="row th"><div class="c0">#</div><div class="c1">Wheel spin</div><div class="c2">What</div>${cols.includes('d') ? '<div class="c3">Date</div>' : ''}${cols.includes('c') ? '<span class="chk-sp"></span>' : ''}</div>`;
 
+function chInfo(d) {   /* series name + first chapter number from text like "Frieren: Volume 6 Chapter 48-57" or "R15+ ja Dame desu ka? 1-9" */
+  d = (d || '').trim(); let ch = null, m = d.match(/\b(?:chapters?|chs?\.?)\s*(\d+)/i);
+  if (m) ch = +m[1]; else { m = d.match(/(\d+)(?:\s*[-–]\s*\d+)?\s*$/); if (m) ch = +m[1]; }
+  const name = d.replace(/\s+(?:volume|vol\.?)\s*\d+.*$/i, '').replace(/\s+(?:chapters?|chs?\.?)\s*\d+.*$/i, '').replace(/\s+\d+(?:\s*[-–]\s*\d+)?\s*$/, '').trim().toLowerCase();
+  return { name, ch };
+}
 function priorityCard() {
   const fut = S.sub === 'future', st = fut ? 'future' : 'priority', cols = fut ? '' : 'cf';
   let list = by(st);
   const filt = !fut && S.pcat;
-  if (fut) list.sort((a, b) => (a.category || '~').localeCompare(b.category || '~') || a.sort_order - b.sort_order);
+  if (fut) {   /* a category whose items all end in chapter numbers (manga catch-up) sorts by series, then chapter; others keep the order they were added in */
+    const smart = {}, key = e => e.category || '~', info = new Map();
+    list.forEach(e => { const k = key(e), ci = chInfo(e.description); info.set(e, ci); smart[k] = (smart[k] ?? true) && ci.ch != null; });
+    list.sort((a, b) => key(a).localeCompare(key(b)) || (smart[key(a)] ? (info.get(a).name.localeCompare(info.get(b).name) || info.get(a).ch - info.get(b).ch) : 0) || a.sort_order - b.sort_order);
+  }
   if (filt) list = list.filter(e => e.category === S.pcat);
   const t = (k, l, n) => `<button class="${S.sub === k ? 'on' : ''}" data-sub="${k}">${l} (${n})</button>`;
   return `<div class="card"><div class="head"><div class="seg" style="margin:0">${t('now', 'Priority', by('priority').length)}${t('future', 'Future', by('future').length)}</div>
