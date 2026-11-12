@@ -186,6 +186,7 @@ select.gl-p{width:auto;flex:none;padding:3px 6px;font-size:.82rem;border-radius:
 .gl-notes{display:grid;gap:5px;margin:6px 0 0 0}.gl-notes div{font-size:.86rem;white-space:pre-wrap;padding-left:10px;border-left:3px solid var(--line)}.gl-notes b{display:block;font-size:.72rem;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
 @media(min-width:701px){.gl-g{display:grid;grid-template-columns:minmax(240px,34%) 1fr;gap:6px 24px;align-items:start}.gl-notes{margin:0;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px}.gl-g:not(:has(.gl-notes)) .gl-top{grid-column:1/-1}}
 .sheet.gl-sheet{max-width:680px}.gl-sheet textarea{line-height:1.45}
+.cflag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:99px;background:#f6d3c9;color:#8a2f17;font-size:.68rem;font-weight:600;white-space:nowrap;vertical-align:middle}
 .gl-edit{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1rem;padding:0 4px}
 /* ---- phone layout: compact two-row nav, one category at a time, single page scroll ---- */
 .mobcats{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 7px}
@@ -1299,27 +1300,27 @@ const prog = i => {
 };
 const mark = i => i.done ? `<span style="color:${yc(i.done_year)}">✓${i.done_year ? ' ’' + String(i.done_year).slice(2) : ''}</span>`
   : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : i.status === 'catchup' ? '<span class="cat">Catch up</span>' : '';
-const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t2">${esc(i.progress) || '—'}</div><div class="t3">${esc(i.total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
-const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t5">${prog(i)}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
+const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${curFlag(i)}</div><div class="t2">${esc(cvv(i).progress) || '—'}</div><div class="t3">${esc(cvv(i).total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
+const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${curFlag(i)}</div><div class="t5">${prog(cvv(i))}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
 
 
 /* ---------- Send an item from a big tab to Current ---------- */
 function curPlan(kind, id) {
   const num = x => x == null || x === '' ? null : Number(x), hm = n => n == null ? null : `${Math.floor(n / 60)}h ${n % 60}m`;
-  if (kind === 'books') { const b = S.books.find(x => x.id === id); return b && { cat: 'books', title: b.title, st: { 1: 'active', 2: 'paused', 3: 'done', 4: 'dropped' }[b.status], keepAll: true }; }
+  if (kind === 'books') { const b = S.books.find(x => x.id === id); return b && { cat: 'books', title: b.title, st: { 1: 'active', 2: 'paused', 3: 'done', 4: 'dropped', 5: 'active', 6: 'active' }[b.status], keepAll: true }; }
   if (kind === 'manga') {
     const m = S.manga.find(x => x.id === id); if (!m) return null;
-    const st = { 1: 'active', 2: 'active', 3: 'paused', 4: 'done', 5: 'dropped', 7: 'catchup' }[m.status], read = num(m.chs_read), tot = m.ongoing ? null : num(m.chs_total), done = st === 'done', top = done ? (tot ?? read) : read;
+    const st = { 1: 'active', 2: 'active', 3: 'paused', 4: 'done', 5: 'dropped', 6: 'active', 7: 'catchup' }[m.status], read = num(m.chs_read), tot = m.ongoing ? null : num(m.chs_total), done = st === 'done', top = done ? (tot ?? read) : read;
     return { cat: 'manga', title: m.title, st, prog: top != null ? `Ch. ${top}` : null, tot: done ? (top != null ? `Ch. ${top}` : null) : (tot != null ? `${tot} Chs.` : null) };
   }
   if (kind === 'games') {
     const g = S.games.find(x => x.id === id); if (!g) return null;
-    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'done', 6: 'dropped', 8: 'paused' }[g.status], pr = g.hours != null ? `${+g.hours} Hrs.` : null;
+    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'done', 6: 'dropped', 7: 'active', 8: 'paused' }[g.status], pr = g.hours != null ? `${+g.hours} Hrs.` : null;
     return { cat: 'games', title: g.title, st, prog: pr, tot: st === 'done' ? pr : undefined };   /* total hours aren't stored in Games: keep what Current already has */
   }
   if (kind === 'media') {
     const d = S.media.find(x => x.id === id); if (!d) return null;
-    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'dropped', 6: 'dropped' }[d.status], done = st === 'done';
+    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'dropped', 6: 'dropped', 7: 'active' }[d.status], done = st === 'done';
     if (d.category === 'Movies') { const t = hm(d.mins); return { cat: 'shows', title: d.title, st, prog: done ? t : null, tot: t }; }
     const read = num(d.eps_read), tot = d.ongoing ? null : num(d.eps_total), top = done ? (tot ?? read) : read;
     return { cat: 'shows', title: d.title, st, prog: top != null ? `Ep. ${top}` : null, tot: tot != null ? `${tot} Eps.` : null };
@@ -1331,6 +1332,17 @@ function curPlan(kind, id) {
   }
   return null;
 }
+const CURSRC = { games: ['games', () => S.games], shows: ['media', () => S.media], manga: ['manga', () => S.manga], music: ['music', () => S.malb] }, CURTAB = { games: 'Games', shows: 'Media', manga: 'Manga', music: 'Music' };
+function curSrc(i) {   /* find the matching item in its own tab and read the progress from it (Books are tracked by hand) */
+  const c = CURSRC[i.category]; if (!c) return null;
+  const it = c[1]().find(x => norm(x.title) === norm(i.title)); return it ? curPlan(c[0], it.id) : null;
+}
+function cvv(i) {
+  const s = curSrc(i); if (!s) return i;
+  return { ...i, progress: s.prog ?? i.progress, total: ('tot' in s && s.tot !== undefined) ? s.tot : i.total };
+}
+const curMissing = i => !!CURSRC[i.category] && !curSrc(i);
+const curFlag = i => curMissing(i) ? `<span class="cflag" title="Not found in the ${CURTAB[i.category]} tab — check the spelling there or here, so progress can be read from it">⚠ not in ${CURTAB[i.category]}</span>` : '';
 const curFind = p => S.current.find(i => i.category === p.cat && norm(i.title) === norm(p.title));
 const curBtn = (kind, id) => { const p = curPlan(kind, id); return `<button class="btn alt" data-tocur="${kind}|${id}">${p && curFind(p) ? 'Update in Current' : 'Add to Current'}</button>`; };
 async function toCurrent(kind, id, btn) {
@@ -1339,7 +1351,7 @@ async function toCurrent(kind, id, btn) {
   const old = curFind(p), done = p.st === 'done', cu = p.st === 'catchup';
   const same = old && old.rank != null && (old.status === 'catchup') === cu;
   const rank = (p.st === 'active' || cu) ? (same ? old.rank : Math.max(0, ...(cu ? rankedCU() : ranked(p.cat)).filter(i => !old || i.id !== old.id).map(i => i.rank)) + 1) : null;
-  const payload = { category: p.cat, title: p.title, status: done ? 'active' : p.st, done, done_year: done && old && old.done ? old.done_year : null, rank,
+  const payload = { category: p.cat, title: p.title, status: done ? 'active' : p.st, done, done_year: done ? (old && old.done ? old.done_year : new Date().getFullYear()) : null, rank,
     progress: p.keepAll ? (old ? old.progress : null) : (p.prog ?? (old ? old.progress : null)),
     total: p.keepAll ? (old ? old.total : null) : ('tot' in p && p.tot !== undefined ? p.tot : (old ? old.total : null)) };
   let res;
@@ -1372,7 +1384,7 @@ function overview() {
 
 function catView(k) {
   const all = cur(k).sort((a, b) => a.sort_order - b.sort_order), r = ranked(k);
-  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch' && i.status !== 'catchup'], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], rewatch: ['Rewatch', i => i.status === 'rewatch'], catchup: ['Catch up', i => i.status === 'catchup'] };
+  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch' && i.status !== 'catchup'], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], missing: ['⚠ Not in tab', i => curMissing(i)], rewatch: ['Rewatch', i => i.status === 'rewatch'], catchup: ['Catch up', i => i.status === 'catchup'] };
   const chips = Object.entries(F).map(([f, [l, fn]]) => [f, l, all.filter(fn).length]).filter(([f, , n]) => f === 'all' || n || f === S.flt)
     .map(([f, l, n]) => `<button class="${S.flt === f ? 'on' : ''}" data-cflt="${f}">${l} (${n})</button>`).join('');
   const rows = all.filter((F[S.flt] || F.all)[1]);
