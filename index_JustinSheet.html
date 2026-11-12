@@ -1593,7 +1593,7 @@ function bulkHtml() {
     <div style="display:flex;gap:6px;margin-top:6px"><input id="b-from" type="number" min="1" placeholder="From"><input id="b-to" type="number" min="1" placeholder="To"><input id="b-per" type="number" min="1" placeholder="Per row"><button class="btn alt" data-fill>Fill</button></div>
     <label>One item per line</label><textarea id="b-lines" rows="6" placeholder="Memories of Ice Chapters 1-3"></textarea>
     <label>Or leave blank and add this many empty rows</label><input id="b-empty" type="number" min="0" max="200" value="0">
-    <div class="acts"><button class="btn" data-bsave>Add rows</button><button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+    <div class="acts"><button class="btn" data-bulksave>Add rows</button><button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 
 function modalHtml() {
@@ -1835,7 +1835,7 @@ document.addEventListener('click', e => {
   if (g('data-catback')) { if (S.tab === 'wheel') { S.wcat = null; S.anchor = true; } else S.pcat = null; return render(); }
   if (g('data-bulk')) { S.bulk = { status: g('data-bulk').dataset.bulk }; return render(); }
   if (g('data-fill')) return fillLines();
-  if (g('data-bsave')) return saveBulk();
+  if (g('data-bulksave')) return saveBulk();
   if (g('data-pickf')) { const m = S.modal, id = g('data-pickf').dataset.pickf, f = S.entries.find(x => x.id == id); if (!f) return;
     const was = m.pick == id; m.pick = was ? null : f.id; $('#m-desc').value = was ? '' : (f.description || ''); document.querySelectorAll('.futlist div').forEach(d => d.classList.toggle('on', m.pick != null && d.dataset.pickf == m.pick)); return; }
   if (g('data-save')) return save(g('data-save').dataset.save);
