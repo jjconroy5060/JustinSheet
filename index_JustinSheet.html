@@ -162,6 +162,7 @@ label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
   .wrap,.wrap.wide{padding:6px 10px 14px}
   header{position:static;display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:2px 0 6px;margin-bottom:2px}
   header h1{font-size:1.05rem}
+  header.stick{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;padding-top:6px}
   header h1{grid-row:1;grid-column:1}
   header .side{grid-row:1;grid-column:2;flex-direction:row;align-items:center;gap:8px}
   header nav{grid-row:2}
@@ -463,7 +464,7 @@ function moveBlock(sec, grp, sub, dir) {
 
 /* a series starts closed when nothing in it is finished, or everything in it is finished or dropped */
 const defaultClosed = list => !list.some(b => b.status === 3) || list.every(b => b.status === 3 || b.status === 4);
-const keyBooks = key => { const [sec, grp] = key.split('|'); return S.books.filter(b => b.section === sec && nn(b.grp) === grp); };
+const keyBooks = key => { const [sec, grp] = key.split('|'); return S.books.filter(b => b.section === sec && nn(b.grp) === (grp || null)); };   /* an empty group name = the loose books of that column */
 const isClosed = key => S.bshut.has(key) || (!S.bopen.has(key) && key.split('|').length === 2 && defaultClosed(keyBooks(key)));
 function booksView() {
   if (S.bkErr) return `<div class="card">Couldn’t load Books: ${esc(S.bkErr)}<br><span class="cat">Run 8_books.sql in the Supabase SQL Editor first.</span></div>`;
@@ -472,7 +473,7 @@ function booksView() {
   const cnt = k => pool.filter(b => b.status === k).length;
   const chips = Object.entries(BST).map(([k, l]) => `<button class="chip bk-s${k} ${st == k ? 'sel' : st ? 'dim' : ''}" data-bst="${k}">${l} (${cnt(+k)})</button>`).join('');
   const lnTree = () => { const t = bookTree('Light Novels').filter(g => g.name); if (!t.some(g => g.name === 'Standalones')) t.push({ name: 'Standalones', subs: [], all: [], virtual: true }); return t; };
-  const keys = LNV ? bookTree('Light Novels').filter(g => g.name).map(g => `Light Novels|${g.name}`) : BSEC.slice(0, 5).flatMap(sec => bookTree(sec).filter(g => g.name).map(g => `${sec}|${g.name}`));
+  const keys = LNV ? bookTree('Light Novels').filter(g => g.name).map(g => `Light Novels|${g.name}`) : BSEC.slice(0, 5).flatMap(sec => bookTree(sec).filter(g => g.name || g.all.length).map(g => `${sec}|${g.name || ''}`));
   const allCollapsed = keys.length && keys.every(isClosed);
   const mv = a => S.bord ? `<span class="bk-mv">${[-1, 1].map(d => `<button ${a} data-dir="${d}" title="Move ${d < 0 ? 'up' : 'down'}">${d < 0 ? '▲' : '▼'}</button>`).join('')}</span>` : '';
   const row = b => `<div class="bk-r bk-bk bk-s${b.status}" data-bedit="${b.id}"><span class="t">${mv(`data-bmv="book" data-bid="${b.id}"`)}<span class="tt" title="${esc(b.title)}">${esc(b.title)}</span></span><span>${b.section === 'Light Novels' ? (b.pages ?? '') : kfmt(b.words)}</span>${b.section === 'Light Novels' ? '' : `<span>${rfmt(b.rating)}</span>`}</div>`;
@@ -498,9 +499,9 @@ function booksView() {
     cards = SECS.map(sec => {
       const tree = bookTree(sec), all = secBooks(sec);
       const body = tree.map(g => {
-        const gk = g.name ? `${sec}|${g.name}` : null, closed = gk && !filtering && isClosed(gk), kids = bodyOf(sec, g, false);
+        const gk = `${sec}|${g.name || ''}`, closed = !filtering && isClosed(gk), kids = bodyOf(sec, g, false);
         if (!kids) return '';
-        return (g.name ? head('bk-grp', g.name, g.all, false, gk, sec, g.name, '', closed) : '') + (closed ? '' : kids);
+        return head('bk-grp', g.name || (sec === 'Other Books' ? 'Other Books' : 'Other'), g.all, false, gk, sec, g.name || '', '', closed, !g.name) + (closed ? '' : kids);
       }).join('');
       const wrapped = S.bwrap && (body.match(/class="bk-r /g) || []).length > 70;
       return `<div class="bk-sec ${wrapped ? 'bwrapped' : ''}"><div class="bk-sticky">${lab(sec === 'Brandon Sanderson' ? 'Books List' : '', false)}${head('bk-title', sec, all, false, null, sec, '', '', false, true)}</div><div class="mg-body ${wrapped ? 'w2' : ''}">${body || '<div class="bk-r bk-bk bk-s5" style="cursor:default">Nothing here.</div>'}</div></div>`;
@@ -846,7 +847,7 @@ function mediaView() {
   const allShut = bandKeys.length && bandKeys.every(([c, b]) => dClosed(c, b));
   const row = m => `<div class="bk-r bk-bk md-s${m.status}" data-mdedit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : ''))}">${esc(m.title)}</span></span>${dNeedsRating(m) ? '<span class="unsure" title="Finished/dropped but not rated yet">?</span>' : `<span>${mrf(m.rating)}</span>`}${mov ? `<span>${m.mins ?? ''}</span>` : `<span>${m.eps_read ?? ''}</span><span>${m.ongoing ? 'A' : (m.eps_total ?? '')}</span>`}</div>`;
   const cards = units.map((u, ui) => {
-    const cat = u.key, all = u.bands.flatMap(b => b.items), a = dAgg(all, mov), single = mov && u.bands.length === 1; let shown = 0;
+    const cat = u.key, all = u.bands.flatMap(b => b.items), a = dAgg(all, mov), single = false;   /* every decade keeps its own collapsible band, even when it is alone in its column */ let shown = 0;
     const body = u.bands.map(b => {
       const its = b.items.filter(match); if (!its.length) return '';
       if (single) { shown += its.length; return its.map(row).join(''); }
@@ -1301,7 +1302,7 @@ function render() {
   const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.mum ? musicModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
   const bsc = document.querySelector('.bk-scroll'), bpos = bsc && !S.bkreset ? [bsc.scrollLeft, bsc.scrollTop] : null; S.bkreset = false;
   const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.mum ? 'u' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
-  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music'].includes(S.tab) ? 'wide' : ''}"><header><h1>Justin’s Sheet</h1>
+  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music'].includes(S.tab) ? 'wide' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button><button class="${S.tab === 'media' ? 'on' : ''}" data-tab="media">Media</button><button class="${S.tab === 'music' ? 'on' : ''}" data-tab="music">Music</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
@@ -1412,7 +1413,7 @@ document.addEventListener('click', e => {
   if (g('data-bsortyr')) return sortSeriesByYear();
   if (g('data-bwrap')) { S.bwrap = !S.bwrap; saveSets(); return render(); }
   if (g('data-bord')) { S.bord = !S.bord; return render(); }
-  if (g('data-bcolall')) { const keys = (S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5)).flatMap(sec => bookTree(sec).filter(x => x.name).map(x => `${sec}|${x.name}`)); const all = keys.every(isClosed); keys.forEach(k => { S.bshut.delete(k); S.bopen.delete(k); (all ? S.bopen : S.bshut).add(k); }); saveSets(); return render(); }
+  if (g('data-bcolall')) { const keys = (S.bsub === 'ln' ? ['Light Novels'] : BSEC.slice(0, 5)).flatMap(sec => bookTree(sec).filter(x => x.name || (S.bsub !== 'ln' && x.all.length)).map(x => `${sec}|${x.name || ''}`)); const all = keys.every(isClosed); keys.forEach(k => { S.bshut.delete(k); S.bopen.delete(k); (all ? S.bopen : S.bshut).add(k); }); saveSets(); return render(); }
   if (g('data-badd')) { S.bm = { id: null, section: S.bsub === 'ln' ? 'Light Novels' : BSEC[0], title: '', grp: '', grpNew: false, sub: '', subNew: false, year: '', reads: '', size: '', rating: '', status: 5 }; return render(); }
   if (g('data-bkey')) { const k = g('data-bkey').dataset.bkey, was = isClosed(k); S.bshut.delete(k); S.bopen.delete(k); (was ? S.bopen : S.bshut).add(k); saveSets(); return render(); }
   if (g('data-bedit')) { const b = S.books.find(x => x.id == g('data-bedit').dataset.bedit); S.bm = { id: b.id, section: b.section, title: b.title, grp: b.grp || '', grpNew: false, sub: b.sub || '', subNew: false, year: b.year ?? '', reads: b.reads ?? '', size: (b.section === 'Light Novels' ? b.pages : b.words) ?? '', rating: b.rating ?? '', status: b.status }; return render(); }
