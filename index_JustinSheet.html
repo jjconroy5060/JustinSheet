@@ -123,9 +123,14 @@ details.sc summary{cursor:pointer;margin-top:12px;font-weight:600}
 .bk-sec.mu{min-width:0;flex:1 1 0}
 .bk-scroll:has(.bk-sec.mu){overflow-x:hidden}
 .mu .mu-alb.al3{background:#7ea2ea;border-left-color:#2c4f9e}.mu .mu-alb.al2{background:#ffe9a0;border-left-color:#d4a017}
+.mu .mu-alb,.mu .bk-grp{min-height:2.9em}
+.mu .mu-alb .tt,.mu .bk-grp .tt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;white-space:normal !important;overflow:hidden;text-overflow:ellipsis;font-size:1.06em !important;line-height:1.2;word-break:break-word}
 .mu .mu-song{padding-left:16px !important}.mu-song.nc>span:nth-child(2){opacity:.5;text-decoration:line-through}
 .mu-l1{background:#c3ccd4}.mu-l2{background:#fff2cc}.mu-l3{background:#a9c4f2}
-.mu-alb .ed{font-weight:400;opacity:.55;margin-left:auto;padding-left:4px;font-size:.78rem;cursor:pointer}.mu-alb .ed:hover{opacity:1}
+.mu-alb .cr2{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:15px;line-height:1.1}
+.mu-alb .ed{font-weight:400;opacity:.55;font-size:.74rem;cursor:pointer}.mu-alb .ed:hover{opacity:1}
+@media(min-width:701px){.mu .mu-alb,.mu .bk-grp:not(.bk-title){grid-template-columns:minmax(0,1fr) auto}
+.mu .mu-alb>.t,.mu .bk-grp>.t{grid-row:1/3;grid-column:1}.mu .mu-alb>span:nth-child(2),.mu .bk-grp>span:nth-child(2){grid-column:2;grid-row:1;align-self:end;line-height:1.15}.mu .mu-alb>span:nth-child(3),.mu .bk-grp>span:nth-child(3){grid-column:2;grid-row:2;align-self:start;line-height:1.15}}
 .usgrid{display:grid;grid-template-columns:minmax(0,1fr) 56px 62px 54px 24px 24px;gap:4px;align-items:center;margin-bottom:3px}.usgrid input,.usgrid select{padding:5px 6px;font-size:.82rem;min-width:0}.usgrid.hd{font-size:.68rem;opacity:.65;margin-bottom:2px}
 .md-s1{background:#c3e0b8}.md-s2{background:#fff2cc}.md-s3{background:#bddcf0}.md-s4{background:#a9c4f2}.md-s5{background:#e2d9f3}.md-s6{background:#f4cccc}.md-s7{background:#c3ccd4}
 .mg-s1{background:#c3e0b8}.mg-s2{background:#cdb3ef}.mg-s3{background:#fff2cc}.mg-s4{background:#a9c4f2}.mg-s5{background:#f4cccc}.mg-s6{background:#c3ccd4}.mg-s7{background:#f9cb9c}
@@ -153,8 +158,33 @@ label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;z-index:10}
 /* Books headers, night mode: warm charcoal with gold text */
 
+/* ---- Rogue 100% checklists + Goals ---- */
+.rg-chips{margin-bottom:10px}.rg-chips button small{opacity:.7;margin-left:4px;font-size:.78em}
+.rg-prog{font-size:.85rem;color:var(--mute);white-space:nowrap}
+.rg-bar{height:6px;border-radius:99px;background:var(--line);margin:2px 0 10px;overflow:hidden}.rg-bar i{display:block;height:100%;background:#8fbf80;border-radius:99px}.rg-bar.full i{background:#7fa0e6}
+.rg-items{column-width:210px;column-gap:8px}
+.rg-it{break-inside:avoid;display:flex;gap:8px;align-items:center;padding:4px 8px;margin-bottom:3px;border-radius:7px;background:var(--bg);border:1px solid var(--line);cursor:pointer;font-size:.88rem}
+.rg-it .bx{flex:none;width:16px;height:16px;border-radius:4px;border:1.5px solid var(--mute);display:grid;place-items:center;font-size:.72rem;line-height:1}
+.rg-it.y{background:#c3e0b8;border-color:#a3c997;color:#1b1b1b}.rg-it.y .bx{border-color:#4a7a40;background:#4a7a40;color:#fff}
+.rg-mx{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:10px}
+table.rgx{border-collapse:separate;border-spacing:0;font-size:.82rem}
+table.rgx th,table.rgx td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:3px 6px;text-align:center;background:var(--card)}
+table.rgx thead th{position:sticky;top:0;z-index:2;font-weight:600;vertical-align:bottom}
+table.rgx tbody th{position:sticky;left:0;z-index:1;text-align:left;font-weight:600;white-space:nowrap}
+table.rgx thead th:first-child{left:0;z-index:3;text-align:left}
+table.rgx th small{display:block;font-weight:400;color:var(--mute);font-size:.72em}
+table.rgx th.v div{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto}
+table.rgx td.c{cursor:pointer;min-width:30px;color:transparent}
+table.rgx td.c.y{background:#c3e0b8;color:#2d5a25;font-weight:700}table.rgx td.c.n:hover{background:rgba(127,127,127,.18)}
+.gl-top{display:flex;gap:10px;align-items:flex-start}
+.gl-t{flex:1;min-width:0;font-weight:600}
+select.gl-p{width:auto;flex:none;padding:3px 6px;font-size:.82rem;border-radius:8px;color:#1b1b1b}
+.gl-p.g0{background:#c3ccd4}.gl-p.g1{background:#fff2cc}.gl-p.g2{background:#c3e0b8}
+.gl-g{padding:10px 0;border-top:1px solid var(--line)}.gl-g:first-of-type{border-top:0}
+.gl-notes{display:grid;gap:5px;margin:6px 0 0 0}.gl-notes div{font-size:.86rem;white-space:pre-wrap;padding-left:10px;border-left:3px solid var(--line)}.gl-notes b{display:block;font-size:.72rem;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+.gl-edit{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1rem;padding:0 4px}
 /* ---- phone layout: compact two-row nav, one category at a time, single page scroll ---- */
-.mobcats{display:flex;flex-wrap:wrap;gap:5px;position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 7px}
+.mobcats{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 7px}
 .mobcats button{border:1px solid var(--line);background:var(--card);padding:4px 10px;border-radius:999px;font-size:.74rem;cursor:pointer}
 .mobcats button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
 .mob-off{display:none !important}
@@ -184,7 +214,8 @@ label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
   .mg-body.w2{column-count:1 !important}
   .usgrid{grid-template-columns:minmax(0,1fr) 50px 54px 46px 22px 22px}
   .mu .bk-r{grid-template-columns:minmax(0,1fr) 54px 68px}
-  .mu-alb .ed{padding:4px 10px;font-size:.95rem}
+  .mu-alb .cr2{width:26px}.mu-alb .ed{padding:3px 4px;font-size:.95rem}
+  .rg-chips button{padding:4px 11px;font-size:.84rem}.rg-head .btn{padding:6px 10px;font-size:.8rem}
 }
 @media(prefers-color-scheme:dark){.bk-sticky,.bk-lab,.bk-title{background:#3a3530;color:#d9d4cc}.bk-grp{background:#4d463f;color:#d9d4cc}.bk-subh{background:#6a6258;color:#d9d4cc}}
 </style>
@@ -201,6 +232,7 @@ let _mk = '';
 function loadSet(n) { try { return new Set(JSON.parse(localStorage.getItem(n) || '[]')); } catch (e) { return new Set(); } }
 function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); localStorage.setItem('ga_shut', JSON.stringify([...S.gshut])); localStorage.setItem('ga_open', JSON.stringify([...S.gopen])); localStorage.setItem('ga_wrap', S.gwrap ? '1' : '0'); localStorage.setItem('md_shut', JSON.stringify([...S.mdshut])); localStorage.setItem('md_open', JSON.stringify([...S.mdopen])); localStorage.setItem('md_wrap', S.mdwrap ? '1' : '0'); localStorage.setItem('mu_open', JSON.stringify([...S.muopen])); localStorage.setItem('mu_ashut', JSON.stringify([...S.muashut])); localStorage.setItem('bk_wrap', S.bwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
 const S = { malb: [], msong: [], muErr: null, mum: null, muq: '', muopen: loadSet('mu_open'), muashut: loadSet('mu_ashut'), media: [], mdErr: null, mdm: null, mdq: '', mdst: null, mdrate: false, mdsub: 'shows', mdshut: loadSet('md_shut'), mdopen: loadSet('md_open'), mdwrap: (() => { try { return localStorage.getItem('md_wrap') !== '0'; } catch (e) { return true; } })(), games: [], gaErr: null, gm: null, gq: '', gst: null, gunsure: false, grate: false, gshut: loadSet('ga_shut'), gopen: loadSet('ga_open'), gwrap: (() => { try { return localStorage.getItem('ga_wrap') !== '0'; } catch (e) { return true; } })(), manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+Object.assign(S, { rg: { games: [], lists: [], err: null }, gl: { years: [], goals: [], err: null }, rgm: null, glm: null, gsub: 'games', rgsel: null, gly: null, rgflip: loadSet('rg_flip') });
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -229,6 +261,10 @@ async function loadAll() {
   await loadMusic();
   const md = await db.from('media').select('*').range(0, 999); S.media = md.data || []; S.mdErr = md.error ? md.error.message : null;
   const ga = await db.from('games').select('*').range(0, 999); S.games = ga.data || []; S.gaErr = ga.error ? ga.error.message : null;
+  const rgg = await db.from('rogue_games').select('*').order('sort_order').order('id'), rgl = await db.from('rogue_lists').select('*').order('sort_order').order('id');
+  S.rg = { games: rgg.data || [], lists: rgl.data || [], err: (rgg.error || rgl.error) ? (rgg.error || rgl.error).message : null };
+  const gly = await db.from('goal_years').select('*').order('year'), glg = await db.from('goals').select('*').order('sort_order').order('id');
+  S.gl = { years: (gly.data || []).map(x => x.year), goals: glg.data || [], err: (gly.error || glg.error) ? (gly.error || glg.error).message : null };
   const mg = await db.from('manga').select('*').range(0, 999); S.manga = mg.data || []; S.mgErr = mg.error ? mg.error.message : null;
   const rg = await db.from('roguelikes').select('*').order('sort_order'); S.rogue = rg.data || [];
   S.loading = false; S.anchor = true; render();
@@ -518,15 +554,16 @@ function booksView() {
 /* ---------------- phone mode: category chips, one category visible ---------------- */
 const MOBQ = window.matchMedia('(max-width:700px)'), isMob = () => MOBQ.matches;
 S.msel = {};
-const MOBNAMES = { books: () => [...BSEC], manga: () => MCATS, games: () => GCATS, media: () => [...DCATS, 'Movies'], music: () => MUG };
+const MOBNAMES = { books: () => [...BSEC], manga: () => MCATS, games: () => [...GCATS, 'Rogue 100%'], media: () => [...DCATS, 'Movies'], music: () => MUG };
+const MOBSHORT = { 'Brandon Sanderson': 'Sanderson', 'Fantasy Series': 'Fantasy', 'Sci-Fi Series': 'Sci-Fi', 'Other Books': 'Other', 'Action/Adventure': 'Action', 'Romance/Comedy': 'Romance', 'Slice of Life/Comedy': 'Slice of Life', 'Sports/Hobby': 'Sports', 'Drama/Other': 'Drama', 'Multiplayer/Sports': 'Multiplayer', 'RPG/Strategy': 'RPG', 'Puzzle/Building': 'Puzzle', 'Indie/Platformer/Other': 'Indie', 'TV: Action/Drama': 'TV Action', 'TV: Comedy': 'TV Comedy', 'Anime: Action': 'Anime Action', 'Anime: Romance': 'Anime Romance', 'Anime: Drama/Other': 'Anime Drama', 'Pop/Electronic': 'Pop/Elec.' };
 function mobSetup() {
   if (!isMob() || !MOBNAMES[S.tab]) return;
   const names = MOBNAMES[S.tab]();
-  const allMode = (S.tab === 'books' && S.bsub === 'ln') || (S.tab === 'media' && S.mdsub === 'movies');   /* Light Novels and Movies are one chip each, all their columns stacked */
-  const real = ['books', 'media'].includes(S.tab) ? names.slice(0, -1) : names, keep = S.msel[S.tab];
-  const sel = S.tab === 'books' && S.bsub === 'ln' ? 'Light Novels' : S.tab === 'media' && S.mdsub === 'movies' ? 'Movies' : (real.includes(keep) ? keep : names[0]);
+  const allMode = (S.tab === 'books' && S.bsub === 'ln') || (S.tab === 'media' && S.mdsub === 'movies') || (S.tab === 'games' && S.gsub === 'rogue');   /* Light Novels and Movies are one chip each, all their columns stacked */
+  const real = ['books', 'media', 'games'].includes(S.tab) ? names.slice(0, -1) : names, keep = S.msel[S.tab];
+  const sel = S.tab === 'books' && S.bsub === 'ln' ? 'Light Novels' : S.tab === 'media' && S.mdsub === 'movies' ? 'Movies' : S.tab === 'games' && S.gsub === 'rogue' ? 'Rogue 100%' : (real.includes(keep) ? keep : names[0]);
   const bar = document.querySelector('.bk-bar'); if (!bar) return;
-  bar.insertAdjacentHTML('beforebegin', `<div class="mobcats">${names.map(n => `<button class="${n === sel ? 'on' : ''}" data-mobcat="${esc(n)}">${esc(n)}</button>`).join('')}</div>`);
+  bar.insertAdjacentHTML('beforebegin', `<div class="mobcats">${names.map(n => `<button class="${n === sel ? 'on' : ''}" data-mobcat="${esc(n)}">${esc(MOBSHORT[n] || n)}</button>`).join('')}</div>`);
   const chipsEl = [...bar.querySelectorAll(':scope > .chip')]; if (chipsEl.length) { const d = document.createElement('div'); d.className = 'mobchips'; chipsEl.forEach(c => d.appendChild(c)); bar.after(d); }
   const query = { books: S.bq, manga: S.mq, games: S.gq, media: S.mdq, music: S.muq }[S.tab];
   if (allMode || query) return;                                   /* searching shows every category so nothing is hidden */
@@ -551,7 +588,7 @@ function markCont() {
 }
 function fitTitles() {
   if (!['books', 'manga', 'games', 'media', 'music'].includes(S.tab)) return;
-  const els = [...document.querySelectorAll('.bk-scroll .tt')]; els.forEach(e => { e.style.fontSize = ''; });
+  const els = [...document.querySelectorAll('.bk-scroll .tt')].filter(e => !e.closest('.mu-alb, .mu .bk-grp')); els.forEach(e => { e.style.fontSize = ''; });
   els.filter(e => e.clientWidth > 0 && e.scrollWidth > e.clientWidth + 1).map(e => [e, parseFloat(getComputedStyle(e).fontSize), e.clientWidth / e.scrollWidth])
     .forEach(([e, f, r]) => { e.style.fontSize = Math.max(8.5, Math.floor(f * r * 97) / 100) + 'px'; });
 }
@@ -716,6 +753,167 @@ async function delManga() {
   S.manga = S.manga.filter(x => x.id !== S.mm.id); S.mm = null; render();
 }
 
+
+/* ---------------- Rogue 100% (Games tab) ---------------- */
+const rgLists = gid => S.rg.lists.filter(l => l.game_id === gid);
+function rgCount(l) {
+  const d = l.data || {};
+  if (l.kind === 'matrix') { const T = (d.tasks || []).length, ch = d.chars || []; return [ch.reduce((a, c) => a + (c.d || []).slice(0, T).filter(Boolean).length, 0), ch.length * T]; }
+  const it = d.items || []; return [it.filter(x => x.d).length, it.length];
+}
+const rgGameCount = gm => rgLists(gm.id).map(rgCount).reduce((a, [d, t]) => [a[0] + d, a[1] + t], [0, 0]);
+const rgPct = (d, t) => t ? Math.floor(d / t * 100) : 0;
+function rgMatrixHtml(l) {
+  const d = l.data || {}, tasks = d.tasks || [], chars = d.chars || [];
+  if (!tasks.length || !chars.length) return '<div class="cat">Nothing here yet — use Edit to add characters and what each one has to do.</div>';
+  const rowsAreChars = (chars.length >= tasks.length) !== S.rgflip.has(l.id);
+  const rows = rowsAreChars ? chars.map((c, ci) => ({ n: c.n, cells: tasks.map((_, ti) => [ci, ti, !!(c.d || [])[ti]]) })) : tasks.map((t, ti) => ({ n: t, cells: chars.map((c, ci) => [ci, ti, !!(c.d || [])[ti]]) }));
+  const cols = rowsAreChars ? tasks : chars.map(c => c.n), vert = cols.length > 8;
+  const head = cols.map((n, k) => { const dn = rows.filter(r => r.cells[k][2]).length; return `<th class="${vert ? 'v' : ''}" title="${esc(n)}"><div>${esc(n)}</div><small>${dn}/${rows.length}</small></th>`; }).join('');
+  const body = rows.map(r => { const dn = r.cells.filter(c => c[2]).length;
+    return `<tr><th title="${esc(r.n)}">${esc(r.n)} <small style="display:inline;margin-left:4px">${dn}/${r.cells.length}</small></th>${r.cells.map(([ci, ti, v]) => `<td class="c ${v ? 'y' : 'n'}" data-rgc="${l.id}|${ci}|${ti}">${v ? '✓' : '·'}</td>`).join('')}</tr>`; }).join('');
+  return `<div class="rg-mx" data-rgmx="${l.id}"><table class="rgx"><thead><tr><th>${rowsAreChars ? 'Character' : 'Task'}</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function rogueView() {
+  const R = S.rg, bar = `<div class="bk-bar">${gSeg()}<button class="btn" data-rgadd>Add game</button></div>`;
+  if (R.err) return bar + `<div class="card">Couldn’t load the Rogue 100% lists: ${esc(R.err)}<br><span class="cat">Run 18_rogue_goals.sql in the Supabase SQL Editor first.</span></div>`;
+  if (!R.games.length) return bar + '<div class="card"><div class="cat">No games yet. Add one, then give it a checklist.</div></div>';
+  const sel = R.games.find(x => x.id === S.rgsel) || R.games[0];
+  const chips = `<div class="seg rg-chips">${R.games.map(x => { const [d, t] = rgGameCount(x); return `<button class="${x.id === sel.id ? 'on' : ''}" data-rgsel="${x.id}">${esc(x.name)}<small>${d}/${t}</small></button>`; }).join('')}</div>`;
+  const [gd, gt] = rgGameCount(sel), lists = rgLists(sel.id);
+  const cards = lists.map(l => { const [d, t] = rgCount(l), pc = rgPct(d, t), dd = l.data || {};
+    return `<div class="card" data-rgl="${l.id}"><div class="head"><h2>${esc(l.name)}</h2><span style="display:flex;gap:8px;align-items:center"><span class="rg-prog">${d}/${t} · ${pc}%</span>${l.kind === 'matrix' && (dd.chars || []).length && (dd.tasks || []).length ? `<button class="btn alt" data-rgflip="${l.id}" title="Swap rows and columns">⇄</button>` : ''}<button class="btn alt" data-rgeditl="${l.id}">Edit</button></span></div>
+      <div class="rg-bar ${t && d === t ? 'full' : ''}"><i style="width:${pc}%"></i></div>
+      ${l.kind === 'matrix' ? rgMatrixHtml(l) : ((dd.items || []).length ? `<div class="rg-items">${dd.items.map((it, i) => `<div class="rg-it ${it.d ? 'y' : ''}" data-rgi="${l.id}|${i}"><span class="bx">${it.d ? '✓' : ''}</span><span>${esc(it.n)}</span></div>`).join('')}</div>` : '<div class="cat">Nothing here yet — use Edit to add items.</div>')}</div>`; }).join('');
+  return `${bar}${chips}<div class="head rg-head" style="margin:4px 2px 10px"><h2 style="font-size:1.15rem">${esc(sel.name)} <span class="rg-prog">· ${gd}/${gt} · ${rgPct(gd, gt)}%</span></h2><span style="display:flex;gap:8px"><button class="btn" data-rgaddl="${sel.id}">Add checklist</button><button class="btn alt" data-rgeditg="${sel.id}">Rename / delete</button></span></div>
+    ${cards || '<div class="card"><div class="cat">No checklists for this game yet — add one.</div></div>'}`;
+}
+function rgRender() {   /* re-draw but keep the scroll position of each table */
+  const pos = {}; document.querySelectorAll('[data-rgmx]').forEach(n => { pos[n.dataset.rgmx] = [n.scrollLeft, n.scrollTop]; });
+  render();
+  document.querySelectorAll('[data-rgmx]').forEach(n => { const p = pos[n.dataset.rgmx]; if (p) { n.scrollLeft = p[0]; n.scrollTop = p[1]; } });
+}
+const _rgT = {};
+function rgPersist(l) {
+  clearTimeout(_rgT[l.id]);
+  _rgT[l.id] = setTimeout(async () => { const { error } = await db.from('rogue_lists').update({ data: l.data }).eq('id', l.id); if (error) toast('Save failed: ' + error.message); }, 350);
+}
+function rgToggleCell(lid, ci, ti) { const l = S.rg.lists.find(x => x.id === lid); if (!l) return; const c = l.data.chars[ci]; c.d = c.d || []; while (c.d.length < l.data.tasks.length) c.d.push(false); c.d[ti] = !c.d[ti]; rgPersist(l); rgRender(); }
+function rgToggleItem(lid, i) { const l = S.rg.lists.find(x => x.id === lid); if (!l) return; l.data.items[i].d = !l.data.items[i].d; rgPersist(l); rgRender(); }
+const rgLines = t => String(t || '').split('\n').map(x => x.trim()).filter(Boolean);
+function rgModalHtml() {
+  const m = S.rgm, listPart = m.mode !== 'editgame', gamePart = m.mode === 'game' || m.mode === 'editgame', mx = m.kind === 'matrix';
+  const title = { game: 'Add game', editgame: 'Rename game', newlist: 'Add checklist', editlist: 'Edit checklist' }[m.mode];
+  return `<div class="modal"><div class="sheet"><h2>${title}</h2>
+    ${gamePart ? `<label>Game name</label><input id="rg-gname" value="${esc(m.gname)}" placeholder="e.g. Hades">` : ''}
+    ${listPart ? `<label>${m.mode === 'game' ? 'First checklist (optional)' : 'Checklist name'}</label><input id="rg-lname" value="${esc(m.lname)}" placeholder="e.g. Characters, Challenges, Achievements">
+      <label>Type</label><select id="rg-kind" ${m.mode === 'editlist' ? 'disabled' : ''}><option value="list" ${!mx ? 'selected' : ''}>Regular checklist — one list of things to do</option><option value="matrix" ${mx ? 'selected' : ''}>Character checklist — every character has to do the same things</option></select>
+      ${mx ? `<label>Characters (one per line)</label><textarea id="rg-chars" rows="6" placeholder="Isaac&#10;Cain&#10;Judas">${esc(m.chars)}</textarea>
+      <label>What each character has to do (one per line)</label><textarea id="rg-items" rows="6" placeholder="Beat Mom's Heart&#10;Beat Satan">${esc(m.items)}</textarea>`
+      : `<label>Items (one per line)</label><textarea id="rg-items" rows="8" placeholder="Beat the final boss&#10;Get every achievement">${esc(m.items)}</textarea>`}
+      ${m.mode === 'editlist' ? '<div class="cat" style="margin-top:6px">Names you keep stay checked. Renaming one counts as a new entry.</div>' : ''}` : ''}
+    <div class="acts"><button class="btn" data-rgsave>Save</button>${m.mode === 'editlist' || m.mode === 'editgame' ? '<button class="btn danger" data-rgdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+}
+function readRgm() {
+  const m = S.rgm, v = id => { const n = document.getElementById(id); return n ? n.value : undefined; };
+  if (v('rg-gname') !== undefined) m.gname = v('rg-gname'); if (v('rg-lname') !== undefined) m.lname = v('rg-lname');
+  if (v('rg-kind') !== undefined && m.mode !== 'editlist') m.kind = v('rg-kind');
+  if (v('rg-items') !== undefined) m.items = v('rg-items'); if (v('rg-chars') !== undefined) m.chars = v('rg-chars');
+  return m;
+}
+function rgBuild(m, old) {
+  const items = rgLines(m.items);
+  if (m.kind === 'list') { const was = new Map(((old && old.items) || []).map(x => [norm(x.n), !!x.d])); return { items: items.map(n => ({ n, d: was.get(norm(n)) || false })) }; }
+  const oldT = new Map(((old && old.tasks) || []).map((t, i) => [norm(t), i])), oldC = new Map(((old && old.chars) || []).map(c => [norm(c.n), c]));
+  return { tasks: items, chars: rgLines(m.chars).map(n => { const o = oldC.get(norm(n)); return { n, d: items.map(t => o && oldT.has(norm(t)) ? !!(o.d || [])[oldT.get(norm(t))] : false) }; }) };
+}
+async function saveRgm() {
+  const m = readRgm();
+  if ((m.mode === 'game' || m.mode === 'editgame') && !m.gname.trim()) return toast('Give the game a name first');
+  if (m.mode === 'editgame') { const { error } = await db.from('rogue_games').update({ name: m.gname.trim() }).eq('id', m.gid); if (error) return toast('Save failed: ' + error.message); S.rg.games.find(x => x.id === m.gid).name = m.gname.trim(); S.rgm = null; return render(); }
+  let gid = m.gid;
+  if (m.mode === 'game') {
+    const so = Math.max(0, ...S.rg.games.map(x => x.sort_order)) + 1, { data, error } = await db.from('rogue_games').insert({ name: m.gname.trim(), sort_order: so }).select().single();
+    if (error) return toast('Save failed: ' + error.message); S.rg.games.push(data); gid = data.id; S.rgsel = gid;
+    if (!m.lname.trim() && !rgLines(m.items).length) { S.rgm = null; return render(); }
+  }
+  if (!m.lname.trim()) return toast('Give the checklist a name first');
+  if (m.mode === 'editlist') { const l = S.rg.lists.find(x => x.id === m.lid), data = rgBuild(m, l.data), { error } = await db.from('rogue_lists').update({ name: m.lname.trim(), data }).eq('id', l.id); if (error) return toast('Save failed: ' + error.message); l.name = m.lname.trim(); l.data = data; }
+  else { const so = Math.max(0, ...rgLists(gid).map(x => x.sort_order)) + 1, { data, error } = await db.from('rogue_lists').insert({ game_id: gid, name: m.lname.trim(), kind: m.kind, sort_order: so, data: rgBuild(m, null) }).select().single(); if (error) return toast('Save failed: ' + error.message); S.rg.lists.push(data); }
+  S.rgm = null; render();
+}
+async function delRgm() {
+  const m = S.rgm;
+  if (m.mode === 'editgame') { if (!confirm('Delete this game and all of its checklists?')) return; const { error } = await db.from('rogue_games').delete().eq('id', m.gid); if (error) return toast('Delete failed: ' + error.message); S.rg.games = S.rg.games.filter(x => x.id !== m.gid); S.rg.lists = S.rg.lists.filter(x => x.game_id !== m.gid); S.rgsel = null; }
+  else { if (!confirm('Delete this checklist?')) return; const { error } = await db.from('rogue_lists').delete().eq('id', m.lid); if (error) return toast('Delete failed: ' + error.message); S.rg.lists = S.rg.lists.filter(x => x.id !== m.lid); }
+  S.rgm = null; render();
+}
+
+/* ---------------- Goals (Current tab) ---------------- */
+const GLQ = [['q1', 'April check-in'], ['q2', 'July check-in'], ['q3', 'October check-in'], ['ye', 'End of year']];
+const GLP = [[0, 'Not yet'], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾'], [1, 'Done ✓']];
+const glNum = n => String(+Number(n).toFixed(2)), glCls = p => p >= 0.995 ? 'g2' : p > 0.005 ? 'g1' : 'g0';
+const glYears = () => [...new Set([...S.gl.years, ...S.gl.goals.map(g => g.year)])].sort((a, b) => a - b);
+function glSel() { const ys = glYears(), cy = new Date().getFullYear(); return ys.includes(S.gly) ? S.gly : ys.includes(cy) ? cy : ys[ys.length - 1]; }
+function glProgSel(g) {
+  const p = Number(g.progress), hit = GLP.some(([v]) => Math.abs(v - p) < 0.006);
+  return `<select class="gl-p ${glCls(p)}" data-glprog="${g.id}" title="How far along">${GLP.map(([v, l]) => `<option value="${v}" ${Math.abs(v - p) < 0.006 ? 'selected' : ''}>${l}</option>`).join('')}${hit ? '' : `<option value="${p}" selected>${Math.round(p * 100)}%</option>`}</select>`;
+}
+function goalsView() {
+  if (S.gl.err) return `<div class="card">Couldn’t load Goals: ${esc(S.gl.err)}<br><span class="cat">Run 18_rogue_goals.sql in the Supabase SQL Editor first.</span></div>`;
+  const ys = glYears(), y = glSel(), goals = S.gl.goals.filter(g => g.year === y).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+  const sc = goals.reduce((a, g) => a + Number(g.progress), 0), pc = goals.length ? Math.round(sc / goals.length * 100) : 0;
+  const chips = `<div class="seg">${ys.map(v => `<button class="${v === y ? 'on' : ''}" data-glyr="${v}">${v}</button>`).join('')}<button class="alt" data-glyadd>＋ Add year</button></div>`;
+  if (!ys.length) return `${chips}<div class="card"><div class="cat">No years yet — add one to start setting goals.</div></div>`;
+  return `${chips}<div class="card"><div class="head"><h2>${y} Goals</h2><span style="display:flex;gap:10px;align-items:center"><span class="rg-prog">${goals.length ? glNum(sc) + ' of ' + goals.length + ' · ' + pc + '%' : ''}</span><button class="btn" data-gladd>Add goal</button></span></div>
+    <div class="rg-bar ${goals.length && pc === 100 ? 'full' : ''}"><i style="width:${pc}%"></i></div>
+    ${goals.map(g => { const n = g.notes || {}, notes = GLQ.filter(([k]) => n[k] && String(n[k]).trim());
+      return `<div class="gl-g"><div class="gl-top">${glProgSel(g)}<div class="gl-t">${esc(g.text)}</div><button class="gl-edit" data-gledit="${g.id}" title="Edit goal and notes">✎</button></div>
+        ${notes.length ? `<div class="gl-notes">${notes.map(([k, l]) => `<div><b>${l}</b>${esc(n[k])}</div>`).join('')}</div>` : ''}</div>`; }).join('') || '<div class="cat">No goals for this year yet — add your first one.</div>'}
+    <div style="text-align:right;margin-top:10px"><button class="link" data-glydel>Delete ${y}</button></div></div>`;
+}
+function glModalHtml() {
+  const m = S.glm;
+  if (m.mode === 'year') return `<div class="modal"><div class="sheet"><h2>Add year</h2><label>Year</label><input id="gl-year" type="number" min="2000" max="2100" value="${esc(m.year)}">
+    <div class="cat" style="margin-top:6px">You can add goals right after.</div><div class="acts"><button class="btn" data-glsave>Add year</button><button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+  return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit goal' : 'Add goal'} · ${m.year}</h2>
+    <label>Goal</label><textarea id="gl-text" rows="2">${esc(m.text)}</textarea>
+    <label>Progress</label><select id="gl-prog">${GLP.map(([v, l]) => `<option value="${v}" ${Math.abs(v - m.progress) < 0.006 ? 'selected' : ''}>${l}</option>`).join('')}${GLP.some(([v]) => Math.abs(v - m.progress) < 0.006) ? '' : `<option value="${m.progress}" selected>${Math.round(m.progress * 100)}%</option>`}</select>
+    ${GLQ.map(([k, l]) => `<label>${l} <span class="cat">· optional</span></label><textarea id="gl-${k}" rows="2">${esc(m[k])}</textarea>`).join('')}
+    <div class="acts"><button class="btn" data-glsave>Save</button>${m.id ? '<button class="btn danger" data-gldel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+}
+async function glSetProg(id, v) {
+  const g = S.gl.goals.find(x => x.id === id); if (!g) return; const old = g.progress; g.progress = v; render();
+  const { error } = await db.from('goals').update({ progress: Math.round(v * 1000) / 1000 }).eq('id', id); if (error) { g.progress = old; render(); toast('Save failed: ' + error.message); }
+}
+async function saveGlm() {
+  const m = S.glm;
+  if (m.mode === 'year') {
+    const y = Number($('#gl-year').value); if (!Number.isInteger(y) || y < 2000 || y > 2100) return toast('Enter a year like 2027');
+    if (glYears().includes(y)) { S.gly = y; S.glm = null; return render(); }
+    const { error } = await db.from('goal_years').insert({ year: y }); if (error) return toast('Save failed: ' + error.message);
+    S.gl.years.push(y); S.gly = y; S.glm = null; return render();
+  }
+  const text = $('#gl-text').value.trim(); if (!text) return toast('Write the goal first');
+  const notes = {}; GLQ.forEach(([k]) => { const t = $('#gl-' + k).value.trim(); if (t) notes[k] = t; });
+  const payload = { year: m.year, text, progress: Math.round(Number($('#gl-prog').value) * 1000) / 1000, notes };
+  let res;
+  if (m.id) res = await db.from('goals').update(payload).eq('id', m.id).select().single();
+  else { payload.sort_order = Math.max(0, ...S.gl.goals.filter(g => g.year === m.year).map(g => g.sort_order)) + 1; res = await db.from('goals').insert(payload).select().single(); }
+  if (res.error) return toast('Save failed: ' + res.error.message);
+  S.gl.goals = S.gl.goals.filter(g => g.id !== res.data.id).concat(res.data); S.glm = null; render();
+}
+async function delGlm() {
+  if (!confirm('Delete this goal?')) return; const id = S.glm.id, { error } = await db.from('goals').delete().eq('id', id); if (error) return toast('Delete failed: ' + error.message);
+  S.gl.goals = S.gl.goals.filter(g => g.id !== id); S.glm = null; render();
+}
+async function delGlYear() {
+  const y = glSel(), n = S.gl.goals.filter(g => g.year === y).length;
+  if (!confirm(`Delete ${y}${n ? ' and its ' + n + ' goal' + (n === 1 ? '' : 's') : ''}?`)) return;
+  const { error } = await db.from('goal_years').delete().eq('year', y); if (error) return toast('Delete failed: ' + error.message);
+  S.gl.years = S.gl.years.filter(v => v !== y); S.gl.goals = S.gl.goals.filter(g => g.year !== y); S.gly = null; render();
+}
+
 /* ---------------- Games ---------------- */
 const GCATS = ['Action/Adventure', 'Multiplayer/Sports', 'RPG/Strategy', 'Roguelikes', 'Puzzle/Building', 'Indie/Platformer/Other'];
 const GST = { 1: 'Playing', 2: 'Paused', 3: 'Finished', 4: '100% Future', 5: '100% games', 6: 'Dropped', 7: 'Not started', 8: 'Not current' };
@@ -737,7 +935,9 @@ const gClosed = (cat, band) => { const k = cat + '|' + band.name; return S.gshut
 const gHrs = h => h == null || h === '' ? '' : Number(h).toLocaleString(undefined, { maximumFractionDigits: 1 });
 function gAgg(list) { const rs = list.filter(m => m.rating != null); return { rt: rs.length ? mrf(rs.reduce((a, m) => a + Number(m.rating), 0) / rs.length) : '', hr: gHrs(list.reduce((a, m) => a + (Number(m.hours) || 0), 0)) }; }
 
+const gSeg = () => `<div class="seg sm" style="margin:0"><button class="${S.gsub !== 'rogue' ? 'on' : ''}" data-gsubtab="games">Games (${S.games.length})</button><button class="${S.gsub === 'rogue' ? 'on' : ''}" data-gsubtab="rogue">Rogue 100%</button></div>`;
 function gamesView() {
+  if (S.gsub === 'rogue') return rogueView();
   if (S.gaErr) return `<div class="card">Couldn’t load Games: ${esc(S.gaErr)}<br><span class="cat">Run 14_games.sql in the Supabase SQL Editor first.</span></div>`;
   const nRate = S.games.filter(gNeedsRating).length;
   if (!nRate) S.grate = false;
@@ -759,7 +959,7 @@ function gamesView() {
       <div class="bk-r bk-title"><span class="t"><span class="tt">${esc(cat)} · ${all.length}</span></span><span>${a.rt}</span><span>${a.hr}</span></div></div>
       <div class="mg-body ${wrapped ? 'w2' : ''}">${body || '<div class="bk-r bk-bk gm-s7" style="cursor:default">Nothing here.</div>'}</div></div>`;
   }).join('');
-  return `<div class="bk-bar"><button class="btn" data-gadd>Add game</button>${chips}
+  return `<div class="bk-bar">${gSeg()}<button class="btn" data-gadd>Add game</button>${chips}
     <input id="gq" placeholder="Search games" value="${esc(S.gq)}" style="width:200px"><button class="btn alt" data-gcolall>${allShut ? 'Expand all' : 'Collapse all'}</button>
     <button class="btn alt ${S.gwrap ? 'on' : ''}" data-gwrap title="Long columns flow into two side-by-side halves, newest at the bottom of the second half">Wrap long columns: ${S.gwrap ? 'on' : 'off'}</button>${nRate ? `<button class="chip bk-s-unsure ${S.grate ? 'sel' : ''}" data-grate title="Finished or dropped, but no rating yet">Needs a rating (${nRate})</button>` : ''}
     <span class="cat">${S.games.length} games · ${gHrs(S.games.reduce((a, m) => a + (Number(m.hours) || 0), 0))} hrs</span></div><div class="bk-scroll">${cards}</div>`;
@@ -934,13 +1134,13 @@ function musicView() {
       const albs = ar.albs.filter(a => !q || norm(ar.name).includes(q) || norm(a.title).includes(q) || muSongs(a.id).some(x => norm(x.title).includes(q)));
       if (!albs.length) return '';
       const ashut = !q && S.muashut.has(ar.name + '|' + g);
-      const head = `<div class="bk-r bk-grp" data-muakey="${esc(ar.name + '|' + g)}" title="Click to ${ashut ? 'expand' : 'collapse'}"><span class="t"><span class="cr">${ashut ? '▸' : '▾'}</span><span class="tt">${esc(ar.name)} · ${ar.albs.length}</span></span><span>${muRf(muAvg(ar.albs))}</span><span>${muSecs(ar.albs.reduce((n, a) => n + muAlbSecs(a), 0))}</span></div>`;
+      const head = `<div class="bk-r bk-grp" data-muakey="${esc(ar.name + '|' + g)}" title="${esc(ar.name + ' · ' + ar.albs.length + (ar.albs.length === 1 ? ' album' : ' albums'))} — click to ${ashut ? 'expand' : 'collapse'}"><span class="t"><span class="cr">${ashut ? '▸' : '▾'}</span><span class="tt">${esc(ar.name)} · ${ar.albs.length}</span></span><span>${muRf(muAvg(ar.albs))}</span><span>${muSecs(ar.albs.reduce((n, a) => n + muAlbSecs(a), 0))}</span></div>`;
       if (ashut) return head;
       return head + albs.map(a => {
         const open = S.muopen.has(a.id) || (q && !norm(a.title).includes(q) && !norm(ar.name).includes(q)), ss = muSongs(a.id), r = muAlbR(a), sec = muAlbSecs(a);
         const rows = open ? ss.filter(x => !q || norm(ar.name).includes(q) || norm(a.title).includes(q) || norm(x.title).includes(q)).map(x => `<div class="bk-r bk-bk mu-song mu-l${x.listen} ${x.counts === false ? 'nc' : ''}" data-muedit="${a.id}" title="${x.counts === false ? 'Not counted in the album rating' : ''}"><span class="t"><span class="tt">${esc(x.title)}</span></span><span>${muSrf(x.rating)}</span><span>${x.secs != null ? muSecs(x.secs) : ''}</span></div>`).join('') : '';
         const lvl = ss.length && ss.every(x => x.listen === 3) && ss.every(x => x.rating != null) ? 'al3' : ss.length && ss.every(x => x.listen >= 2) ? 'al2' : '';   /* blue: every song known + rated; yellow: every song at least heard */
-        return `<div class="bk-r bk-bk mu-alb ${lvl}" data-mutog="${a.id}" title="${esc(a.title + (a.year ? ' (' + a.year + ')' : ''))}"><span class="t"><span class="cr">${open ? '▾' : '▸'}</span><span class="tt">${esc(a.title)}</span><span class="ed" data-muedit="${a.id}" title="Edit album">✎</span></span><span>${muRf(r)}</span><span>${sec ? muSecs(sec) : ''}</span></div>${rows}`;
+        return `<div class="bk-r bk-bk mu-alb ${lvl}" data-mutog="${a.id}" title="${esc(a.title + (a.year ? ' (' + a.year + ')' : ''))}"><span class="t"><span class="cr2"><span>${open ? '▾' : '▸'}</span><span class="ed" data-muedit="${a.id}" title="Edit album">✎</span></span><span class="tt">${esc(a.title)}</span></span><span>${muRf(r)}</span><span>${sec ? muSecs(sec) : ''}</span></div>${rows}`;
       }).join('');
     }).join('');
     return `<div class="bk-sec mu"><div class="bk-sticky"><div class="bk-r bk-lab"><span class="t">${g === MUG[0] ? 'Music List' : ''}</span><span>Rating</span><span>Time</span></div>
@@ -1090,8 +1290,8 @@ const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div cl
 
 function currentView() {
   if (S.curErr) return `<div class="card">Couldn’t load Current: ${esc(S.curErr)}<br><span class="cat">Run 4_current.sql in the Supabase SQL Editor first.</span></div>`;
-  const tabs = [['overview', 'Overview'], ...CATS, ['years', 'Years']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
-  const body = S.cat === 'overview' ? overview() : S.cat === 'years' ? yearsView() : catView(S.cat);
+  const tabs = [['overview', 'Overview'], ...CATS, ['years', 'Years'], ['goals', 'Goals']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
+  const body = S.cat === 'overview' ? overview() : S.cat === 'years' ? yearsView() : S.cat === 'goals' ? goalsView() : catView(S.cat);
   return `<div class="seg">${tabs}</div>${body}`;
 }
 
@@ -1299,9 +1499,9 @@ function render() {
       <div class="acts"><button class="btn">Sign in</button></div><div class="err" id="lerr"></div></form>`;
     return;
   }
-  const modal = S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.mum ? musicModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
+  const modal = S.rgm ? rgModalHtml() : S.glm ? glModalHtml() : S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.mum ? musicModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
   const bsc = document.querySelector('.bk-scroll'), bpos = bsc && !S.bkreset ? [bsc.scrollLeft, bsc.scrollTop] : null; S.bkreset = false;
-  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.mum ? 'u' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
+  const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.rgm ? 'x' : S.glm ? 'y' : S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.mum ? 'u' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
   app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music'].includes(S.tab) ? 'wide' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button><button class="${S.tab === 'media' ? 'on' : ''}" data-tab="media">Media</button><button class="${S.tab === 'music' ? 'on' : ''}" data-tab="music">Music</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
@@ -1393,8 +1593,8 @@ async function del() {
 document.addEventListener('click', e => {
   const t = e.target, g = a => t.closest(`[${a}]`);
   if (!S.user) return;
-  if (t.classList.contains('modal')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
-  if (g('data-cancel')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.settings = false; return render(); }
+  if (t.classList.contains('modal')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.rgm = null; S.glm = null; S.settings = false; return render(); }
+  if (g('data-cancel')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.rgm = null; S.glm = null; S.settings = false; return render(); }
   if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
   if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
@@ -1433,6 +1633,7 @@ document.addEventListener('click', e => {
   if (g('data-mobcat')) { const n = g('data-mobcat').dataset.mobcat;
     if (S.tab === 'books') { if (n === 'Light Novels') S.bsub = 'ln'; else { S.bsub = 'books'; S.msel.books = n; } S.bst = null; }
     else if (S.tab === 'media') { if (n === 'Movies') S.mdsub = 'movies'; else { S.mdsub = 'shows'; S.msel.media = n; } S.mdst = null; S.mdq = ''; }
+    else if (S.tab === 'games') { if (n === 'Rogue 100%') S.gsub = 'rogue'; else { S.gsub = 'games'; S.msel.games = n; } S.gst = null; }
     else S.msel[S.tab] = n;
     S.bkreset = true; render(); window.scrollTo(0, 0); return; }
   if (g('data-mdsubtab')) { S.mdsub = g('data-mdsubtab').dataset.mdsubtab; S.mdst = null; S.mdq = ''; S.bkreset = true; return render(); }
@@ -1447,6 +1648,25 @@ document.addEventListener('click', e => {
   if (g('data-mdrate')) { S.mdrate = !S.mdrate; return render(); }
   if (g('data-scadd')) { if (S.mdm) { readDm(); S.mdm.scores.push(['__new__', '', 10]); } else if (S.gm) { readGm(); S.gm.scores.push(['__new__', '', 10]); } else { readMm(); S.mm.scores.push(['__new__', '', 10]); } return render(); }
   if (g('data-scdel')) { const i = Number(g('data-scdel').dataset.scdel); if (S.mdm) { readDm(); S.mdm.scores.splice(i, 1); } else if (S.gm) { readGm(); S.gm.scores.splice(i, 1); } else { readMm(); S.mm.scores.splice(i, 1); } return render(); }
+  if (g('data-gsubtab')) { S.gsub = g('data-gsubtab').dataset.gsubtab; S.gst = null; S.bkreset = true; return render(); }
+  if (g('data-rgsel')) { S.rgsel = Number(g('data-rgsel').dataset.rgsel); return render(); }
+  if (g('data-rgflip')) { const k = Number(g('data-rgflip').dataset.rgflip); S.rgflip.has(k) ? S.rgflip.delete(k) : S.rgflip.add(k); try { localStorage.setItem('rg_flip', JSON.stringify([...S.rgflip])); } catch (e) { /* storage unavailable */ } return rgRender(); }
+  if (g('data-rgc')) { const [l, c, t] = g('data-rgc').dataset.rgc.split('|').map(Number); return rgToggleCell(l, c, t); }
+  if (g('data-rgi')) { const [l, i] = g('data-rgi').dataset.rgi.split('|').map(Number); return rgToggleItem(l, i); }
+  if (g('data-rgadd')) { S.rgm = { mode: 'game', gname: '', lname: '', kind: 'list', items: '', chars: '' }; return render(); }
+  if (g('data-rgaddl')) { S.rgm = { mode: 'newlist', gid: Number(g('data-rgaddl').dataset.rgaddl), lname: '', kind: 'list', items: '', chars: '' }; return render(); }
+  if (g('data-rgeditl')) { const l = S.rg.lists.find(x => x.id == g('data-rgeditl').dataset.rgeditl), d = l.data || {};
+    S.rgm = { mode: 'editlist', lid: l.id, lname: l.name, kind: l.kind, items: l.kind === 'matrix' ? (d.tasks || []).join('\n') : (d.items || []).map(x => x.n).join('\n'), chars: (d.chars || []).map(x => x.n).join('\n') }; return render(); }
+  if (g('data-rgeditg')) { const x = S.rg.games.find(v => v.id == g('data-rgeditg').dataset.rgeditg); S.rgm = { mode: 'editgame', gid: x.id, gname: x.name }; return render(); }
+  if (g('data-rgsave')) return saveRgm();
+  if (g('data-rgdel')) return delRgm();
+  if (g('data-glyr')) { S.gly = Number(g('data-glyr').dataset.glyr); return render(); }
+  if (g('data-glyadd')) { S.glm = { mode: 'year', year: glYears().length ? Math.max(...glYears()) + 1 : new Date().getFullYear() }; return render(); }
+  if (g('data-gladd')) { S.glm = { mode: 'goal', id: null, year: glSel(), text: '', progress: 0, ye: '', q1: '', q2: '', q3: '' }; return render(); }
+  if (g('data-gledit')) { const x = S.gl.goals.find(v => v.id == g('data-gledit').dataset.gledit), n = x.notes || {}; S.glm = { mode: 'goal', id: x.id, year: x.year, text: x.text, progress: Number(x.progress), ye: n.ye || '', q1: n.q1 || '', q2: n.q2 || '', q3: n.q3 || '' }; return render(); }
+  if (g('data-glsave')) return saveGlm();
+  if (g('data-gldel')) return delGlm();
+  if (g('data-glydel')) return delGlYear();
   if (g('data-gst')) { const v = Number(g('data-gst').dataset.gst); S.gst = S.gst === v ? null : v; return render(); }
   if (g('data-gadd')) { S.gm = { id: null, category: GCATS[0], title: '', year: new Date().getFullYear(), rating: '', plat: '', platNew: '', hours: '', plays: '', unsure: false, note: '', status: 7, scores: gBlank(GCATS[0]) }; return render(); }
   if (g('data-gedit')) { const x = S.games.find(v => v.id == g('data-gedit').dataset.gedit); S.gm = { id: x.id, category: x.category, title: x.title, year: x.year ?? '', rating: x.rating ?? '', plat: x.platform || '', platNew: '', hours: x.hours ?? '', plays: x.plays ?? '', unsure: !!x.hours_unsure, note: x.note || '', status: x.status, scores: Array.isArray(x.scores) ? x.scores.map(y => [y[0], y[1] ?? '', y[2] ?? GMAX[y[0]] ?? 10]) : gBlank(x.category) }; return render(); }
@@ -1500,6 +1720,8 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat();
   if (e.key === 'Enter' && e.target.id === 'r-new') addRogue(); });
 document.addEventListener('change', e => {
+  if (e.target.dataset.glprog !== undefined) return glSetProg(Number(e.target.dataset.glprog), Number(e.target.value));
+  if (S.rgm && e.target.id === 'rg-kind') { readRgm(); return render(); }
   if (e.target.dataset.vis !== undefined) return toggleVis(e.target);
   if (e.target.id === 'm-cat' && S.mm) { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
   if (S.mum && (e.target.id === 'u-genre' || e.target.id === 'u-art')) { readUm(); if (e.target.id === 'u-genre') { const a = [...new Set(S.malb.filter(x => x.genre === S.mum.genre).map(x => x.artist))]; if (!a.includes(S.mum.artist)) S.mum.artist = a[0] || '__new__'; } return render(); }
