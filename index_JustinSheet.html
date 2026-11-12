@@ -159,14 +159,16 @@ label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
 /* Books headers, night mode: warm charcoal with gold text */
 
 /* ---- Rogue 100% checklists + Goals ---- */
-.rg-chips{margin-bottom:10px}.rg-chips button small{opacity:.7;margin-left:4px;font-size:.78em}
+.rg-chips{margin-bottom:10px;justify-content:center}.rg-chips button small{opacity:.7;margin-left:4px;font-size:.78em}
 .rg-prog{font-size:.85rem;color:var(--mute);white-space:nowrap}
 .rg-bar{height:6px;border-radius:99px;background:var(--line);margin:2px 0 10px;overflow:hidden}.rg-bar i{display:block;height:100%;background:#8fbf80;border-radius:99px}.rg-bar.full i{background:#7fa0e6}
 .rg-items{column-width:210px;column-gap:8px}
 .rg-it{break-inside:avoid;display:flex;gap:8px;align-items:center;padding:4px 8px;margin-bottom:3px;border-radius:7px;background:var(--bg);border:1px solid var(--line);cursor:pointer;font-size:.88rem}
 .rg-it .bx{flex:none;width:16px;height:16px;border-radius:4px;border:1.5px solid var(--mute);display:grid;place-items:center;font-size:.72rem;line-height:1}
 .rg-it.y{background:#c3e0b8;border-color:#a3c997;color:#1b1b1b}.rg-it.y .bx{border-color:#4a7a40;background:#4a7a40;color:#fff}
-.rg-mx{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:10px}
+.rg-cards{display:flex;flex-wrap:wrap;justify-content:center;gap:0 14px;align-items:flex-start}
+.rg-cards>.rg-matrix{flex:0 1 auto;max-width:100%;min-width:340px}.rg-cards>.rg-list{flex:1 1 100%}
+.rg-mx{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:10px}
 table.rgx{border-collapse:separate;border-spacing:0;font-size:.82rem}
 table.rgx th,table.rgx td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:3px 6px;text-align:center;background:var(--card)}
 table.rgx thead th{position:sticky;top:0;z-index:2;font-weight:600;vertical-align:bottom}
@@ -182,6 +184,8 @@ select.gl-p{width:auto;flex:none;padding:3px 6px;font-size:.82rem;border-radius:
 .gl-p.g0{background:#c3ccd4}.gl-p.g1{background:#fff2cc}.gl-p.g2{background:#c3e0b8}
 .gl-g{padding:10px 0;border-top:1px solid var(--line)}.gl-g:first-of-type{border-top:0}
 .gl-notes{display:grid;gap:5px;margin:6px 0 0 0}.gl-notes div{font-size:.86rem;white-space:pre-wrap;padding-left:10px;border-left:3px solid var(--line)}.gl-notes b{display:block;font-size:.72rem;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+@media(min-width:701px){.gl-g{display:grid;grid-template-columns:minmax(240px,34%) 1fr;gap:6px 24px;align-items:start}.gl-notes{margin:0;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px}.gl-g:not(:has(.gl-notes)) .gl-top{grid-column:1/-1}}
+.sheet.gl-sheet{max-width:680px}.gl-sheet textarea{line-height:1.45}
 .gl-edit{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1rem;padding:0 4px}
 /* ---- phone layout: compact two-row nav, one category at a time, single page scroll ---- */
 .mobcats{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 7px}
@@ -215,6 +219,7 @@ select.gl-p{width:auto;flex:none;padding:3px 6px;font-size:.82rem;border-radius:
   .usgrid{grid-template-columns:minmax(0,1fr) 50px 54px 46px 22px 22px}
   .mu .bk-r{grid-template-columns:minmax(0,1fr) 54px 68px}
   .mu-alb .cr2{width:26px}.mu-alb .ed{padding:3px 4px;font-size:.95rem}
+  .rg-cards{display:block}.rg-cards>.rg-matrix{min-width:0}
   .rg-chips button{padding:4px 11px;font-size:.84rem}.rg-head .btn{padding:6px 10px;font-size:.8rem}
 }
 @media(prefers-color-scheme:dark){.bk-sticky,.bk-lab,.bk-title{background:#3a3530;color:#d9d4cc}.bk-grp{background:#4d463f;color:#d9d4cc}.bk-subh{background:#6a6258;color:#d9d4cc}}
@@ -766,7 +771,16 @@ const rgPct = (d, t) => t ? Math.floor(d / t * 100) : 0;
 function rgMatrixHtml(l) {
   const d = l.data || {}, tasks = d.tasks || [], chars = d.chars || [];
   if (!tasks.length || !chars.length) return '<div class="cat">Nothing here yet — use Edit to add characters and what each one has to do.</div>';
-  const rowsAreChars = (chars.length >= tasks.length) !== S.rgflip.has(l.id);
+  const flipped = S.rgflip.has(l.id);
+  if (!isMob() && !flipped && tasks.length <= 4 && chars.length > 12) {   /* few tasks, many characters: characters across the top in two centered rows */
+    const per = Math.ceil(chars.length / 2), parts = [chars.slice(0, per), chars.slice(per)];
+    return parts.map((part, pi) => { const off = pi * per;
+      const head = part.map(c => { const dn = (c.d || []).slice(0, tasks.length).filter(Boolean).length; return `<th class="v" title="${esc(c.n)}"><div>${esc(c.n)}</div><small>${dn}/${tasks.length}</small></th>`; }).join('');
+      const body = tasks.map((t, ti) => { const dn = part.filter(c => (c.d || [])[ti]).length;
+        return `<tr><th title="${esc(t)}">${esc(t)} <small style="display:inline;margin-left:4px">${dn}/${part.length}</small></th>${part.map((c, k) => { const v = !!(c.d || [])[ti]; return `<td class="c ${v ? 'y' : 'n'}" data-rgc="${l.id}|${off + k}|${ti}">${v ? '✓' : '·'}</td>`; }).join('')}</tr>`; }).join('');
+      return `<div class="rg-mx" data-rgmx="${l.id}-${pi}" style="margin-bottom:10px"><table class="rgx"><thead><tr><th>Task</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`; }).join('');
+  }
+  const rowsAreChars = (chars.length >= tasks.length) !== flipped;
   const rows = rowsAreChars ? chars.map((c, ci) => ({ n: c.n, cells: tasks.map((_, ti) => [ci, ti, !!(c.d || [])[ti]]) })) : tasks.map((t, ti) => ({ n: t, cells: chars.map((c, ci) => [ci, ti, !!(c.d || [])[ti]]) }));
   const cols = rowsAreChars ? tasks : chars.map(c => c.n), vert = cols.length > 8;
   const head = cols.map((n, k) => { const dn = rows.filter(r => r.cells[k][2]).length; return `<th class="${vert ? 'v' : ''}" title="${esc(n)}"><div>${esc(n)}</div><small>${dn}/${rows.length}</small></th>`; }).join('');
@@ -782,11 +796,11 @@ function rogueView() {
   const chips = `<div class="seg rg-chips">${R.games.map(x => { const [d, t] = rgGameCount(x); return `<button class="${x.id === sel.id ? 'on' : ''}" data-rgsel="${x.id}">${esc(x.name)}<small>${d}/${t}</small></button>`; }).join('')}</div>`;
   const [gd, gt] = rgGameCount(sel), lists = rgLists(sel.id);
   const cards = lists.map(l => { const [d, t] = rgCount(l), pc = rgPct(d, t), dd = l.data || {};
-    return `<div class="card" data-rgl="${l.id}"><div class="head"><h2>${esc(l.name)}</h2><span style="display:flex;gap:8px;align-items:center"><span class="rg-prog">${d}/${t} · ${pc}%</span>${l.kind === 'matrix' && (dd.chars || []).length && (dd.tasks || []).length ? `<button class="btn alt" data-rgflip="${l.id}" title="Swap rows and columns">⇄</button>` : ''}<button class="btn alt" data-rgeditl="${l.id}">Edit</button></span></div>
+    return `<div class="card rg-${l.kind}" data-rgl="${l.id}"><div class="head"><h2>${esc(l.name)}</h2><span style="display:flex;gap:8px;align-items:center"><span class="rg-prog">${d}/${t} · ${pc}%</span>${l.kind === 'matrix' && (dd.chars || []).length && (dd.tasks || []).length ? `<button class="btn alt" data-rgflip="${l.id}" title="Swap rows and columns">⇄</button>` : ''}<button class="btn alt" data-rgeditl="${l.id}">Edit</button></span></div>
       <div class="rg-bar ${t && d === t ? 'full' : ''}"><i style="width:${pc}%"></i></div>
       ${l.kind === 'matrix' ? rgMatrixHtml(l) : ((dd.items || []).length ? `<div class="rg-items">${dd.items.map((it, i) => `<div class="rg-it ${it.d ? 'y' : ''}" data-rgi="${l.id}|${i}"><span class="bx">${it.d ? '✓' : ''}</span><span>${esc(it.n)}</span></div>`).join('')}</div>` : '<div class="cat">Nothing here yet — use Edit to add items.</div>')}</div>`; }).join('');
   return `${bar}${chips}<div class="head rg-head" style="margin:4px 2px 10px"><h2 style="font-size:1.15rem">${esc(sel.name)} <span class="rg-prog">· ${gd}/${gt} · ${rgPct(gd, gt)}%</span></h2><span style="display:flex;gap:8px"><button class="btn" data-rgaddl="${sel.id}">Add checklist</button><button class="btn alt" data-rgeditg="${sel.id}">Rename / delete</button></span></div>
-    ${cards || '<div class="card"><div class="cat">No checklists for this game yet — add one.</div></div>'}`;
+    <div class="rg-cards">${cards || '<div class="card"><div class="cat">No checklists for this game yet — add one.</div></div>'}</div>`;
 }
 function rgRender() {   /* re-draw but keep the scroll position of each table */
   const pos = {}; document.querySelectorAll('[data-rgmx]').forEach(n => { pos[n.dataset.rgmx] = [n.scrollLeft, n.scrollTop]; });
@@ -876,10 +890,10 @@ function glModalHtml() {
   const m = S.glm;
   if (m.mode === 'year') return `<div class="modal"><div class="sheet"><h2>Add year</h2><label>Year</label><input id="gl-year" type="number" min="2000" max="2100" value="${esc(m.year)}">
     <div class="cat" style="margin-top:6px">You can add goals right after.</div><div class="acts"><button class="btn" data-glsave>Add year</button><button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
-  return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit goal' : 'Add goal'} · ${m.year}</h2>
-    <label>Goal</label><textarea id="gl-text" rows="2">${esc(m.text)}</textarea>
+  return `<div class="modal"><div class="sheet gl-sheet"><h2>${m.id ? 'Edit goal' : 'Add goal'} · ${m.year}</h2>
+    <label>Goal</label><textarea id="gl-text" rows="3">${esc(m.text)}</textarea>
     <label>Progress</label><select id="gl-prog">${GLP.map(([v, l]) => `<option value="${v}" ${Math.abs(v - m.progress) < 0.006 ? 'selected' : ''}>${l}</option>`).join('')}${GLP.some(([v]) => Math.abs(v - m.progress) < 0.006) ? '' : `<option value="${m.progress}" selected>${Math.round(m.progress * 100)}%</option>`}</select>
-    ${GLQ.map(([k, l]) => `<label>${l} <span class="cat">· optional</span></label><textarea id="gl-${k}" rows="2">${esc(m[k])}</textarea>`).join('')}
+    ${GLQ.map(([k, l]) => `<label>${l} <span class="cat">· optional</span></label><textarea id="gl-${k}" rows="6">${esc(m[k])}</textarea>`).join('')}
     <div class="acts"><button class="btn" data-glsave>Save</button>${m.id ? '<button class="btn danger" data-gldel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 async function glSetProg(id, v) {
