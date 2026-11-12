@@ -186,6 +186,7 @@ select.gl-p{width:auto;flex:none;padding:3px 6px;font-size:.82rem;border-radius:
 .gl-notes{display:grid;gap:5px;margin:6px 0 0 0}.gl-notes div{font-size:.86rem;white-space:pre-wrap;padding-left:10px;border-left:3px solid var(--line)}.gl-notes b{display:block;font-size:.72rem;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
 @media(min-width:701px){.gl-g{display:grid;grid-template-columns:minmax(240px,34%) 1fr;gap:6px 24px;align-items:start}.gl-notes{margin:0;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px}.gl-g:not(:has(.gl-notes)) .gl-top{grid-column:1/-1}}
 .sheet.gl-sheet{max-width:680px}.gl-sheet textarea{line-height:1.45}
+.csub{font-weight:inherit}
 .cflag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:99px;background:#f6d3c9;color:#8a2f17;font-size:.68rem;font-weight:600;white-space:nowrap;vertical-align:middle}
 .gl-edit{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1rem;padding:0 4px}
 /* ---- phone layout: compact two-row nav, one category at a time, single page scroll ---- */
@@ -1300,8 +1301,8 @@ const prog = i => {
 };
 const mark = i => i.done ? `<span style="color:${yc(i.done_year)}">✓${i.done_year ? ' ’' + String(i.done_year).slice(2) : ''}</span>`
   : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : i.status === 'catchup' ? '<span class="cat">Catch up</span>' : '';
-const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${curFlag(i)}</div><div class="t2">${esc(cvv(i).progress) || '—'}</div><div class="t3">${esc(cvv(i).total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
-const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${curFlag(i)}</div><div class="t5">${prog(cvv(i))}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
+const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${i.subtitle ? `<span class="csub">: ${esc(i.subtitle)}</span>` : ''}${curFlag(i)}</div><div class="t2">${esc(cvv(i).progress) || '—'}</div><div class="t3">${esc(cvv(i).total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
+const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${i.subtitle ? `<span class="csub">: ${esc(i.subtitle)}</span>` : ''}${curFlag(i)}</div><div class="t5">${prog(cvv(i))}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
 
 
 /* ---------- Send an item from a big tab to Current ---------- */
@@ -1328,14 +1329,36 @@ function curPlan(kind, id) {
   if (kind === 'music') {
     const a = S.malb.find(x => x.id === id); if (!a) return null;
     const so = muSongs(id), n = so.length, x = so.filter(v => v.listen === 3).length;
-    return { cat: 'music', title: a.title, st: n && x === n ? 'done' : 'active', prog: `${x} Songs`, tot: `${n} Songs` };
+    return { cat: 'music', title: a.artist + ' - ' + a.title, st: n && x === n ? 'done' : 'active', prog: `${x} Songs`, tot: `${n} Songs` };
   }
   return null;
 }
 const CURSRC = { games: ['games', () => S.games], shows: ['media', () => S.media], manga: ['manga', () => S.manga], music: ['music', () => S.malb] }, CURTAB = { games: 'Games', shows: 'Media', manga: 'Manga', music: 'Music' };
-function curSrc(i) {   /* find the matching item in its own tab and read the progress from it (Books are tracked by hand) */
+const ntl = s => (s || '').toLowerCase().replace(/\s*[–—-]\s*/g, ' - ').replace(/\s+/g, ' ').trim();
+function curItem(i) {   /* the matching item in its own tab; albums are written "Artist - Album" in Current */
   const c = CURSRC[i.category]; if (!c) return null;
-  const it = c[1]().find(x => norm(x.title) === norm(i.title)); return it ? curPlan(c[0], it.id) : null;
+  const k = ntl(i.title), it = c[1]().find(x => c[0] === 'music' ? (ntl(x.artist + ' - ' + x.title) === k || ntl(x.title) === k) : ntl(x.title) === k);
+  return it ? [c[0], it] : null;
+}
+function curSrc(i) { const r = curItem(i); return r ? curPlan(r[0], r[1].id) : null; }
+async function curWriteBack(old, m) {   /* edits in Current also update the tab the item lives in */
+  const r = curItem({ category: m.category, title: m.title.trim() }); if (!r) return;
+  const [kind, it] = r, num = t => { const x = String(t || '').match(/\d+(?:\.\d+)?/); return x ? Number(x[0]) : null; };
+  const newlyDone = m.done && !(old && old.done), upd = {}, notes = [];
+  if (kind !== 'music') {
+    const liveProg = old ? cvv(old).progress : null, n = num(m.progress);
+    if ((m.progress.trim() || null) !== (liveProg || null) && n != null) {
+      if (kind === 'manga') upd.chs_read = Math.round(n); else if (kind === 'media' && it.category !== 'Movies') upd.eps_read = Math.round(n); else if (kind === 'games') upd.hours = n;
+      if (n > 0 && it.status === { games: 7, media: 7, manga: 6 }[kind] && Object.keys(upd).length) upd.status = 1;
+    }
+    if (newlyDone) { if (kind === 'games' && ![3, 4, 5].includes(it.status)) upd.status = 3; if (kind === 'media' && ![3, 4].includes(it.status)) upd.status = 4; if (kind === 'manga' && it.status !== 4) upd.status = 4; }
+    if (!Object.keys(upd).length) return;
+    const { error } = await db.from(kind).update(upd).eq('id', it.id); if (error) return toast('Saved in Current, but the ' + CURTAB[m.category] + ' tab update failed: ' + error.message);
+    Object.assign(it, upd); toast('Also updated the ' + CURTAB[m.category] + ' tab');
+  } else if (newlyDone) {
+    const { error } = await db.from('music_songs').update({ listen: 3 }).eq('album_id', it.id); if (error) return toast('Saved in Current, but the songs update failed: ' + error.message);
+    S.msong.filter(x => x.album_id === it.id).forEach(x => { x.listen = 3; }); toast('Also marked every song as 3 in the Music tab');
+  }
 }
 function cvv(i) {
   const s = curSrc(i); if (!s) return i;
@@ -1343,7 +1366,7 @@ function cvv(i) {
 }
 const curMissing = i => !!CURSRC[i.category] && !curSrc(i);
 const curFlag = i => curMissing(i) ? `<span class="cflag" title="Not found in the ${CURTAB[i.category]} tab — check the spelling there or here, so progress can be read from it">⚠ not in ${CURTAB[i.category]}</span>` : '';
-const curFind = p => S.current.find(i => i.category === p.cat && norm(i.title) === norm(p.title));
+const curFind = p => S.current.find(i => i.category === p.cat && ntl(i.title) === ntl(p.title));
 const curBtn = (kind, id) => { const p = curPlan(kind, id); return `<button class="btn alt" data-tocur="${kind}|${id}">${p && curFind(p) ? 'Update in Current' : 'Add to Current'}</button>`; };
 async function toCurrent(kind, id, btn) {
   const p = curPlan(kind, id); if (!p) return;
@@ -1415,7 +1438,8 @@ function curModalHtml() {
   for (let y = 2024; y <= top; y++) yrs.push(y);
   const st = [['active', 'Active'], ['paused', 'Paused'], ['dropped', 'Dropped'], ['rewatch', 'Rewatch / replay later'], ['catchup', 'Catch up']];
   return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit' : 'Add to'} ${m.id ? '' : catName(m.category)}</h2>
-    <label>Title</label><input id="c-title" value="${esc(m.title)}">
+    <label>Title <span class="cat">· used to find it in its tab</span></label><input id="c-title" value="${esc(m.title)}">
+    <label>Second title <span class="cat">· optional, shown after the title (e.g. Space Age)</span></label><input id="c-sub" value="${esc(m.sub || '')}" placeholder="e.g. Space Age">
     <div style="display:flex;gap:8px"><div style="flex:1"><label>How far</label><input id="c-prog" value="${esc(m.progress)}" placeholder="Ch. 12"></div><div style="flex:1"><label>Total</label><input id="c-tot" value="${esc(m.total)}" placeholder="147 Chs."></div></div>
     <label>Status</label><select id="c-status">${st.map(([k, l]) => `<option value="${k}" ${m.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
     <label class="chkrow"><input type="checkbox" id="c-incur" ${m.incur ? 'checked' : ''}><span>In my Current list</span></label>
@@ -1425,7 +1449,7 @@ function curModalHtml() {
 }
 
 function readCm() {
-  const m = S.cm; m.title = $('#c-title').value; m.progress = $('#c-prog').value; m.total = $('#c-tot').value; m.status = $('#c-status').value;
+  const m = S.cm; m.title = $('#c-title').value; m.sub = $('#c-sub').value; m.progress = $('#c-prog').value; m.total = $('#c-tot').value; m.status = $('#c-status').value;
   m.incur = $('#c-incur').checked; m.done = $('#c-done').checked; m.year = $('#c-year') ? Number($('#c-year').value) : (m.done ? (m.year || new Date().getFullYear()) : m.year);
   return m;
 }
@@ -1439,12 +1463,13 @@ async function saveCur() {
     const cu = m.status === 'catchup', same = old && old.rank != null && (old.status === 'catchup') === cu;
     rank = same ? old.rank : Math.max(0, ...(cu ? rankedCU() : ranked(m.category)).filter(i => i.id !== m.id).map(i => i.rank)) + 1;
   }
-  const payload = { category: m.category, title, progress: m.progress.trim() || null, total: m.total.trim() || null, status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
+  const payload = { category: m.category, title, ...((m.sub || '').trim() || (old && old.subtitle) ? { subtitle: (m.sub || '').trim() || null } : {}), progress: m.progress.trim() || null, total: m.total.trim() || null, status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
   let res;
   if (m.id) res = await db.from('current_items').update(payload).eq('id', m.id).select().single();
   else { payload.sort_order = Math.max(0, ...S.current.map(i => i.sort_order)) + 1; res = await db.from('current_items').insert(payload).select().single(); }
   if (res.error) return toast('Save failed: ' + res.error.message);
   S.current = S.current.filter(i => i.id !== res.data.id).concat(res.data);
+  await curWriteBack(old, m);
   S.cm = null; render();
 }
 
@@ -1675,7 +1700,7 @@ document.addEventListener('click', e => {
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
   if (g('data-cmove')) return moveRank(g('data-cmove').dataset.cmove, Number(g('data-cmove').dataset.dir));
   if (g('data-cadd')) { S.cm = { id: null, category: g('data-cadd').dataset.cadd, title: '', progress: '', total: '', status: g('data-cadd').dataset.cst || 'active', incur: true, done: false, year: new Date().getFullYear() }; return render(); }
-  if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, progress: i.progress || '', total: i.total || '', status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
+  if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, sub: i.subtitle || '', progress: cvv(i).progress || '', total: cvv(i).total || '', status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
   if (g('data-csave')) return saveCur();
   if (g('data-cdel')) return delCur();
   if (g('data-roll')) { S.wheel = { n: 5, res: [] }; return render(); }
