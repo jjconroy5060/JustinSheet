@@ -152,6 +152,39 @@ label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
 .err{color:var(--danger);margin-top:8px;font-size:.9rem}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;z-index:10}
 /* Books headers, night mode: warm charcoal with gold text */
+
+/* ---- phone layout: compact two-row nav, one category at a time, single page scroll ---- */
+.mobcats{display:flex;flex-wrap:wrap;gap:5px;position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 7px}
+.mobcats button{border:1px solid var(--line);background:var(--card);padding:4px 10px;border-radius:999px;font-size:.74rem;cursor:pointer}
+.mobcats button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.mob-off{display:none !important}
+@media(max-width:700px){
+  .wrap,.wrap.wide{padding:6px 10px 14px}
+  header{position:static;display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:2px 0 6px;margin-bottom:2px}
+  header h1{font-size:1.05rem}
+  header h1{grid-row:1;grid-column:1}
+  header .side{grid-row:1;grid-column:2;flex-direction:row;align-items:center;gap:8px}
+  header nav{grid-row:2}
+  header .side .link,header .side .gear{font-size:.78rem;padding:2px}
+  header nav{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  header nav button{padding:5px 2px;font-size:.78rem;text-align:center}
+  header #q{grid-column:1/-1}
+  .bk-bar{gap:6px;margin-bottom:6px}
+  .bk-bar .seg,.bk-bar [data-bwrap],.bk-bar [data-mwrap],.bk-bar [data-gwrap],.bk-bar [data-mdwrap]{display:none}
+  .bk-bar .cat{display:none}
+  .mobchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 8px;padding:1px 0 2px}.mobchips::-webkit-scrollbar{display:none}
+  .mobchips .chip{flex:none;border-radius:999px;padding:3px 10px;font-size:.74rem;color:#1b1b1b;cursor:pointer;border:2px solid transparent}.mobchips .chip.sel{border-color:var(--ink)}.mobchips .chip.dim{opacity:.45}
+  .bk-bar input{flex:1 1 140px;min-width:0;width:auto !important}
+  .bk-bar .btn{padding:6px 12px;font-size:.85rem}
+  .bk-scroll{display:block;max-height:none;min-height:0;overflow:visible;padding:0}
+  .bk-sec,.mg.wrapped,.bk-sec.bwrapped,.bk-sec.mu{min-width:0;width:auto;margin-bottom:10px;font-size:.86rem}
+  .bk-r{padding:5px 7px}
+  .bk-sticky{position:static}
+  .mg-body.w2{column-count:1 !important}
+  .usgrid{grid-template-columns:minmax(0,1fr) 50px 54px 46px 22px 22px}
+  .mu .bk-r{grid-template-columns:minmax(0,1fr) 54px 68px}
+  .mu-alb .ed{padding:4px 10px;font-size:.95rem}
+}
 @media(prefers-color-scheme:dark){.bk-sticky,.bk-lab,.bk-title{background:#3a3530;color:#d9d4cc}.bk-grp{background:#4d463f;color:#d9d4cc}.bk-subh{background:#6a6258;color:#d9d4cc}}
 </style>
 </head>
@@ -480,9 +513,30 @@ function booksView() {
 
 /* titles that spill onto a second line get a smaller font; if even that is not enough they are cut with … (hover shows the full title) */
 /* in a column that wraps into two halves, a series/decade that carries over gets a "… cont." header at the top of the second half */
+
+/* ---------------- phone mode: category chips, one category visible ---------------- */
+const MOBQ = window.matchMedia('(max-width:700px)'), isMob = () => MOBQ.matches;
+S.msel = {};
+const MOBNAMES = { books: () => [...BSEC], manga: () => MCATS, games: () => GCATS, media: () => [...DCATS, 'Movies'], music: () => MUG };
+function mobSetup() {
+  if (!isMob() || !MOBNAMES[S.tab]) return;
+  const names = MOBNAMES[S.tab]();
+  const allMode = (S.tab === 'books' && S.bsub === 'ln') || (S.tab === 'media' && S.mdsub === 'movies');   /* Light Novels and Movies are one chip each, all their columns stacked */
+  const real = ['books', 'media'].includes(S.tab) ? names.slice(0, -1) : names, keep = S.msel[S.tab];
+  const sel = S.tab === 'books' && S.bsub === 'ln' ? 'Light Novels' : S.tab === 'media' && S.mdsub === 'movies' ? 'Movies' : (real.includes(keep) ? keep : names[0]);
+  const bar = document.querySelector('.bk-bar'); if (!bar) return;
+  bar.insertAdjacentHTML('beforebegin', `<div class="mobcats">${names.map(n => `<button class="${n === sel ? 'on' : ''}" data-mobcat="${esc(n)}">${esc(n)}</button>`).join('')}</div>`);
+  const chipsEl = [...bar.querySelectorAll(':scope > .chip')]; if (chipsEl.length) { const d = document.createElement('div'); d.className = 'mobchips'; chipsEl.forEach(c => d.appendChild(c)); bar.after(d); }
+  const query = { books: S.bq, manga: S.mq, games: S.gq, media: S.mdq, music: S.muq }[S.tab];
+  if (allMode || query) return;                                   /* searching shows every category so nothing is hidden */
+  const secs = [...document.querySelectorAll('.bk-scroll > .bk-sec')], i = names.indexOf(sel);
+  secs.forEach((s, k) => s.classList.toggle('mob-off', k !== i));
+}
+MOBQ.addEventListener('change', () => { if (typeof render === 'function') render(); });
 function markCont() {
   if (!['books', 'manga', 'games', 'media', 'music'].includes(S.tab)) return;
   document.querySelectorAll('.bk-scroll .cont').forEach(e => e.remove());
+  if (isMob()) return;
   document.querySelectorAll('.bk-scroll .mg-body.w2').forEach(body => {
     for (let n = 0; n < 4; n++) {
       const mid = body.getBoundingClientRect().left + body.clientWidth / 2, kids = [...body.children].filter(c => !c.classList.contains('cont'));
@@ -1254,7 +1308,7 @@ function render() {
     ${S.loading ? '<div class="cat">Loading…</div>' : (S.tab === 'home' ? home() : S.tab === 'current' ? currentView() : S.tab === 'books' ? booksView() : S.tab === 'manga' ? mangaView() : S.tab === 'games' ? gamesView() : S.tab === 'media' ? mediaView() : S.tab === 'music' ? musicView() : wheel())}</div>
     ${S.tab === 'wheel' && !S.loading ? '<button class="fab" data-add="priority" title="Add">+</button>' : ''}${modal}`;
   if (bpos) { const n = document.querySelector('.bk-scroll'); if (n) { n.scrollLeft = bpos[0]; n.scrollTop = bpos[1]; } }
-  if (['books', 'manga', 'games', 'media', 'music'].includes(S.tab)) { markCont(); fitTitles(); }
+  if (['books', 'manga', 'games', 'media', 'music'].includes(S.tab)) { mobSetup(); markCont(); fitTitles(); }
   if (S.mum) muPreview();
   const sh1 = document.querySelector('.sheet'); if (sh1 && mk === _mk) sh1.scrollTop = sy0; _mk = mk;
   if (S.anchor && S.tab === 'wheel' && !S.loading) { S.anchor = false; anchor(); }
@@ -1375,6 +1429,11 @@ document.addEventListener('click', e => {
   if (g('data-mupaste')) { const add = muParseList($('#u-paste').value); if (!add.length) return toast('Paste some songs first'); readUm(); const sg = S.mum.songs.filter(x => String(x.title).trim() || x.time || x.rating !== ''); S.mum.songs = sg.concat(add); render(); return toast(add.length + ' songs added — check them, then Save'); }
   if (g('data-musave')) return saveMusic();
   if (g('data-mudel')) return delMusic();
+  if (g('data-mobcat')) { const n = g('data-mobcat').dataset.mobcat;
+    if (S.tab === 'books') { if (n === 'Light Novels') S.bsub = 'ln'; else { S.bsub = 'books'; S.msel.books = n; } S.bst = null; }
+    else if (S.tab === 'media') { if (n === 'Movies') S.mdsub = 'movies'; else { S.mdsub = 'shows'; S.msel.media = n; } S.mdst = null; S.mdq = ''; }
+    else S.msel[S.tab] = n;
+    S.bkreset = true; render(); window.scrollTo(0, 0); return; }
   if (g('data-mdsubtab')) { S.mdsub = g('data-mdsubtab').dataset.mdsubtab; S.mdst = null; S.mdq = ''; S.bkreset = true; return render(); }
   if (g('data-mdst')) { const v = Number(g('data-mdst').dataset.mdst); S.mdst = S.mdst === v ? null : v; return render(); }
   if (g('data-mdadd')) { const cat = S.mdsub === 'movies' ? DMOV : DCATS[0]; S.mdm = { id: null, category: cat, title: '', year: new Date().getFullYear(), rating: '', read: '', total: '', ongoing: false, mins: '', status: 7, scores: dBlank(cat) }; return render(); }
