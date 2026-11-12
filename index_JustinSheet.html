@@ -1301,38 +1301,61 @@ const prog = i => {
 };
 const mark = i => i.done ? `<span style="color:${yc(i.done_year)}">✓${i.done_year ? ' ’' + String(i.done_year).slice(2) : ''}</span>`
   : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : i.status === 'catchup' ? '<span class="cat">Catch up</span>' : '';
-const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${i.subtitle ? `<span class="csub">: ${esc(i.subtitle)}</span>` : ''}${curFlag(i)}</div><div class="t2">${esc(cvv(i).progress) || '—'}</div><div class="t3">${esc(cvv(i).total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
-const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${i.subtitle ? `<span class="csub">: ${esc(i.subtitle)}</span>` : ''}${curFlag(i)}</div><div class="t5">${prog(cvv(i))}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
+const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${i.subtitle ? `<span class="csub">: ${esc(i.subtitle)}</span>` : ''}${curFlag(i)}</div><div class="t2">${esc(curFmt(i, 'progress', cvv(i).progress)) || '—'}</div><div class="t3">${esc(curFmt(i, 'total', cvv(i).total)) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
+const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}${i.subtitle ? `<span class="csub">: ${esc(i.subtitle)}</span>` : ''}${curFlag(i)}</div><div class="t5">${curProg(i)}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
 
 
 /* ---------- Send an item from a big tab to Current ---------- */
 function curPlan(kind, id) {
-  const num = x => x == null || x === '' ? null : Number(x), hm = n => n == null ? null : `${Math.floor(n / 60)}h ${n % 60}m`;
+  const num = x => x == null || x === '' ? null : Number(x);
   if (kind === 'books') { const b = S.books.find(x => x.id === id); return b && { cat: 'books', title: b.title, st: { 1: 'active', 2: 'paused', 3: 'done', 4: 'dropped', 5: 'active', 6: 'active' }[b.status], keepAll: true }; }
   if (kind === 'manga') {
     const m = S.manga.find(x => x.id === id); if (!m) return null;
-    const st = { 1: 'active', 2: 'active', 3: 'paused', 4: 'done', 5: 'dropped', 6: 'active', 7: 'catchup' }[m.status], read = num(m.chs_read), tot = m.ongoing ? null : num(m.chs_total), done = st === 'done', top = done ? (tot ?? read) : read;
-    return { cat: 'manga', title: m.title, st, prog: top != null ? `Ch. ${top}` : null, tot: done ? (top != null ? `Ch. ${top}` : null) : (tot != null ? `${tot} Chs.` : null) };
+    const st = { 1: 'active', 2: 'active', 3: 'paused', 4: 'done', 5: 'dropped', 6: 'active', 7: 'catchup' }[m.status], read = num(m.chs_read), tot = num(m.chs_total), done = st === 'done', top = done ? (tot ?? read) : read;
+    return { cat: 'manga', title: m.title, st, prog: top != null ? String(top) : null, tot: done ? (top != null ? String(top) : null) : (tot != null ? String(tot) : (m.ongoing ? 'Ongoing' : null)) };
   }
   if (kind === 'games') {
     const g = S.games.find(x => x.id === id); if (!g) return null;
-    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'done', 6: 'dropped', 7: 'active', 8: 'paused' }[g.status], pr = g.hours != null ? `${+g.hours} Hrs.` : null;
-    return { cat: 'games', title: g.title, st, prog: pr, tot: st === 'done' ? pr : undefined };   /* total hours aren't stored in Games: keep what Current already has */
+    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'done', 6: 'dropped', 7: 'active', 8: 'paused' }[g.status];
+    return { cat: 'games', title: g.title, st, prog: g.hours != null ? String(+g.hours) : null, tot: undefined };   /* total hours aren't stored in Games: Current keeps its own */
   }
   if (kind === 'media') {
     const d = S.media.find(x => x.id === id); if (!d) return null;
     const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'dropped', 6: 'dropped', 7: 'active' }[d.status], done = st === 'done';
-    if (d.category === 'Movies') { const t = hm(d.mins); return { cat: 'shows', title: d.title, st, prog: done ? t : null, tot: t }; }
-    const read = num(d.eps_read), tot = d.ongoing ? null : num(d.eps_total), top = done ? (tot ?? read) : read;
-    return { cat: 'shows', title: d.title, st, prog: top != null ? `Ep. ${top}` : null, tot: tot != null ? `${tot} Eps.` : null };
+    if (d.category === 'Movies') { const t = d.mins != null ? String(d.mins) : null; return { cat: 'shows', title: d.title, st, prog: done ? t : null, tot: t, movie: true }; }
+    const read = num(d.eps_read), tot = num(d.eps_total), top = done ? (tot ?? read) : read;
+    return { cat: 'shows', title: d.title, st, prog: top != null ? String(top) : null, tot: tot != null ? String(tot) : (d.ongoing ? 'Ongoing' : null) };
   }
   if (kind === 'music') {
     const a = S.malb.find(x => x.id === id); if (!a) return null;
     const so = muSongs(id), n = so.length, x = so.filter(v => v.listen === 3).length;
-    return { cat: 'music', title: a.artist + ' - ' + a.title, st: n && x === n ? 'done' : 'active', prog: `${x} Songs`, tot: `${n} Songs` };
+    return { cat: 'music', title: a.artist + ' - ' + a.title, st: n && x === n ? 'done' : 'active', prog: String(x), tot: String(n) };
   }
   return null;
 }
+/* Progress/Total are stored and edited as plain numbers; the prefixes and suffixes (Ep., Chs., Hrs.…) are added only when shown. Books stay free text. */
+const CUP = { manga: ['Ch. ', ''], shows: ['Ep. ', ''], games: ['', ' Hrs.'], music: ['', ' Songs'] }, CUT = { manga: ['', ' Chs.'], shows: ['', ' Eps.'], games: ['', ' Hrs.'], music: ['', ' Songs'] };
+const curHM = n => `${Math.floor(n / 60)}h ${n % 60}m`, curNum = x => /^\d+(\.\d+)?$/.test(x);
+function curRaw(cat, t) {
+  t = String(t ?? '').trim(); if (!t || cat === 'books') return t;
+  let m = t.match(/^(\d+)\s*h(?:\s*(\d+)\s*m)?$/i); if (m) return String(+m[1] * 60 + (+m[2] || 0));
+  m = t.match(/^(?:[A-Za-z.]+\s*)?(\d+(?:\.\d+)?)\s*(?:[A-Za-z.]+)?$/); return m ? m[1] : t;
+}
+const curIsMovie = i => { if (i.category !== 'shows') return false; const r = curItem(i); return r ? r[1].category === 'Movies' : /\d\s*h/i.test((i.progress || '') + ' ' + (i.total || '')); };
+function curFmt(i, field, raw) {
+  if (i.category === 'books') return raw || '';
+  const v = curRaw(i.category, raw); if (!v || !curNum(v)) return v;
+  if (curIsMovie(i)) return curHM(+v);
+  const [a, b] = (field === 'progress' ? CUP : CUT)[i.category] || ['', '']; return a + v + b;
+}
+function curProg(i) {
+  if (i.category === 'books') return prog(i);
+  const v = cvv(i), a = curRaw(i.category, v.progress), b = curRaw(i.category, v.total);
+  if (curNum(a) && curNum(b) && !curIsMovie(i)) return `${esc(a)} / ${esc(b)}${CUT[i.category][1]}`;
+  return `${esc(curFmt(i, 'progress', v.progress)) || '—'}${b ? ' / ' + esc(curFmt(i, 'total', v.total)) : ''}`;
+}
+const curStore = (i, raw) => { const v = String(raw ?? '').trim(); if (!v) return null; return i.category === 'shows' && curNum(v) && curIsMovie(i) ? curHM(+v) : v; };
+const curUnit = i => i.category === 'shows' ? (curIsMovie(i) ? 'minutes' : 'episode') : ({ manga: 'chapter', games: 'hours', music: 'songs' }[i.category] || '');
 const CURSRC = { games: ['games', () => S.games], shows: ['media', () => S.media], manga: ['manga', () => S.manga], music: ['music', () => S.malb] }, CURTAB = { games: 'Games', shows: 'Media', manga: 'Manga', music: 'Music' };
 const ntl = s => (s || '').toLowerCase().replace(/\s*[–—-]\s*/g, ' - ').replace(/\s+/g, ' ').trim();
 function curItem(i) {   /* the matching item in its own tab; albums are written "Artist - Album" in Current */
@@ -1346,11 +1369,13 @@ async function curWriteBack(old, m) {   /* edits in Current also update the tab 
   const [kind, it] = r, num = t => { const x = String(t || '').match(/\d+(?:\.\d+)?/); return x ? Number(x[0]) : null; };
   const newlyDone = m.done && !(old && old.done), upd = {}, notes = [];
   if (kind !== 'music') {
-    const liveProg = old ? cvv(old).progress : null, n = num(m.progress);
-    if ((m.progress.trim() || null) !== (liveProg || null) && n != null) {
-      if (kind === 'manga') upd.chs_read = Math.round(n); else if (kind === 'media' && it.category !== 'Movies') upd.eps_read = Math.round(n); else if (kind === 'games') upd.hours = n;
+    const live = old ? cvv(old) : {}, liveP = curRaw(m.category, live.progress), liveT = curRaw(m.category, live.total), np = m.progress.trim(), nt = m.total.trim(), movie = kind === 'media' && it.category === 'Movies';
+    if (np !== liveP && curNum(np)) {
+      const n = Number(np);
+      if (kind === 'manga') upd.chs_read = Math.round(n); else if (kind === 'media' && !movie) upd.eps_read = Math.round(n); else if (kind === 'games') upd.hours = n;
       if (n > 0 && it.status === { games: 7, media: 7, manga: 6 }[kind] && Object.keys(upd).length) upd.status = 1;
     }
+    if (nt !== liveT && curNum(nt)) { const n = Math.round(Number(nt)); if (kind === 'manga') upd.chs_total = n; else if (movie) upd.mins = n; else if (kind === 'media') upd.eps_total = n; }
     if (newlyDone) { if (kind === 'games' && ![3, 4, 5].includes(it.status)) upd.status = 3; if (kind === 'media' && ![3, 4].includes(it.status)) upd.status = 4; if (kind === 'manga' && it.status !== 4) upd.status = 4; }
     if (!Object.keys(upd).length) return;
     const { error } = await db.from(kind).update(upd).eq('id', it.id); if (error) return toast('Saved in Current, but the ' + CURTAB[m.category] + ' tab update failed: ' + error.message);
@@ -1362,8 +1387,11 @@ async function curWriteBack(old, m) {   /* edits in Current also update the tab 
 }
 function cvv(i) {
   const s = curSrc(i); if (!s) return i;
-  return { ...i, progress: s.prog ?? i.progress, total: ('tot' in s && s.tot !== undefined) ? s.tot : i.total };
+  const progress = s.prog ?? i.progress; let total = ('tot' in s && s.tot !== undefined) ? s.tot : i.total;
+  if (i.category === 'games' && i.done && !total) total = progress;
+  return { ...i, progress, total };
 }
+const curOngoingParked = i => { if (i.category !== 'manga' || i.rank != null) return false; const r = curItem(i); return !!(r && r[1].ongoing); };   /* ongoing manga that isn't actively in Current */
 const curMissing = i => !!CURSRC[i.category] && !curSrc(i);
 const curFlag = i => curMissing(i) ? `<span class="cflag" title="Not found in the ${CURTAB[i.category]} tab — check the spelling there or here, so progress can be read from it">⚠ not in ${CURTAB[i.category]}</span>` : '';
 const curFind = p => S.current.find(i => i.category === p.cat && ntl(i.title) === ntl(p.title));
@@ -1407,7 +1435,7 @@ function overview() {
 
 function catView(k) {
   const all = cur(k).sort((a, b) => a.sort_order - b.sort_order), r = ranked(k);
-  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch' && i.status !== 'catchup'], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], missing: ['⚠ Not in tab', i => curMissing(i)], rewatch: ['Rewatch', i => i.status === 'rewatch'], catchup: ['Catch up', i => i.status === 'catchup'] };
+  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch' && i.status !== 'catchup' && !curOngoingParked(i)], ongoing: ['Ongoing', i => curOngoingParked(i)], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], missing: ['⚠ Not in tab', i => curMissing(i)], rewatch: ['Rewatch', i => i.status === 'rewatch'], catchup: ['Catch up', i => i.status === 'catchup'] };
   const chips = Object.entries(F).map(([f, [l, fn]]) => [f, l, all.filter(fn).length]).filter(([f, , n]) => f === 'all' || n || f === S.flt)
     .map(([f, l, n]) => `<button class="${S.flt === f ? 'on' : ''}" data-cflt="${f}">${l} (${n})</button>`).join('');
   const rows = all.filter((F[S.flt] || F.all)[1]);
@@ -1440,7 +1468,7 @@ function curModalHtml() {
   return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit' : 'Add to'} ${m.id ? '' : catName(m.category)}</h2>
     <label>Title <span class="cat">· used to find it in its tab</span></label><input id="c-title" value="${esc(m.title)}">
     <label>Second title <span class="cat">· optional, shown after the title (e.g. Space Age)</span></label><input id="c-sub" value="${esc(m.sub || '')}" placeholder="e.g. Space Age">
-    <div style="display:flex;gap:8px"><div style="flex:1"><label>How far</label><input id="c-prog" value="${esc(m.progress)}" placeholder="Ch. 12"></div><div style="flex:1"><label>Total</label><input id="c-tot" value="${esc(m.total)}" placeholder="147 Chs."></div></div>
+    <div style="display:flex;gap:8px"><div style="flex:1"><label>How far${curUnit(m) ? ` <span class="cat">· ${curUnit(m)}</span>` : ''}</label><input id="c-prog" value="${esc(m.progress)}" placeholder="${m.category === 'books' ? 'Ch. 12' : '12'}"></div><div style="flex:1"><label>Total${curUnit(m) ? ` <span class="cat">· ${curUnit(m)}</span>` : ''}</label><input id="c-tot" value="${esc(m.total)}" placeholder="${m.category === 'books' ? '147 Chs.' : '147'}"></div></div>
     <label>Status</label><select id="c-status">${st.map(([k, l]) => `<option value="${k}" ${m.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
     <label class="chkrow"><input type="checkbox" id="c-incur" ${m.incur ? 'checked' : ''}><span>In my Current list</span></label>
     <label class="chkrow"><input type="checkbox" id="c-done" ${m.done ? 'checked' : ''}><span>Done</span></label>
@@ -1463,7 +1491,7 @@ async function saveCur() {
     const cu = m.status === 'catchup', same = old && old.rank != null && (old.status === 'catchup') === cu;
     rank = same ? old.rank : Math.max(0, ...(cu ? rankedCU() : ranked(m.category)).filter(i => i.id !== m.id).map(i => i.rank)) + 1;
   }
-  const payload = { category: m.category, title, ...((m.sub || '').trim() || (old && old.subtitle) ? { subtitle: (m.sub || '').trim() || null } : {}), progress: m.progress.trim() || null, total: m.total.trim() || null, status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
+  const payload = { category: m.category, title, ...((m.sub || '').trim() || (old && old.subtitle) ? { subtitle: (m.sub || '').trim() || null } : {}), progress: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.progress), total: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.total), status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
   let res;
   if (m.id) res = await db.from('current_items').update(payload).eq('id', m.id).select().single();
   else { payload.sort_order = Math.max(0, ...S.current.map(i => i.sort_order)) + 1; res = await db.from('current_items').insert(payload).select().single(); }
@@ -1700,7 +1728,7 @@ document.addEventListener('click', e => {
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
   if (g('data-cmove')) return moveRank(g('data-cmove').dataset.cmove, Number(g('data-cmove').dataset.dir));
   if (g('data-cadd')) { S.cm = { id: null, category: g('data-cadd').dataset.cadd, title: '', progress: '', total: '', status: g('data-cadd').dataset.cst || 'active', incur: true, done: false, year: new Date().getFullYear() }; return render(); }
-  if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, sub: i.subtitle || '', progress: cvv(i).progress || '', total: cvv(i).total || '', status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
+  if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, sub: i.subtitle || '', progress: curRaw(i.category, cvv(i).progress), total: curRaw(i.category, cvv(i).total), status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
   if (g('data-csave')) return saveCur();
   if (g('data-cdel')) return delCur();
   if (g('data-roll')) { S.wheel = { n: 5, res: [] }; return render(); }
