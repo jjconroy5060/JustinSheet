@@ -641,7 +641,7 @@ function bookModalHtml() {
     ${ln ? '' : `<div style="flex:1"><label>Rating</label><input id="b-rate" type="number" min="0" max="5" step="0.25" value="${esc(m.rating)}"></div>`}</div>
     <label>Times read</label><input id="b-reads" type="number" min="0" step="1" value="${esc(m.reads)}" placeholder="optional">
     <label>Status</label><select id="b-status">${Object.entries(BST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
-    <div class="acts"><button class="btn" data-bsave>Save</button>${m.id ? '<button class="btn danger" data-bdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+    <div class="acts"><button class="btn" data-bsave>Save</button>${m.id ? curBtn('books', m.id) : ''}${m.id ? '<button class="btn danger" data-bdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 function readBm() {
   const m = S.bm; m.section = $('#b-sec').value; m.title = $('#b-title').value;
@@ -733,7 +733,7 @@ function mangaModalHtml() {
     <label>Times read</label><input id="m-reads" type="number" min="0" step="1" value="${esc(m.reads)}" placeholder="optional">
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="m-uns" type="checkbox" style="width:auto" ${m.unsure ? 'checked' : ''}> Not sure how far I read (shows a red ?)</label>
     <label>Status</label><select id="m-status">${Object.entries(MST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
-    <div class="acts"><button class="btn" data-msave>Save</button>${m.id ? '<button class="btn danger" data-mdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+    <div class="acts"><button class="btn" data-msave>Save</button>${m.id ? curBtn('manga', m.id) : ''}${m.id ? '<button class="btn danger" data-mdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 function readScores() {
   const M = S.mdm || S.gm || S.mm, P = S.mdm ? 'd' : S.gm ? 'g' : 'm';
@@ -997,7 +997,7 @@ function gamesModalHtml() {
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="g-uns" type="checkbox" style="width:auto" ${m.unsure ? 'checked' : ''}> Hours are an estimate (just a note, not shown in the list)</label>
     <label>Hours note</label><input id="g-note" value="${esc(m.note)}" placeholder="e.g. Estimate for PC time">
     <label>Status</label><select id="g-status">${Object.entries(GST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
-    <div class="acts"><button class="btn" data-gsave>Save</button>${m.id ? '<button class="btn danger" data-gdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+    <div class="acts"><button class="btn" data-gsave>Save</button>${m.id ? curBtn('games', m.id) : ''}${m.id ? '<button class="btn danger" data-gdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 const readGm = () => Object.assign(S.gm, { category: $('#g-cat').value, title: $('#g-title').value, year: $('#g-year').value, rating: $('#g-rate').value, plat: $('#g-plat').value, platNew: $('#g-platn') ? $('#g-platn').value : S.gm.platNew, hours: $('#g-hrs').value, plays: $('#g-plays').value, unsure: $('#g-uns').checked, note: $('#g-note').value, status: Number($('#g-status').value), scores: readScores() });
 async function saveGame() {
@@ -1096,7 +1096,7 @@ function mediaModalHtml() {
     <div style="flex:1"><label>Total episodes</label><input id="d-tot" type="number" min="0" value="${esc(m.total)}"></div></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="d-ong" type="checkbox" style="width:auto" ${m.ongoing ? 'checked' : ''}> Still airing</label>`}
     <label>Status</label><select id="d-status">${Object.entries(DST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
-    <div class="acts"><button class="btn" data-mdsave>Save</button>${m.id ? '<button class="btn danger" data-mddel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+    <div class="acts"><button class="btn" data-mdsave>Save</button>${m.id ? curBtn('media', m.id) : ''}${m.id ? '<button class="btn danger" data-mddel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 const readDm = () => { const m = S.mdm, mov = $('#d-cat').value === DMOV; return Object.assign(m, { category: $('#d-cat').value, title: $('#d-title').value, year: $('#d-year').value, rating: $('#d-rate').value, read: mov ? m.read : $('#d-read').value, total: mov ? m.total : $('#d-tot').value, ongoing: mov ? false : $('#d-ong').checked, mins: mov ? $('#d-mins').value : m.mins, status: Number($('#d-status').value), scores: readScores() }); };
 async function saveMedia() {
@@ -1183,7 +1183,7 @@ function musicModalHtml() {
     <details class="sc" style="margin-top:8px" ${m.id ? '' : 'open'}><summary>Paste a whole track list <span class="cat">· one song per line, title and time</span></summary>
       <textarea id="u-paste" rows="6" placeholder="Look Your Back! - 4:59&#10;A Seagull &amp; Clouds - 4:56&#10;Flying Beagle - 6:31" style="width:100%;margin-top:6px;font:inherit;padding:8px;border:1px solid var(--line,#ccc);border-radius:8px"></textarea>
       <div style="margin-top:4px"><button class="btn alt" data-mupaste type="button">Add these songs</button> <span class="cat">Time can come before or after the title. Numbers and “plays” lines are ignored.</span></div></details>
-    <div class="acts"><button class="btn" data-musave>Save</button>${m.id ? '<button class="btn danger" data-mudel>Delete album</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
+    <div class="acts"><button class="btn" data-musave>Save</button>${m.id ? curBtn('music', m.id) : ''}${m.id ? '<button class="btn danger" data-mudel>Delete album</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 function readUm() {
   const m = S.mum, art = $('#u-art').value;
@@ -1301,6 +1301,55 @@ const mark = i => i.done ? `<span style="color:${yc(i.done_year)}">✓${i.done_y
   : i.status === 'paused' ? '<span class="paused">Paused</span>' : i.status === 'dropped' ? '<span class="cat">Dropped</span>' : i.status === 'rewatch' ? '<span class="cat">Rewatch</span>' : i.status === 'catchup' ? '<span class="cat">Catch up</span>' : '';
 const curRow = (i, n) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t2">${esc(i.progress) || '—'}</div><div class="t3">${esc(i.total) || '—'}</div><div class="t4">${mark(i)}</div></div>`;
 const rankRow = (i, n, arrows) => `<div class="row" data-cedit="${i.id}"><div class="c0">${n}</div><div class="t1 ${stCls(i)}">${esc(i.title)}</div><div class="t5">${prog(i)}</div>${arrows ? `<span><button class="arrow" data-cmove="${i.id}" data-dir="-1">▲</button><button class="arrow" data-cmove="${i.id}" data-dir="1">▼</button></span>` : ''}</div>`;
+
+
+/* ---------- Send an item from a big tab to Current ---------- */
+function curPlan(kind, id) {
+  const num = x => x == null || x === '' ? null : Number(x), hm = n => n == null ? null : `${Math.floor(n / 60)}h ${n % 60}m`;
+  if (kind === 'books') { const b = S.books.find(x => x.id === id); return b && { cat: 'books', title: b.title, st: { 1: 'active', 2: 'paused', 3: 'done', 4: 'dropped' }[b.status], keepAll: true }; }
+  if (kind === 'manga') {
+    const m = S.manga.find(x => x.id === id); if (!m) return null;
+    const st = { 1: 'active', 2: 'active', 3: 'paused', 4: 'done', 5: 'dropped', 7: 'catchup' }[m.status], read = num(m.chs_read), tot = m.ongoing ? null : num(m.chs_total), done = st === 'done', top = done ? (tot ?? read) : read;
+    return { cat: 'manga', title: m.title, st, prog: top != null ? `Ch. ${top}` : null, tot: done ? (top != null ? `Ch. ${top}` : null) : (tot != null ? `${tot} Chs.` : null) };
+  }
+  if (kind === 'games') {
+    const g = S.games.find(x => x.id === id); if (!g) return null;
+    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'done', 6: 'dropped', 8: 'paused' }[g.status], pr = g.hours != null ? `${+g.hours} Hrs.` : null;
+    return { cat: 'games', title: g.title, st, prog: pr, tot: st === 'done' ? pr : undefined };   /* total hours aren't stored in Games: keep what Current already has */
+  }
+  if (kind === 'media') {
+    const d = S.media.find(x => x.id === id); if (!d) return null;
+    const st = { 1: 'active', 2: 'paused', 3: 'done', 4: 'done', 5: 'dropped', 6: 'dropped' }[d.status], done = st === 'done';
+    if (d.category === 'Movies') { const t = hm(d.mins); return { cat: 'shows', title: d.title, st, prog: done ? t : null, tot: t }; }
+    const read = num(d.eps_read), tot = d.ongoing ? null : num(d.eps_total), top = done ? (tot ?? read) : read;
+    return { cat: 'shows', title: d.title, st, prog: top != null ? `Ep. ${top}` : null, tot: tot != null ? `${tot} Eps.` : null };
+  }
+  if (kind === 'music') {
+    const a = S.malb.find(x => x.id === id); if (!a) return null;
+    const so = muSongs(id), n = so.length, x = so.filter(v => v.listen === 3).length;
+    return { cat: 'music', title: a.title, st: n && x === n ? 'done' : 'active', prog: `${x} Songs`, tot: `${n} Songs` };
+  }
+  return null;
+}
+const curFind = p => S.current.find(i => i.category === p.cat && norm(i.title) === norm(p.title));
+const curBtn = (kind, id) => { const p = curPlan(kind, id); return `<button class="btn alt" data-tocur="${kind}|${id}">${p && curFind(p) ? 'Update in Current' : 'Add to Current'}</button>`; };
+async function toCurrent(kind, id, btn) {
+  const p = curPlan(kind, id); if (!p) return;
+  if (!p.st) return toast('Not-started items can’t go in Current — change the status first');
+  const old = curFind(p), done = p.st === 'done', cu = p.st === 'catchup';
+  const same = old && old.rank != null && (old.status === 'catchup') === cu;
+  const rank = (p.st === 'active' || cu) ? (same ? old.rank : Math.max(0, ...(cu ? rankedCU() : ranked(p.cat)).filter(i => !old || i.id !== old.id).map(i => i.rank)) + 1) : null;
+  const payload = { category: p.cat, title: p.title, status: done ? 'active' : p.st, done, done_year: done && old && old.done ? old.done_year : null, rank,
+    progress: p.keepAll ? (old ? old.progress : null) : (p.prog ?? (old ? old.progress : null)),
+    total: p.keepAll ? (old ? old.total : null) : ('tot' in p && p.tot !== undefined ? p.tot : (old ? old.total : null)) };
+  let res;
+  if (old) res = await db.from('current_items').update(payload).eq('id', old.id).select().single();
+  else { payload.sort_order = Math.max(0, ...S.current.map(i => i.sort_order)) + 1; res = await db.from('current_items').insert(payload).select().single(); }
+  if (res.error) return toast('Could not save to Current: ' + res.error.message);
+  S.current = S.current.filter(i => i.id !== res.data.id).concat(res.data);
+  if (btn) btn.textContent = 'Update in Current';
+  toast(old ? 'Updated in Current' : 'Added to Current');
+}
 
 function currentView() {
   if (S.curErr) return `<div class="card">Couldn’t load Current: ${esc(S.curErr)}<br><span class="cat">Run 4_current.sql in the Supabase SQL Editor first.</span></div>`;
@@ -1662,6 +1711,7 @@ document.addEventListener('click', e => {
   if (g('data-mdrate')) { S.mdrate = !S.mdrate; return render(); }
   if (g('data-scadd')) { if (S.mdm) { readDm(); S.mdm.scores.push(['__new__', '', 10]); } else if (S.gm) { readGm(); S.gm.scores.push(['__new__', '', 10]); } else { readMm(); S.mm.scores.push(['__new__', '', 10]); } return render(); }
   if (g('data-scdel')) { const i = Number(g('data-scdel').dataset.scdel); if (S.mdm) { readDm(); S.mdm.scores.splice(i, 1); } else if (S.gm) { readGm(); S.gm.scores.splice(i, 1); } else { readMm(); S.mm.scores.splice(i, 1); } return render(); }
+  if (g('data-tocur')) { const [k, id] = g('data-tocur').dataset.tocur.split('|'); return toCurrent(k, Number(id), g('data-tocur')); }
   if (g('data-gsubtab')) { S.gsub = g('data-gsubtab').dataset.gsubtab; S.gst = null; S.bkreset = true; return render(); }
   if (g('data-rgsel')) { S.rgsel = Number(g('data-rgsel').dataset.rgsel); return render(); }
   if (g('data-rgflip')) { const k = Number(g('data-rgflip').dataset.rgflip); S.rgflip.has(k) ? S.rgflip.delete(k) : S.rgflip.add(k); try { localStorage.setItem('rg_flip', JSON.stringify([...S.rgflip])); } catch (e) { /* storage unavailable */ } return rgRender(); }
