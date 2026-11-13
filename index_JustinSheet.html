@@ -168,6 +168,7 @@ label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
 .rg-it.y{background:#c3e0b8;border-color:#a3c997;color:#1b1b1b}.rg-it.y .bx{border-color:#4a7a40;background:#4a7a40;color:#fff}
 .rg-cards{display:flex;flex-wrap:wrap;justify-content:center;gap:0 14px;align-items:flex-start}
 .rg-cards>.rg-matrix{flex:0 1 auto;max-width:100%;min-width:340px}.rg-cards>.rg-list{flex:1 1 100%}
+.rg-addc{display:flex;gap:8px;justify-content:center;margin-top:10px}.rg-addc input{max-width:260px}
 .rg-mx{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:10px}
 table.rgx{border-collapse:separate;border-spacing:0;font-size:.82rem}
 table.rgx th,table.rgx td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:3px 6px;text-align:center;background:var(--card)}
@@ -810,9 +811,20 @@ function rogueView() {
   const cards = lists.map(l => { const [d, t] = rgCount(l), pc = rgPct(d, t), dd = l.data || {};
     return `<div class="card rg-${l.kind}" data-rgl="${l.id}"><div class="head"><h2>${esc(l.name)}</h2><span style="display:flex;gap:8px;align-items:center"><span class="rg-prog">${d}/${t} · ${pc}%</span>${l.kind === 'matrix' && (dd.chars || []).length && (dd.tasks || []).length ? `<button class="btn alt" data-rgflip="${l.id}" title="Swap rows and columns">⇄</button>` : ''}<button class="btn alt" data-rgeditl="${l.id}">Edit</button></span></div>
       <div class="rg-bar ${t && d === t ? 'full' : ''}"><i style="width:${pc}%"></i></div>
-      ${l.kind === 'matrix' ? rgMatrixHtml(l) : ((dd.items || []).length ? `<div class="rg-items">${dd.items.map((it, i) => `<div class="rg-it ${it.d ? 'y' : ''}" data-rgi="${l.id}|${i}"><span class="bx">${it.d ? '✓' : ''}</span><span>${esc(it.n)}</span></div>`).join('')}</div>` : '<div class="cat">Nothing here yet — use Edit to add items.</div>')}</div>`; }).join('');
+      ${l.kind === 'matrix' ? rgMatrixHtml(l) + rgAddCharBox(l) : ((dd.items || []).length ? `<div class="rg-items">${dd.items.map((it, i) => `<div class="rg-it ${it.d ? 'y' : ''}" data-rgi="${l.id}|${i}"><span class="bx">${it.d ? '✓' : ''}</span><span>${esc(it.n)}</span></div>`).join('')}</div>` : '<div class="cat">Nothing here yet — use Edit to add items.</div>')}</div>`; }).join('');
   return `${bar}${chips}<div class="head rg-head" style="margin:4px 2px 10px"><h2 style="font-size:1.15rem">${esc(sel.name)} <span class="rg-prog">· ${gd}/${gt} · ${rgPct(gd, gt)}%</span></h2><span style="display:flex;gap:8px"><button class="btn" data-rgaddl="${sel.id}">Add checklist</button><button class="btn alt" data-rgeditg="${sel.id}">Rename / delete</button></span></div>
     <div class="rg-cards">${cards || '<div class="card"><div class="cat">No checklists for this game yet — add one.</div></div>'}</div>`;
+}
+function rgAddCharBox(l) {
+  return `<div class="rg-addc"><input id="rgc-${l.id}" data-rgcin="${l.id}" placeholder="Add a character…" maxlength="60"><button class="btn alt" data-rgaddc="${l.id}">＋ Add character</button></div>`;
+}
+async function rgAddChar(lid) {
+  const l = S.rg.lists.find(x => x.id === lid), inp = document.getElementById('rgc-' + lid), name = inp ? inp.value.trim() : '';
+  if (!l || !name) return toast('Type the character’s name first');
+  if ((l.data.chars || []).some(c => norm(c.n) === norm(name))) return toast('That character is already in the list');
+  l.data.chars = (l.data.chars || []).concat({ n: name, d: (l.data.tasks || []).map(() => false) });
+  rgPersist(l); rgRender(); toast('Added ' + name);
+  const again = document.getElementById('rgc-' + lid); if (again) again.focus();
 }
 function rgRender() {   /* re-draw but keep the scroll position of each table */
   const pos = {}; document.querySelectorAll('[data-rgmx]').forEach(n => { pos[n.dataset.rgmx] = [n.scrollLeft, n.scrollTop]; });
@@ -1059,7 +1071,7 @@ function dMovieGroups() {
   return gs.map(g => ({ label: g.bands.filter(b => b !== noYear).map(b => b.name).filter((x, i, a) => i === 0 || i === a.length - 1).join('–'), bands: g.bands }));
 }
 const dCats = () => S.mdsub === 'movies' ? [DMOV] : DCATS;
-function dAgg(list, mov) { const rs = list.filter(m => m.rating != null); return { rt: rs.length ? mrf(rs.reduce((a, m) => a + Number(m.rating), 0) / rs.length) : '', n: mov ? Math.round(list.reduce((a, m) => a + (m.mins || 0), 0) / 60).toLocaleString() + 'h' : list.reduce((a, m) => a + (m.eps_read || 0), 0).toLocaleString() }; }
+function dAgg(list, mov) { const rs = list.filter(m => m.rating != null); return { rt: rs.length ? (mov ? rfmt : mrf)(rs.reduce((a, m) => a + Number(m.rating), 0) / rs.length) : '', n: mov ? Math.round(list.reduce((a, m) => a + (m.mins || 0), 0) / 60).toLocaleString() + 'h' : list.reduce((a, m) => a + (m.eps_read || 0), 0).toLocaleString() }; }
 
 function mediaView() {
   if (S.mdErr) return `<div class="card">Couldn’t load Media: ${esc(S.mdErr)}<br><span class="cat">Run 15_media.sql in the Supabase SQL Editor first.</span></div>`;
@@ -1071,7 +1083,7 @@ function mediaView() {
   const units = mov ? dMovieGroups().map(g => ({ key: DMOV, label: g.label, bands: g.bands })) : cats.map(c => ({ key: c, label: c, bands: mgBands(dList(c)) }));
   const bandKeys = units.flatMap(u => u.bands.map(b => [u.key, b]));
   const allShut = bandKeys.length && bandKeys.every(([c, b]) => dClosed(c, b));
-  const row = m => `<div class="bk-r bk-bk md-s${m.status}" data-mdedit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : ''))}">${esc(m.title)}</span></span>${dNeedsRating(m) ? '<span class="unsure" title="Finished/dropped but not rated yet">?</span>' : `<span>${mrf(m.rating)}</span>`}${mov ? `<span>${m.mins ?? ''}</span>` : `<span>${m.eps_read ?? ''}</span><span>${m.ongoing ? 'A' : (m.eps_total ?? '')}</span>`}</div>`;
+  const row = m => `<div class="bk-r bk-bk md-s${m.status}" data-mdedit="${m.id}"><span class="t"><span class="tt" title="${esc(m.title + (m.year ? ' (' + m.year + ')' : ''))}">${esc(m.title)}</span></span>${dNeedsRating(m) ? '<span class="unsure" title="Finished/dropped but not rated yet">?</span>' : `<span>${(mov ? rfmt : mrf)(m.rating)}</span>`}${mov ? `<span>${m.mins ?? ''}</span>` : `<span>${m.eps_read ?? ''}</span><span>${m.ongoing ? 'A' : (m.eps_total ?? '')}</span>`}</div>`;
   const cards = units.map((u, ui) => {
     const cat = u.key, all = u.bands.flatMap(b => b.items), a = dAgg(all, mov), single = false;   /* every decade keeps its own collapsible band, even when it is alone in its column */ let shown = 0;
     const body = u.bands.map(b => {
@@ -1092,30 +1104,30 @@ function mediaView() {
     ${mov ? '' : `<button class="btn alt ${S.mdwrap ? 'on' : ''}" data-mdwrap title="Long columns flow into two side-by-side halves, newest at the bottom of the second half">Wrap long columns: ${S.mdwrap ? 'on' : 'off'}</button>`}${nRate ? `<button class="chip bk-s-unsure ${S.mdrate ? 'sel' : ''}" data-mdrate title="Finished, finished with no memory, or dropped, but no rating yet">Needs a rating (${nRate})</button>` : ''}</div><div class="bk-scroll">${cards}</div>`;
 }
 function mediaModalHtml() {
-  const m = S.mdm, tot = mScoreSum(m.scores), crit = dCriteria(), mov = m.category === DMOV;
+  const m = S.mdm, mov = m.category === DMOV, tot = mov ? null : mScoreSum(m.scores), crit = dCriteria();
   return `<div class="modal"><div class="sheet"><h2>${m.id ? 'Edit' : 'Add'} ${mov ? 'movie' : 'show'}</h2>
     <label>Category</label><select id="d-cat">${[DMOV, ...DCATS].map(c => `<option ${c === m.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
     <label>Title</label><input id="d-title" value="${esc(m.title)}">
     <div style="display:flex;gap:8px"><div style="flex:1"><label>Year</label><input id="d-year" type="number" value="${esc(m.year)}" placeholder="2024"></div>
-    <div style="flex:1"><label>Rating (0–10)</label><input id="d-rate" type="number" min="0" max="10" step="0.1" value="${esc(m.rating)}" ${tot != null ? 'readonly' : ''}></div></div>
-    <details class="sc" ${mFilled(m.scores) ? 'open' : ''}><summary>Rating breakdown <span class="cat">· optional, fills the rating for you</span></summary>
+    <div style="flex:1"><label>Rating (${mov ? '0–5 stars' : '0–10'})</label><input id="d-rate" type="number" min="0" max="${mov ? 5 : 10}" step="${mov ? 0.25 : 0.1}" value="${esc(m.rating)}" ${tot != null ? 'readonly' : ''}></div></div>
+    ${mov ? '' : `<details class="sc" ${mFilled(m.scores) ? 'open' : ''}><summary>Rating breakdown <span class="cat">· optional, fills the rating for you</span></summary>
       <div class="scgrid">${m.scores.map((x, i) => { const lab = String(x[0] || ''), isNew = x[0] === '__new__' || (lab !== '' && !(lab in crit)), over = x[1] !== '' && Number(x[1]) > Number(x[2]);
         return `<div style="min-width:0"><select class="scl" data-i="${i}">${Object.keys(crit).map(c => `<option value="${esc(c)}" ${c === lab ? 'selected' : ''}>${esc(c)}</option>`).join('')}<option value="__new__" ${isNew ? 'selected' : ''}>Custom…</option></select>${isNew ? `<input class="scn" data-i="${i}" placeholder="Name" value="${esc(lab === '__new__' ? '' : lab)}" style="margin-top:4px">` : ''}</div>
         <input class="sc ${over ? 'over' : ''}" id="d-sc${i}" type="number" min="0" step="1" value="${esc(x[1])}"><span class="sl">/</span><input class="scx" id="d-sx${i}" type="number" min="1" step="1" value="${esc(x[2])}" title="Out of"><button class="xx" data-scdel="${i}" title="Remove">×</button>`; }).join('')}</div>
       <div style="margin-top:6px"><button class="btn alt" data-scadd type="button">+ Add criterion</button></div>
-      <div class="scok ${mScoreInfo(m.scores).ok ? 'good' : 'warn'}" id="d-scok">${mScoreInfo(m.scores).ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + mMaxSum(m.scores) + ', not 100 · '}${mScoreInfo(m.scores).line}</div></details>
+      <div class="scok ${mScoreInfo(m.scores).ok ? 'good' : 'warn'}" id="d-scok">${mScoreInfo(m.scores).ok ? '✓ Criteria add up to 100 · ' : '⚠ Criteria add up to ' + mMaxSum(m.scores) + ', not 100 · '}${mScoreInfo(m.scores).line}</div></details>`}
     ${mov ? `<label>Runtime (minutes)</label><input id="d-mins" type="number" min="0" step="1" value="${esc(m.mins)}">` : `<div style="display:flex;gap:8px"><div style="flex:1"><label>Episodes watched</label><input id="d-read" type="number" min="0" value="${esc(m.read)}"></div>
     <div style="flex:1"><label>Total episodes</label><input id="d-tot" type="number" min="0" value="${esc(m.total)}"></div></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="d-ong" type="checkbox" style="width:auto" ${m.ongoing ? 'checked' : ''}> Still airing</label>`}
     <label>Status</label><select id="d-status">${Object.entries(DST).map(([k, l]) => `<option value="${k}" ${m.status == k ? 'selected' : ''}>${k} · ${l}</option>`).join('')}</select>
     <div class="acts"><button class="btn" data-mdsave>Save</button>${m.id ? curBtn('media', m.id) : ''}${m.id ? '<button class="btn danger" data-mddel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
-const readDm = () => { const m = S.mdm, mov = $('#d-cat').value === DMOV; return Object.assign(m, { category: $('#d-cat').value, title: $('#d-title').value, year: $('#d-year').value, rating: $('#d-rate').value, read: mov ? m.read : $('#d-read').value, total: mov ? m.total : $('#d-tot').value, ongoing: mov ? false : $('#d-ong').checked, mins: mov ? $('#d-mins').value : m.mins, status: Number($('#d-status').value), scores: readScores() }); };
+const readDm = () => { const m = S.mdm, mov = $('#d-cat').value === DMOV; return Object.assign(m, { category: $('#d-cat').value, title: $('#d-title').value, year: $('#d-year').value, rating: $('#d-rate').value, read: mov ? m.read : $('#d-read').value, total: mov ? m.total : $('#d-tot').value, ongoing: mov ? false : $('#d-ong').checked, mins: mov ? $('#d-mins').value : m.mins, status: Number($('#d-status').value), scores: mov ? m.scores : readScores() }); };
 async function saveMedia() {
   const m = readDm(), title = m.title.trim(), mov = m.category === DMOV; if (!title) return toast('Add a title first');
-  if (mFilled(m.scores) && m.scores.some(x => x[1] !== '' && (!String(x[0]).trim() || x[0] === '__new__'))) return toast('Give every scored criterion a name');
-  const num = v => String(v).trim() === '' ? null : Number(v), sum = mScoreSum(m.scores), rating = sum != null ? sum : num(m.rating);
-  if (rating != null && !(rating >= 0 && rating <= 10)) return toast('Rating must be between 0 and 10');
+  if (!mov && mFilled(m.scores) && m.scores.some(x => x[1] !== '' && (!String(x[0]).trim() || x[0] === '__new__'))) return toast('Give every scored criterion a name');
+  const num = v => String(v).trim() === '' ? null : Number(v), sum = mov ? null : mScoreSum(m.scores), rating = sum != null ? sum : num(m.rating), top = mov ? 5 : 10;
+  if (rating != null && !(rating >= 0 && rating <= top)) return toast('Rating must be between 0 and ' + top);
   const payload = { category: m.category, title, year: num(m.year), rating, eps_read: mov ? null : num(m.read), eps_total: mov || m.ongoing ? null : num(m.total), ongoing: !mov && !!m.ongoing, mins: mov ? num(m.mins) : null, status: m.status, scores: sum != null ? m.scores.filter(x => String(x[0]).trim() && x[0] !== '__new__').map(x => [String(x[0]).trim(), x[1] === '' ? null : Number(x[1]), Number(x[2])]) : null };
   const res = m.id ? await db.from('media').update(payload).eq('id', m.id).select().single() : await db.from('media').insert(payload).select().single();
   if (res.error) return toast('Save failed: ' + res.error.message);
@@ -1797,6 +1809,7 @@ document.addEventListener('click', e => {
   if (g('data-rgeditl')) { const l = S.rg.lists.find(x => x.id == g('data-rgeditl').dataset.rgeditl), d = l.data || {};
     S.rgm = { mode: 'editlist', lid: l.id, lname: l.name, kind: l.kind, items: l.kind === 'matrix' ? (d.tasks || []).join('\n') : (d.items || []).map(x => x.n).join('\n'), chars: (d.chars || []).map(x => x.n).join('\n') }; return render(); }
   if (g('data-rgeditg')) { const x = S.rg.games.find(v => v.id == g('data-rgeditg').dataset.rgeditg); S.rgm = { mode: 'editgame', gid: x.id, gname: x.name }; return render(); }
+  if (g('data-rgaddc')) return rgAddChar(Number(g('data-rgaddc').dataset.rgaddc));
   if (g('data-rgsave')) return saveRgm();
   if (g('data-rgdel')) return delRgm();
   if (g('data-glyr')) { S.gly = Number(g('data-glyr').dataset.glyr); return render(); }
@@ -1858,6 +1871,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 's-new') addCat();
   if (e.key === 'Enter' && e.target.id === 'r-new') addRogue(); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.rgcin !== undefined) { e.preventDefault(); rgAddChar(Number(e.target.dataset.rgcin)); } });
 document.addEventListener('change', e => {
   if (e.target.dataset.glprog !== undefined) return glSetProg(Number(e.target.dataset.glprog), Number(e.target.value));
   if (S.rgm && e.target.id === 'rg-kind') { readRgm(); return render(); }
@@ -1865,7 +1879,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'm-cat' && S.mm) { readMm(); if (!mFilled(S.mm.scores)) S.mm.scores = mBlank(S.mm.category); return render(); }
   if (S.mum && (e.target.id === 'u-genre' || e.target.id === 'u-art')) { readUm(); if (e.target.id === 'u-genre') { const a = [...new Set(S.malb.filter(x => x.genre === S.mum.genre).map(x => x.artist))]; if (!a.includes(S.mum.artist)) S.mum.artist = a[0] || '__new__'; } return render(); }
   if (S.mum && e.target.classList.contains('us-l')) return muPreview();
-  if (e.target.id === 'd-cat' && S.mdm) { readDm(); if (!mFilled(S.mdm.scores)) S.mdm.scores = dBlank(S.mdm.category); return render(); }
+  if (e.target.id === 'd-cat' && S.mdm) { readDm(); if (!mFilled(S.mdm.scores)) S.mdm.scores = dBlank(S.mdm.category); if (S.mdm.category === DMOV && Number(S.mdm.rating) > 5) S.mdm.rating = ''; return render(); }
   if (e.target.classList.contains('scl') && S.mdm) { readDm(); const i = Number(e.target.dataset.i), v = e.target.value; if (v !== '__new__') S.mdm.scores[i][2] = DMAX[v] ?? dCriteria()[v] ?? 10; return render(); }
   if (e.target.id === 'g-cat' && S.gm) { readGm(); if (!mFilled(S.gm.scores)) S.gm.scores = gBlank(S.gm.category); return render(); }
   if (e.target.id === 'g-plat' && S.gm) { readGm(); return render(); }
