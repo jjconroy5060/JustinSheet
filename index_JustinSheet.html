@@ -50,6 +50,7 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .chkrow{display:flex;align-items:center;gap:10px;margin:0;padding:6px 0;color:var(--ink);font-size:.9rem;border-top:1px solid var(--line);cursor:pointer}
 .chkrow input{width:auto}.chkrow span:nth-of-type(1){flex:1}
 .row .t1{flex:1;min-width:0;overflow-wrap:anywhere}.row .t2,.row .t3{flex:0 0 5.2em}.row .t4{flex:0 0 3.6em;text-align:right}.row .t5{flex:0 0 9.5em;white-space:nowrap}
+.untr{color:#2fa89a;font-weight:600}
 .paused{color:var(--danger)}.dropped{color:var(--mute);text-decoration:line-through}
 .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}.cols .card,.ovg .card{margin:0}
 .ovg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
@@ -278,13 +279,34 @@ async function loadAll() {
   S.loading = false; S.anchor = true; render();
 }
 
+/* The five "Another …" categories: always in the category menus (at the bottom, in this order); rolling one picks a real item from its tab. */
+const ANOTHER = ['Another Book', 'Another Manga', 'Another Game', 'Another Watch', 'Another Music'], ANOTHER_KEYS = ['book', 'manga', 'game', 'watch', 'music'];
+const anotherKey = n => { const i = ANOTHER.findIndex(a => norm(a) === norm(n)); return i < 0 ? null : ANOTHER_KEYS[i]; };
+const anotherPool = { book: 'set to Next in Books', manga: 'Not started or Paused in Manga', game: 'Not started or Paused in Games (outside Roguelikes)', watch: 'in Media (movies/shows)', music: 'a grey album in Music' };
+function anotherPick(key) {
+  const one = a => a.length ? a[Math.floor(Math.random() * a.length)] : null;
+  if (key === 'book') return one(S.books.filter(b => b.status === 6).map(b => b.title));
+  if (key === 'manga') return one(S.manga.filter(m => m.status === 6 || m.status === 3).map(m => m.title));
+  if (key === 'game') return one(S.games.filter(g => (g.status === 7 || g.status === 2) && g.category !== 'Roguelikes').map(g => g.title));
+  if (key === 'music') return one(S.malb.filter(a => { const ss = muSongs(a.id); return ss.length && !ss.every(x => x.listen >= 2); }).map(a => a.artist + ' - ' + a.title));
+  if (key === 'watch') {   /* movies and shows 50/50; movies: Not started 30%, Finished no memory 20%; shows: Not started / Paused / Watched some of */
+    const mov = S.media.filter(m => m.category === DMOV), shows = S.media.filter(m => m.category !== DMOV);
+    const groups = [[mov.filter(m => m.status === 7), 30], [mov.filter(m => m.status === 3), 20], [shows.filter(m => [7, 2, 5].includes(m.status)), 50]].filter(([l]) => l.length);
+    if (!groups.length) return null;
+    let r = Math.random() * groups.reduce((a, [, w]) => a + w, 0), g = groups[groups.length - 1][0];
+    for (const [l, w] of groups) { r -= w; if (r < 0) { g = l; break; } }
+    return one(g).title;
+  }
+  return null;
+}
+const rollable = n => mapped(n) || anotherKey(n);
 function catCounts() { const c = {}; S.entries.forEach(e => { if (e.category) c[e.category] = (c[e.category] || 0) + 1; }); return c; }
 const visible = n => { const o = S.options.find(x => x.name === n); return !o || o.show_in_menu !== false; };
 function allCats() {
   const c = catCounts(), base = S.options.length ? S.options.map(o => o.name) : Object.keys(c);
-  return [...new Set(base)].sort((a, b) => (c[b] || 0) - (c[a] || 0) || a.localeCompare(b));
+  return [...new Set(base)].filter(n => !anotherKey(n)).sort((a, b) => (c[b] || 0) - (c[a] || 0) || a.localeCompare(b)).concat(ANOTHER);
 }
-function categories(extra) { const l = allCats().filter(n => visible(n) || n === extra); if (extra && !l.includes(extra)) l.push(extra); return l; }
+function categories(extra) { const l = allCats().filter(n => visible(n) || n === extra || anotherKey(n)); if (extra && !l.includes(extra)) l.push(extra); return l; }
 
 /* ---------- views ---------- */
 function rowHtml(e, n, cols = '', cls = '') {
@@ -1314,7 +1336,7 @@ const catName = k => (CATS.find(c => c[0] === k) || [])[1];
 const cur = k => S.current.filter(i => i.category === k);
 const ranked = k => cur(k).filter(i => i.rank != null && !i.done && i.status !== 'catchup').sort((a, b) => a.rank - b.rank);
 const rankedCU = () => cur('manga').filter(i => i.status === 'catchup' && i.rank != null && !i.done).sort((a, b) => a.rank - b.rank);
-const stCls = i => i.status === 'paused' ? 'paused' : i.status === 'dropped' ? 'dropped' : '';
+const stCls = i => (i.status === 'paused' ? 'paused' : i.status === 'dropped' ? 'dropped' : '') + (i.category === 'manga' && i.done && i.untranslated ? ' untr' : '');
 const unit = x => x.toLowerCase().replace(/s?\.?$/, '');
 const prog = i => {
   const p = (i.progress || '').trim(), t = (i.total || '').trim(), re = /^([\d.]+)\s*([A-Za-z][A-Za-z.]*)$/, a = p.match(re), b = t.match(re);
@@ -1494,13 +1516,14 @@ function curModalHtml() {
     <label>Status</label><select id="c-status">${st.map(([k, l]) => `<option value="${k}" ${m.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
     <label class="chkrow"><input type="checkbox" id="c-incur" ${m.incur ? 'checked' : ''}><span>In my Current list</span></label>
     <label class="chkrow"><input type="checkbox" id="c-done" ${m.done ? 'checked' : ''}><span>Done</span></label>
+    ${m.category === 'manga' && m.done ? `<label class="chkrow"><input type="checkbox" id="c-untr" ${m.untr ? 'checked' : ''}><span class="untr">Finished, but not fully translated into English</span></label>` : ''}
     ${m.done ? `<label>Year completed</label><select id="c-year">${yrs.map(y => `<option ${y === m.year ? 'selected' : ''}>${y}</option>`).join('')}</select>` : ''}
     <div class="acts"><button class="btn" data-csave>Save</button>${m.id ? '<button class="btn danger" data-cdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 
 function readCm() {
   const m = S.cm; m.title = $('#c-title').value; m.sub = $('#c-sub').value; m.progress = $('#c-prog').value; m.total = $('#c-tot').value; m.status = $('#c-status').value;
-  m.incur = $('#c-incur').checked; m.done = $('#c-done').checked; m.year = $('#c-year') ? Number($('#c-year').value) : (m.done ? (m.year || new Date().getFullYear()) : m.year);
+  m.incur = $('#c-incur').checked; m.done = $('#c-done').checked; m.untr = $('#c-untr') ? $('#c-untr').checked : (m.done ? m.untr : false); m.year = $('#c-year') ? Number($('#c-year').value) : (m.done ? (m.year || new Date().getFullYear()) : m.year);
   return m;
 }
 
@@ -1513,7 +1536,7 @@ async function saveCur() {
     const cu = m.status === 'catchup', same = old && old.rank != null && (old.status === 'catchup') === cu;
     rank = same ? old.rank : Math.max(0, ...(cu ? rankedCU() : ranked(m.category)).filter(i => i.id !== m.id).map(i => i.rank)) + 1;
   }
-  const payload = { category: m.category, title, ...((m.sub || '').trim() || (old && old.subtitle) ? { subtitle: (m.sub || '').trim() || null } : {}), progress: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.progress), total: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.total), status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
+  const payload = { category: m.category, title, ...(m.category === 'manga' && (m.untr || (old && old.untranslated)) ? { untranslated: !!(m.untr && m.done) } : {}), ...((m.sub || '').trim() || (old && old.subtitle) ? { subtitle: (m.sub || '').trim() || null } : {}), progress: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.progress), total: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.total), status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
   let res;
   if (m.id) res = await db.from('current_items').update(payload).eq('id', m.id).select().single();
   else { payload.sort_order = Math.max(0, ...S.current.map(i => i.sort_order)) + 1; res = await db.from('current_items').insert(payload).select().single(); }
@@ -1545,12 +1568,12 @@ function wheelHtml() {
   const w = S.wheel, pool = S.options.filter(o => o.active && Number(o.weight) > 0).sort((a, b) => Number(b.weight) - Number(a.weight) || a.sort_order - b.sort_order);
   const tot = pool.reduce((a, o) => a + Number(o.weight), 0), taken = new Set(w.res.map(r => r.fid).filter(Boolean));
   const rows = w.res.map((r, i) => {
-    const futs = by('future').filter(f => f.category === r.cat && f.description && (!taken.has(f.id) || f.id === r.fid)), m = mapped(r.cat);
+    const futs = by('future').filter(f => f.category === r.cat && f.description && (!taken.has(f.id) || f.id === r.fid)), m = rollable(r.cat);
     return `<div class="rr"><div class="rh"><span class="n">${i + 1}</span><b>${esc(r.cat)}</b><button class="x" data-wdel="${i}" title="Remove">×</button></div>
       <input data-ri="${i}" value="${esc(r.desc)}" placeholder="${m ? 'What (Roll picks fills this)' : 'What (optional)'}">
       ${futs.length ? `<select data-rf="${i}"><option value="">Choose from Future (${futs.length})…</option>${futs.map(f => `<option value="${f.id}" ${f.id === r.fid ? 'selected' : ''}>${esc(f.description)}</option>`).join('')}</select>` : ''}</div>`;
   }).join('');
-  const anyMapped = w.res.some(r => mapped(r.cat));
+  const anyMapped = w.res.some(r => rollable(r.cat));
   return `<div class="modal"><div class="sheet"><div class="head"><h2>Roll the wheel</h2><button class="btn alt" data-cancel>Close</button></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="cat">Rolls</span><input id="w-n" type="number" min="1" max="100" value="${w.n}" style="width:5em"><button class="btn" data-wroll>${w.res.length ? 'Roll again' : 'Roll'}</button>${anyMapped ? '<button class="btn alt" data-wcur>Roll picks</button>' : ''}</div>
     ${w.res.length ? `<h3 style="font-size:.95rem;margin-top:14px">Rolled (${w.res.length})</h3>${rows}<div class="acts"><button class="btn" data-wadd>Add ${w.res.length} to Priority</button></div>` : ''}
@@ -1579,6 +1602,8 @@ function pickFrom(key) {
 function rollCurrent() {
   let done = 0; const empty = new Set();
   S.wheel.res.forEach(r => {
+    const ak = anotherKey(r.cat);
+    if (ak) { if (r.src === 'future' || r.src === 'typed') return; const t = anotherPick(ak); if (t == null) { empty.add(r.cat); return; } r.desc = t; r.src = 'roll'; r.fid = null; done++; return; }
     const o = mapped(r.cat); if (!o || r.src === 'future' || r.src === 'typed') return;
     const t = pickFrom(o.current_cat); if (t == null) { empty.add(linkName(o.current_cat)); return; }
     r.desc = t; r.src = 'roll'; r.fid = null; done++;
@@ -1628,7 +1653,7 @@ function modalHtml() {
     <label>Category</label>
     <select id="m-cat"><option value="">No category</option>${cats.map(c => `<option ${c === m.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
     ${futures.length ? `<label>In Future for ${esc(m.category)} (${futures.length}) — tap one to use it</label><div class="futlist">${futures.map(f => `<div data-pickf="${f.id}" class="${m.pick == f.id ? 'on' : ''}">${esc(f.description)}</div>`).join('')}</div>` : ''}
-    ${m.status !== 'done' && mapped(m.category) ? `<button class="btn alt" data-mroll style="margin-top:10px">${mapped(m.category).current_cat === 'roguelike' ? 'Roll a roguelike' : 'Roll from Current'}</button>` : ''}
+    ${m.status !== 'done' && anotherKey(m.category) ? `<button class="btn alt" data-mroll style="margin-top:10px">🎲 Roll ${esc(m.category.toLowerCase())}</button>` : m.status !== 'done' && mapped(m.category) ? `<button class="btn alt" data-mroll style="margin-top:10px">${mapped(m.category).current_cat === 'roguelike' ? 'Roll a roguelike' : 'Roll from Current'}</button>` : ''}
     <label>What</label><textarea id="m-desc" rows="3">${esc(m.description)}</textarea>
     ${showDate ? `<label>Date</label><input id="m-date" type="date" value="${esc(m.done_on || today())}">` : ''}
     <div class="acts">
@@ -1750,7 +1775,7 @@ document.addEventListener('click', e => {
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
   if (g('data-cmove')) return moveRank(g('data-cmove').dataset.cmove, Number(g('data-cmove').dataset.dir));
   if (g('data-cadd')) { S.cm = { id: null, category: g('data-cadd').dataset.cadd, title: '', progress: '', total: '', status: g('data-cadd').dataset.cst || 'active', incur: true, done: false, year: new Date().getFullYear() }; return render(); }
-  if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, sub: i.subtitle || '', progress: curRaw(i.category, cvv(i).progress), total: curRaw(i.category, cvv(i).total), status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
+  if (g('data-cedit')) { const i = S.current.find(x => x.id == g('data-cedit').dataset.cedit); S.cm = { id: i.id, category: i.category, title: i.title, untr: !!i.untranslated, sub: i.subtitle || '', progress: curRaw(i.category, cvv(i).progress), total: curRaw(i.category, cvv(i).total), status: i.status, incur: i.rank != null, done: i.done, year: i.done_year || new Date().getFullYear() }; return render(); }
   if (g('data-csave')) return saveCur();
   if (g('data-cdel')) return delCur();
   if (g('data-roll')) { S.wheel = { n: 5, res: [] }; return render(); }
@@ -1837,7 +1862,7 @@ document.addEventListener('click', e => {
   if (g('data-mrate')) { S.mrate = !S.mrate; return render(); }
   if (g('data-bsave')) return saveBook();
   if (g('data-bdel')) return delBook();
-  if (g('data-mroll')) { const o = mapped(S.modal.category), t = o && pickFrom(o.current_cat); if (t == null) return toast('Nothing to pick from'); $('#m-desc').value = t; S.modal.description = t; return; }
+  if (g('data-mroll')) { const ak = anotherKey(S.modal.category), o = mapped(S.modal.category), t = ak ? anotherPick(ak) : (o && pickFrom(o.current_cat)); if (t == null) return toast(ak ? 'Nothing to pick from — no entries ' + anotherPool[ak] : 'Nothing to pick from'); $('#m-desc').value = t; S.modal.description = t; return; }
   if (g('data-stab')) { S.stab = g('data-stab').dataset.stab; return render(); }
   if (g('data-rlk')) { const x = S.rogue.find(r => r.id == g('data-rlk').dataset.rlk); S.re = { id: x.id, name: x.name, active: x.active, weight: Number(x.weight) }; return render(); }
   if (g('data-rsave')) return saveRogue();
