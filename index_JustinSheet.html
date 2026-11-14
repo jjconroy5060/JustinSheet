@@ -1336,7 +1336,7 @@ const catName = k => (CATS.find(c => c[0] === k) || [])[1];
 const cur = k => S.current.filter(i => i.category === k);
 const ranked = k => cur(k).filter(i => i.rank != null && !i.done && i.status !== 'catchup').sort((a, b) => a.rank - b.rank);
 const rankedCU = () => cur('manga').filter(i => i.status === 'catchup' && i.rank != null && !i.done).sort((a, b) => a.rank - b.rank);
-const stCls = i => (i.status === 'paused' ? 'paused' : i.status === 'dropped' ? 'dropped' : '') + (i.category === 'manga' && i.done && i.untranslated ? ' untr' : '');
+const stCls = i => (i.status === 'paused' ? 'paused' : i.status === 'dropped' ? 'dropped' : '') + (i.category === 'manga' && i.untranslated ? ' untr' : '');
 const unit = x => x.toLowerCase().replace(/s?\.?$/, '');
 const prog = i => {
   const p = (i.progress || '').trim(), t = (i.total || '').trim(), re = /^([\d.]+)\s*([A-Za-z][A-Za-z.]*)$/, a = p.match(re), b = t.match(re);
@@ -1479,13 +1479,13 @@ function overview() {
 
 function catView(k) {
   const all = cur(k).sort((a, b) => a.sort_order - b.sort_order), r = ranked(k);
-  const F = { all: ['All', i => i.status !== 'dropped' && i.status !== 'rewatch' && i.status !== 'catchup' && !curOngoingParked(i)], ongoing: ['Ongoing', i => curOngoingParked(i)], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], missing: ['⚠ Not in tab', i => curMissing(i)], rewatch: ['Rewatch', i => i.status === 'rewatch'], catchup: ['Catch up', i => i.status === 'catchup'] };
+  const F = { all: ['Tracked', i => i.status !== 'dropped' && i.status !== 'rewatch' && i.status !== 'catchup' && !curOngoingParked(i)], ongoing: ['Ongoing', i => curOngoingParked(i)], prog: ['In progress', i => !i.done && i.status === 'active'], paused: ['Paused', i => i.status === 'paused'], done: ['Done', i => i.done], dropped: ['Dropped', i => i.status === 'dropped'], missing: ['⚠ Not in tab', i => curMissing(i)], rewatch: ['Rewatch', i => i.status === 'rewatch'], catchup: ['Catch up', i => i.status === 'catchup'] };
   const chips = Object.entries(F).map(([f, [l, fn]]) => [f, l, all.filter(fn).length]).filter(([f, , n]) => f === 'all' || n || f === S.flt)
     .map(([f, l, n]) => `<button class="${S.flt === f ? 'on' : ''}" data-cflt="${f}">${l} (${n})</button>`).join('');
   const rows = all.filter((F[S.flt] || F.all)[1]);
   return `<div class="cols"><div class="card"><div class="head"><h2>Current</h2><button class="btn" data-cadd="${k}">Add</button></div>
     ${r.map((i, n) => rankRow(i, n + 1, true)).join('') || '<div class="cat">Nothing current.</div>'}${k === 'manga' ? cuBlock(true) : ''}</div>
-    <div class="card"><div class="head"><h2>All ${catName(k).toLowerCase()}</h2></div><div class="seg sm">${chips}</div>
+    <div class="card"><div class="head"><h2>${catName(k)}</h2></div><div class="seg sm">${chips}</div>
     <div class="row th"><div class="c0">#</div><div class="t1">Title</div><div class="t2">How far</div><div class="t3">Total</div><div class="t4"></div></div>
     ${rows.map((i, n) => curRow(i, n + 1)).join('') || '<div class="cat">Nothing here.</div>'}</div></div>`;
 }
@@ -1497,11 +1497,11 @@ function yearsView() {
   const cnt = (k, y) => done.filter(i => i.category === k && (y === 'all' || i.done_year === y)).length;
   const matrix = `<table class="mx"><tr><th></th>${ys.map(y => `<th style="color:${yc(y)}">${y}</th>`).join('')}<th>Total</th></tr>
     ${CATS.map(([k, l]) => `<tr><td>${l}</td>${ys.map(y => `<td>${cnt(k, y) || '·'}</td>`).join('')}<td>${cnt(k, 'all') || '·'}</td></tr>`).join('')}
-    <tr><th>All</th>${ys.map(y => `<th>${done.filter(i => i.done_year === y).length}</th>`).join('')}<th>${done.length}</th></tr></table>`;
+    <tr><th>Total</th>${ys.map(y => `<th>${done.filter(i => i.done_year === y).length}</th>`).join('')}<th>${done.length}</th></tr></table>`;
   const list = done.filter(i => sel === 'all' || i.done_year === sel);
   const groups = CATS.map(([k, l]) => [l, list.filter(i => i.category === k)]).filter(([, a]) => a.length);
   return `<div class="card"><h2 style="margin-bottom:8px">Completed by year</h2>${matrix}</div>
-    <div class="card"><div class="seg sm">${ys.map(y => chip(y, y)).join('')}${chip('all', 'All')}</div>
+    <div class="card"><div class="seg sm">${ys.map(y => chip(y, y)).join('')}${chip('all', 'Total')}</div>
     ${groups.map(([l, a]) => `<div class="cat" style="margin:8px 0 2px;font-weight:600">${l} (${a.length})</div>${a.map((i, n) => curRow(i, n + 1)).join('')}`).join('') || '<div class="cat">Nothing completed.</div>'}</div>`;
 }
 
@@ -1516,14 +1516,14 @@ function curModalHtml() {
     <label>Status</label><select id="c-status">${st.map(([k, l]) => `<option value="${k}" ${m.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
     <label class="chkrow"><input type="checkbox" id="c-incur" ${m.incur ? 'checked' : ''}><span>In my Current list</span></label>
     <label class="chkrow"><input type="checkbox" id="c-done" ${m.done ? 'checked' : ''}><span>Done</span></label>
-    ${m.category === 'manga' && m.done ? `<label class="chkrow"><input type="checkbox" id="c-untr" ${m.untr ? 'checked' : ''}><span class="untr">Finished, but not fully translated into English</span></label>` : ''}
+    ${m.category === 'manga' && /\d/.test(String(m.total || '')) ? `<label class="chkrow"><input type="checkbox" id="c-untr" ${m.untr ? 'checked' : ''}><span class="untr">Finished, but not fully translated into English</span></label>` : ''}
     ${m.done ? `<label>Year completed</label><select id="c-year">${yrs.map(y => `<option ${y === m.year ? 'selected' : ''}>${y}</option>`).join('')}</select>` : ''}
     <div class="acts"><button class="btn" data-csave>Save</button>${m.id ? '<button class="btn danger" data-cdel>Delete</button>' : ''}<button class="btn alt" data-cancel>Cancel</button></div></div></div>`;
 }
 
 function readCm() {
   const m = S.cm; m.title = $('#c-title').value; m.sub = $('#c-sub').value; m.progress = $('#c-prog').value; m.total = $('#c-tot').value; m.status = $('#c-status').value;
-  m.incur = $('#c-incur').checked; m.done = $('#c-done').checked; m.untr = $('#c-untr') ? $('#c-untr').checked : (m.done ? m.untr : false); m.year = $('#c-year') ? Number($('#c-year').value) : (m.done ? (m.year || new Date().getFullYear()) : m.year);
+  m.incur = $('#c-incur').checked; m.done = $('#c-done').checked; m.untr = $('#c-untr') ? $('#c-untr').checked : m.untr; m.year = $('#c-year') ? Number($('#c-year').value) : (m.done ? (m.year || new Date().getFullYear()) : m.year);
   return m;
 }
 
@@ -1536,7 +1536,7 @@ async function saveCur() {
     const cu = m.status === 'catchup', same = old && old.rank != null && (old.status === 'catchup') === cu;
     rank = same ? old.rank : Math.max(0, ...(cu ? rankedCU() : ranked(m.category)).filter(i => i.id !== m.id).map(i => i.rank)) + 1;
   }
-  const payload = { category: m.category, title, ...(m.category === 'manga' && (m.untr || (old && old.untranslated)) ? { untranslated: !!(m.untr && m.done) } : {}), ...((m.sub || '').trim() || (old && old.subtitle) ? { subtitle: (m.sub || '').trim() || null } : {}), progress: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.progress), total: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.total), status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
+  const payload = { category: m.category, title, ...(m.category === 'manga' && (m.untr || (old && old.untranslated)) ? { untranslated: !!(m.untr && /\d/.test(String(m.total || ''))) } : {}), ...((m.sub || '').trim() || (old && old.subtitle) ? { subtitle: (m.sub || '').trim() || null } : {}), progress: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.progress), total: curStore({ category: m.category, title, progress: old && old.progress, total: old && old.total }, m.total), status: m.status, done: m.done, done_year: m.done ? m.year : null, rank };
   let res;
   if (m.id) res = await db.from('current_items').update(payload).eq('id', m.id).select().single();
   else { payload.sort_order = Math.max(0, ...S.current.map(i => i.sort_order)) + 1; res = await db.from('current_items').insert(payload).select().single(); }
@@ -1916,6 +1916,7 @@ document.addEventListener('change', e => {
   if (e.target.dataset.ract) return toggleRogue(e.target);
   if (e.target.dataset.rf !== undefined) { const r = S.wheel.res[Number(e.target.dataset.rf)], f = S.entries.find(x => x.id == e.target.value);
     if (f) { r.desc = f.description; r.src = 'future'; r.fid = f.id; } else { if (r.src === 'future') { r.desc = ''; r.src = ''; } r.fid = null; } return render(); }
+  if (e.target.id === 'c-tot' && S.cm && S.cm.category === 'manga') { readCm(); return render(); }
   if (e.target.id === 'c-done') { readCm(); if (S.cm.done && !S.cm.year) S.cm.year = new Date().getFullYear(); return render(); }
   if (S.modal && (e.target.id === 'm-cat' || e.target.id === 'm-status')) { const m = S.modal; if (e.target.id === 'm-cat' && m.pick) { const pf = S.entries.find(x => x.id == m.pick); if (pf && $('#m-desc').value === (pf.description || '')) $('#m-desc').value = ''; m.pick = null; } m.category = $('#m-cat').value; m.description = $('#m-desc').value; m.done_on = $('#m-date')?.value || m.done_on; if (e.target.id === 'm-status') m.status = e.target.value; render(); }
 });
