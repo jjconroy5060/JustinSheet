@@ -54,8 +54,9 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .paused{color:var(--danger)}.dropped{color:var(--mute);text-decoration:line-through}
 .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}.cols .card,.ovg .card{margin:0}
 .homegrid{display:grid;grid-template-columns:minmax(300px,4fr) minmax(0,7fr);gap:14px;align-items:start}.homeov .ovg{grid-template-columns:1fr}.homeov .card:first-child{margin-top:0}
+.wrap.mid{max-width:1360px}@media(min-width:701px){.big .row .c3{width:130px;white-space:nowrap}}.big .seg.sm button{font-size:.92rem;padding:6px 12px}.big .card h2{font-size:1.2rem}.big .cat{font-size:.95rem}.big .chkrow{font-size:1rem}
 .big .row{font-size:1.02rem;padding:5px 8px;line-height:1.35}.big .row .c0{font-size:.9rem}.big .seg button{font-size:1rem}.big .btn{font-size:.95rem}
-@media(max-width:700px){.big .row{font-size:.92rem;padding:4px 4px}.big .row .c0{font-size:.8rem}}
+@media(max-width:700px){.big .row{font-size:.86rem;padding:4px 4px}.big .row .c0{font-size:.8rem}}
 .ovg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
 @media(max-width:720px){.cols{grid-template-columns:1fr}}
 .seg.sm button{padding:3px 10px;font-size:.8rem}
@@ -348,7 +349,7 @@ function priorityCard() {
 
 function home() {
   if (isMob()) return priorityCard();
-  return `<div class="homegrid"><div class="homeov">${overview()}</div><div>${priorityCard()}</div></div>`;
+  return `<div class="homegrid"><div class="homeov big">${overview()}</div><div>${priorityCard()}</div></div>`;
 }
 
 /* Sort Priority so similar categories sit together: Books, Manga, Games, Media, Music, Roguelikes, Rogue 100%, anything else, Stats/Wheel last. */
@@ -390,7 +391,7 @@ function wheel() {
   const rows = [...d, ...p].map((e, i) => [e, i + 1])
     .filter(([e]) => !q || norm(e.category).includes(q) || norm(e.description).includes(q))
     .map(([e, n]) => { const isP = e.status === 'priority'; const cls = isP ? 'pr' + (first ? ' first-p' : '') : ''; if (isP) first = false; return rowHtml(e, n, 'dcf', cls); }).join('');
-  return `<div class="card"><div class="head"><h2>${w ? esc(w) : 'Wheel'}</h2><span class="cat">${d.length.toLocaleString()} completed · ${p.length} priority</span></div>${rows || '<div class="cat">No matches.</div>'}
+  return `<div class="card big"><div class="head"><h2>${w ? esc(w) : 'Wheel'}</h2><span class="cat">${d.length.toLocaleString()} completed · ${p.length} priority</span></div>${rows || '<div class="cat">No matches.</div>'}
     ${w ? '<div class="acts"><button class="btn alt" data-catback>← Back to all</button></div>' : ''}</div>`;
 }
 
@@ -1502,7 +1503,7 @@ function currentView() {
   if (S.cat === 'overview') S.cat = 'games';
   const tabs = [...CATS, ['years', 'Years'], ['goals', 'Goals']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
   const body = S.cat === 'years' ? yearsView() : S.cat === 'goals' ? goalsView() : catView(S.cat);
-  return `<div class="seg">${tabs}</div>${body}`;
+  return `<div class="big"><div class="seg">${tabs}</div>${body}</div>`;
 }
 
 function cuBlock(arrows) {
@@ -1717,7 +1718,7 @@ function render() {
   const modal = S.rgm ? rgModalHtml() : S.glm ? glModalHtml() : S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.mum ? musicModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
   const bsc = document.querySelector('.bk-scroll'), bpos = bsc && !S.bkreset ? [bsc.scrollLeft, bsc.scrollTop] : null; S.bkreset = false;
   const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.rgm ? 'x' : S.glm ? 'y' : S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.mum ? 'u' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
-  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music', 'home'].includes(S.tab) ? 'wide' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
+  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music', 'home'].includes(S.tab) ? 'wide' : ['wheel', 'current'].includes(S.tab) ? 'mid' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button><button class="${S.tab === 'media' ? 'on' : ''}" data-tab="media">Media</button><button class="${S.tab === 'music' ? 'on' : ''}" data-tab="music">Music</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
