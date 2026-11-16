@@ -53,6 +53,9 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .untr{color:#2fa89a;font-weight:600}
 .paused{color:var(--danger)}.dropped{color:var(--mute);text-decoration:line-through}
 .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}.cols .card,.ovg .card{margin:0}
+.homegrid{display:grid;grid-template-columns:minmax(300px,4fr) minmax(0,7fr);gap:14px;align-items:start}.homeov .ovg{grid-template-columns:1fr}.homeov .card:first-child{margin-top:0}
+.big .row{font-size:1.02rem;padding:5px 8px;line-height:1.35}.big .row .c0{font-size:.9rem}.big .seg button{font-size:1rem}.big .btn{font-size:.95rem}
+@media(max-width:700px){.big .row{font-size:.92rem;padding:4px 4px}.big .row .c0{font-size:.8rem}}
 .ovg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
 @media(max-width:720px){.cols{grid-template-columns:1fr}}
 .seg.sm button{padding:3px 10px;font-size:.8rem}
@@ -240,7 +243,7 @@ const db = supabase.createClient(
 let _mk = '';
 function loadSet(n) { try { return new Set(JSON.parse(localStorage.getItem(n) || '[]')); } catch (e) { return new Set(); } }
 function saveSets() { try { localStorage.setItem('bk_shut', JSON.stringify([...S.bshut])); localStorage.setItem('bk_open', JSON.stringify([...S.bopen])); localStorage.setItem('mg_shut', JSON.stringify([...S.mshut])); localStorage.setItem('mg_open', JSON.stringify([...S.mopen])); localStorage.setItem('mg_wrap', S.mwrap ? '1' : '0'); localStorage.setItem('ga_shut', JSON.stringify([...S.gshut])); localStorage.setItem('ga_open', JSON.stringify([...S.gopen])); localStorage.setItem('ga_wrap', S.gwrap ? '1' : '0'); localStorage.setItem('md_shut', JSON.stringify([...S.mdshut])); localStorage.setItem('md_open', JSON.stringify([...S.mdopen])); localStorage.setItem('md_wrap', S.mdwrap ? '1' : '0'); localStorage.setItem('mu_open', JSON.stringify([...S.muopen])); localStorage.setItem('mu_ashut', JSON.stringify([...S.muashut])); localStorage.setItem('bk_wrap', S.bwrap ? '1' : '0'); } catch (e) { /* storage unavailable */ } }
-const S = { malb: [], msong: [], muErr: null, mum: null, muq: '', muopen: loadSet('mu_open'), muashut: loadSet('mu_ashut'), media: [], mdErr: null, mdm: null, mdq: '', mdst: null, mdrate: false, mdsub: 'shows', mdshut: loadSet('md_shut'), mdopen: loadSet('md_open'), mdwrap: (() => { try { return localStorage.getItem('md_wrap') !== '0'; } catch (e) { return true; } })(), games: [], gaErr: null, gm: null, gq: '', gst: null, gunsure: false, grate: false, gshut: loadSet('ga_shut'), gopen: loadSet('ga_open'), gwrap: (() => { try { return localStorage.getItem('ga_wrap') !== '0'; } catch (e) { return true; } })(), manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'overview', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
+const S = { malb: [], msong: [], muErr: null, mum: null, muq: '', muopen: loadSet('mu_open'), muashut: loadSet('mu_ashut'), media: [], mdErr: null, mdm: null, mdq: '', mdst: null, mdrate: false, mdsub: 'shows', mdshut: loadSet('md_shut'), mdopen: loadSet('md_open'), mdwrap: (() => { try { return localStorage.getItem('md_wrap') !== '0'; } catch (e) { return true; } })(), games: [], gaErr: null, gm: null, gq: '', gst: null, gunsure: false, grate: false, gshut: loadSet('ga_shut'), gopen: loadSet('ga_open'), gwrap: (() => { try { return localStorage.getItem('ga_wrap') !== '0'; } catch (e) { return true; } })(), manga: [], mgErr: null, mm: null, mq: '', mst: null, munsure: false, mrate: false, mshut: loadSet('mg_shut'), mopen: loadSet('mg_open'), bwrap: (() => { try { return localStorage.getItem('bk_wrap') !== '0'; } catch (e) { return true; } })(), mwrap: (() => { try { return localStorage.getItem('mg_wrap') !== '0'; } catch (e) { return true; } })(), books: [], bkErr: null, bm: null, bren: null, bord: false, bkreset: false, bsub: 'books', bq: '', bst: null, bshut: loadSet('bk_shut'), bopen: loadSet('bk_open'), wcat: null, pcat: null, re: null, rogue: [], stab: 'cats', ce: null, user: null, entries: [], options: [], tab: 'home', wheel: null, current: [], curErr: null, cat: 'games', flt: 'all', yr: null, cm: null, settings: false, sub: 'now', bulk: null, anchor: false, q: '', modal: null, loading: false };
 Object.assign(S, { rg: { games: [], lists: [], err: null }, gl: { years: [], goals: [], err: null }, rgm: null, glm: null, gsub: 'games', rgsel: null, gly: null, rgflip: loadSet('rg_flip') });
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -324,7 +327,7 @@ function chInfo(d) {   /* series name + first chapter number from text like "Fri
   return { name, ch };
 }
 function priorityCard() {
-  const fut = S.sub === 'future', st = fut ? 'future' : 'priority', cols = fut ? '' : 'cf';
+  const sub = S.sub === 'overview' && !isMob() ? 'now' : S.sub, fut = sub === 'future', st = fut ? 'future' : 'priority', cols = fut ? '' : 'cf';
   let list = by(st);
   const filt = !fut && S.pcat;
   if (fut) {   /* a category whose items all end in chapter numbers (manga catch-up) sorts by series, then chapter; others keep the order they were added in */
@@ -333,15 +336,47 @@ function priorityCard() {
     list.sort((a, b) => key(a).localeCompare(key(b)) || (smart[key(a)] ? (info.get(a).name.localeCompare(info.get(b).name) || info.get(a).ch - info.get(b).ch) : 0) || a.sort_order - b.sort_order);
   }
   if (filt) list = list.filter(e => e.category === S.pcat);
-  const t = (k, l, n) => `<button class="${S.sub === k ? 'on' : ''}" data-sub="${k}">${l} (${n})</button>`;
-  return `<div class="card"><div class="head"><div class="seg" style="margin:0">${t('now', 'Priority', by('priority').length)}${t('future', 'Future', by('future').length)}</div>
-    <div class="acts" style="margin:0"><button class="btn alt" data-roll>Roll</button><button class="btn alt" data-bulk="${st}">Bulk add</button><button class="btn" data-add="${st}">Add</button></div></div>
+  const t = (k, l, n) => `<button class="${sub === k ? 'on' : ''}" data-sub="${k}">${l}${n == null ? '' : ` (${n})`}</button>`;
+  const tabsH = `${t('now', 'Priority', by('priority').length)}${t('future', 'Future', by('future').length)}${isMob() ? t('overview', 'Overview') : ''}`;
+  if (isMob() && sub === 'overview') return `<div class="card big"><div class="head"><div class="seg" style="margin:0">${tabsH}</div></div></div><div style="height:10px"></div>${overview()}`;
+  return `<div class="card big"><div class="head"><div class="seg" style="margin:0">${tabsH}</div>
+    <div class="acts" style="margin:0"><button class="btn alt" data-roll>Roll</button>${fut ? '' : '<button class="btn alt" data-psort title="Group Priority by category: Books, Manga, Games, Media, Music, Roguelikes, Rogue 100%, other, Stats/Wheel">Sort</button>'}<button class="btn alt" data-bulk="${st}">Bulk add</button><button class="btn" data-add="${st}">Add</button></div></div>
     ${filt ? `<div class="cat" style="margin-bottom:6px">Showing only <b>${esc(S.pcat)}</b> (${list.length})</div>` : ''}
     ${thHtml(cols)}${list.map((e, i) => rowHtml(e, i + 1, cols)).join('') || '<div class="cat">Nothing here yet.</div>'}
     ${filt ? '<div class="acts"><button class="btn alt" data-catback>← Back to all priority</button></div>' : ''}</div>`;
 }
 
-function home() { return priorityCard(); }
+function home() {
+  if (isMob()) return priorityCard();
+  return `<div class="homegrid"><div class="homeov">${overview()}</div><div>${priorityCard()}</div></div>`;
+}
+
+/* Sort Priority so similar categories sit together: Books, Manga, Games, Media, Music, Roguelikes, Rogue 100%, anything else, Stats/Wheel last. */
+function prioRank(name) {
+  const n = norm(name || ''), ak = anotherKey(name);
+  if (ak) return { book: 1, manga: 2, game: 3, watch: 4, music: 5 }[ak];
+  if (/stat|wheel/.test(n)) return 99;
+  if (/rogue\s*100|100\s*%?\s*rogue/.test(n)) return 7;
+  if (/rogue/.test(n)) return 6;
+  const o = mapped(name); if (o) return { books: 1, manga: 2, games: 3, shows: 4, music: 5 }[o.current_cat] || 50;
+  if (/light novel|book|novel|reading/.test(n)) return 1;
+  if (/manga|manhwa|webtoon/.test(n)) return 2;
+  if (/game/.test(n)) return 3;
+  if (/movie|film|tv|show|anime|series|watch/.test(n)) return 4;
+  if (/music|album|song/.test(n)) return 5;
+  return 50;
+}
+async function sortPriority() {
+  const list = by('priority').slice(), slots = list.map(e => e.sort_order).sort((a, b) => a - b), ord = new Map(list.map((e, i) => [e, i]));
+  const sorted = list.slice().sort((a, b) => prioRank(a.category) - prioRank(b.category) || String(a.category || '').localeCompare(String(b.category || '')) || ord.get(a) - ord.get(b));
+  const ch = [];
+  sorted.forEach((e, i) => { if (e.sort_order !== slots[i]) ch.push([e, slots[i]]); });
+  if (!ch.length) return toast('Already sorted');
+  const res = await Promise.all(ch.map(([e, so]) => db.from('log_entries').update({ sort_order: so }).eq('id', e.id)));
+  const bad = res.find(r => r.error); if (bad) return toast('Could not sort: ' + bad.error.message);
+  ch.forEach(([e, so]) => { e.sort_order = so; });
+  S.entries.sort((a, b) => a.sort_order - b.sort_order); render(); toast('Priority sorted by category');
+}
 
 function wheel() {
   const w = S.wcat, keep = x => !w || x.category === w;
@@ -1460,8 +1495,9 @@ async function toCurrent(kind, id, btn) {
 
 function currentView() {
   if (S.curErr) return `<div class="card">Couldn’t load Current: ${esc(S.curErr)}<br><span class="cat">Run 4_current.sql in the Supabase SQL Editor first.</span></div>`;
-  const tabs = [['overview', 'Overview'], ...CATS, ['years', 'Years'], ['goals', 'Goals']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
-  const body = S.cat === 'overview' ? overview() : S.cat === 'years' ? yearsView() : S.cat === 'goals' ? goalsView() : catView(S.cat);
+  if (S.cat === 'overview') S.cat = 'games';
+  const tabs = [...CATS, ['years', 'Years'], ['goals', 'Goals']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
+  const body = S.cat === 'years' ? yearsView() : S.cat === 'goals' ? goalsView() : catView(S.cat);
   return `<div class="seg">${tabs}</div>${body}`;
 }
 
@@ -1677,7 +1713,7 @@ function render() {
   const modal = S.rgm ? rgModalHtml() : S.glm ? glModalHtml() : S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.mum ? musicModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
   const bsc = document.querySelector('.bk-scroll'), bpos = bsc && !S.bkreset ? [bsc.scrollLeft, bsc.scrollTop] : null; S.bkreset = false;
   const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.rgm ? 'x' : S.glm ? 'y' : S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.mum ? 'u' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
-  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music'].includes(S.tab) ? 'wide' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
+  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music', 'home'].includes(S.tab) ? 'wide' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button><button class="${S.tab === 'media' ? 'on' : ''}" data-tab="media">Media</button><button class="${S.tab === 'music' ? 'on' : ''}" data-tab="music">Music</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
@@ -1770,7 +1806,7 @@ document.addEventListener('click', e => {
   if (!S.user) return;
   if (t.classList.contains('modal')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.rgm = null; S.glm = null; S.settings = false; return render(); }
   if (g('data-cancel')) { S.bren = null; S.bm = null; S.mm = null; S.gm = null; S.mdm = null; S.mum = null; S.re = null; S.ce = null; S.wheel = null; S.modal = null; S.bulk = null; S.cm = null; S.rgm = null; S.glm = null; S.settings = false; return render(); }
-  if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; return render(); }
+  if (g('data-ctab')) { S.cat = g('data-ctab').dataset.ctab; S.flt = 'all'; S.yr = null; if (S.tab === 'home') { S.tab = 'current'; window.scrollTo(0, 0); } return render(); }
   if (g('data-cflt')) { S.flt = g('data-cflt').dataset.cflt; return render(); }
   if (g('data-cyr')) { const v = g('data-cyr').dataset.cyr; S.yr = v === 'all' ? 'all' : Number(v); return render(); }
   if (g('data-cmove')) return moveRank(g('data-cmove').dataset.cmove, Number(g('data-cmove').dataset.dir));
@@ -1878,6 +1914,7 @@ document.addEventListener('click', e => {
   if (g('data-wdel')) { S.wheel.n = Number($('#w-n').value) || S.wheel.n; S.wheel.res.splice(Number(g('data-wdel').dataset.wdel), 1); return render(); }
   if (g('data-settings')) { S.settings = true; return render(); }
   if (g('data-addcat')) return addCat();
+  if (g('data-psort')) return sortPriority();
   if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; S.pcat = null; return render(); }
   if (g('data-catf')) { if (S.tab === 'wheel') { S.wcat = g('data-catf').dataset.catf; S.anchor = true; } else S.pcat = g('data-catf').dataset.catf; return render(); }
   if (g('data-catback')) { if (S.tab === 'wheel') { S.wcat = null; S.anchor = true; } else S.pcat = null; return render(); }
