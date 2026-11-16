@@ -352,23 +352,27 @@ function home() {
 }
 
 /* Sort Priority so similar categories sit together: Books, Manga, Games, Media, Music, Roguelikes, Rogue 100%, anything else, Stats/Wheel last. */
-function prioRank(name) {
+function prioRank(name) {   /* [group, position in group]: current first, then plain, then reread/catch-up, then "Another …" */
   const n = norm(name || ''), ak = anotherKey(name);
-  if (ak) return { book: 1, manga: 2, game: 3, watch: 4, music: 5 }[ak];
-  if (/stat|wheel/.test(n)) return 99;
-  if (/rogue\s*100|100\s*%?\s*rogue/.test(n)) return 7;
-  if (/rogue/.test(n)) return 6;
-  const o = mapped(name); if (o) return { books: 1, manga: 2, games: 3, shows: 4, music: 5 }[o.current_cat] || 50;
-  if (/light novel|book|novel|reading/.test(n)) return 1;
-  if (/manga|manhwa|webtoon/.test(n)) return 2;
-  if (/game/.test(n)) return 3;
-  if (/movie|film|tv|show|anime|series|watch/.test(n)) return 4;
-  if (/music|album|song/.test(n)) return 5;
-  return 50;
+  if (/stat|wheel/.test(n)) return [99, 0];
+  if (/rogue\s*100|100\s*%?\s*rogue/.test(n)) return [7, 0];
+  if (/rogue/.test(n)) return [6, 0];
+  const o = mapped(name);
+  let g = ak ? { book: 1, manga: 2, game: 3, watch: 4, music: 5 }[ak] : 0;
+  if (!g && /manga|manhwa|webtoon/.test(n)) g = 2;
+  if (!g && /light novel|book|novel|reading/.test(n)) g = 1;
+  if (!g && o) g = { books: 1, manga: 2, games: 3, shows: 4, music: 5 }[o.current_cat] || 0;
+  if (!g && /game|celeste|map|contest|collab|silver|golden|csc|lobby/.test(n)) g = 3;
+  if (!g && /movie|film|tv|show|anime|series|watch|media/.test(n)) g = 4;
+  if (!g && /music|album|song|listen/.test(n)) g = 5;
+  if (!g) return [50, 0];
+  const sub = ak ? 3 : /re-?read|re-?watch|re-?play|catch ?up/.test(n) ? 2 : (o || /current/.test(n)) ? 0 : 1;
+  return [g, sub];
 }
+const cmpRank = (x, y) => x[0] - y[0] || x[1] - y[1];
 async function sortPriority() {
   const list = by('priority').slice(), slots = list.map(e => e.sort_order).sort((a, b) => a - b), ord = new Map(list.map((e, i) => [e, i]));
-  const sorted = list.slice().sort((a, b) => prioRank(a.category) - prioRank(b.category) || String(a.category || '').localeCompare(String(b.category || '')) || ord.get(a) - ord.get(b));
+  const sorted = list.slice().sort((a, b) => cmpRank(prioRank(a.category), prioRank(b.category)) || String(a.category || '').localeCompare(String(b.category || '')) || ord.get(a) - ord.get(b));
   const ch = [];
   sorted.forEach((e, i) => { if (e.sort_order !== slots[i]) ch.push([e, slots[i]]); });
   if (!ch.length) return toast('Already sorted');
