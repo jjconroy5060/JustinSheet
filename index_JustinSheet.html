@@ -54,6 +54,7 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .paused{color:var(--danger)}.dropped{color:var(--mute);text-decoration:line-through}
 .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}.cols .card,.ovg .card{margin:0}
 .homeov.big .row{font-size:.91rem;padding:3px 7px}.homeov.big .row .c0{font-size:.82rem}.homeov.big .card h2{font-size:1.12rem}.homeov.big .cat{font-size:.9rem}.homeov.big .btn{font-size:.9rem}
+.topgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;align-items:start;margin-top:8px}.topc{margin:0}.topc .row{font-size:.9rem;padding:3px 4px}.topc .row .t1{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25;flex:1 1 0;min-width:0}.topc .row .t4{flex:0 0 4.6em}.topr{white-space:nowrap}
 .homegrid{display:grid;grid-template-columns:minmax(300px,4fr) minmax(0,7fr);gap:14px;align-items:start}.homeov .ovg{grid-template-columns:1fr}.homeov .card:first-child{margin-top:0}
 .wrap.mid{max-width:1360px}@media(min-width:701px){.big .row .c3{width:130px;white-space:nowrap}}.big .seg.sm button{font-size:.92rem;padding:6px 12px}.big .card h2{font-size:1.2rem}.big .cat{font-size:.95rem}.big .chkrow{font-size:1rem}
 .big .row{font-size:1.02rem;padding:5px 8px;line-height:1.35}.big .row .c0{font-size:.9rem}.big .seg button{font-size:1rem}.big .btn{font-size:.95rem}
@@ -1502,9 +1503,38 @@ async function toCurrent(kind, id, btn) {
 function currentView() {
   if (S.curErr) return `<div class="card">Couldn’t load Current: ${esc(S.curErr)}<br><span class="cat">Run 4_current.sql in the Supabase SQL Editor first.</span></div>`;
   if (S.cat === 'overview') S.cat = 'games';
-  const tabs = [...CATS, ['years', 'Years'], ['goals', 'Goals']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
-  const body = S.cat === 'years' ? yearsView() : S.cat === 'goals' ? goalsView() : catView(S.cat);
+  const tabs = [...CATS, ['years', 'Years'], ['goals', 'Goals'], ['top', 'Top 25']].map(([k, l]) => `<button class="${S.cat === k ? 'on' : ''}" data-ctab="${k}">${l}</button>`).join('');
+  const body = S.cat === 'years' ? yearsView() : S.cat === 'goals' ? goalsView() : S.cat === 'top' ? topView() : catView(S.cat);
   return `<div class="big"><div class="seg">${tabs}</div>${body}</div>`;
+}
+
+/* ---------- Top 25 lists (read-only, from the category tabs) ---------- */
+const TOPS = [
+  { k: 'books', short: 'Books', title: 'Books', f: () => S.books.filter(b => b.section !== 'Light Novels').map(b => [b.title, b.rating, rfmt]) },
+  { k: 'mrom', short: 'Romance', title: 'Manga · Romance/Comedy', f: () => S.manga.filter(m => m.category === 'Romance/Comedy').map(m => [m.title, m.rating, mrf]) },
+  { k: 'mact', short: 'Action', title: 'Manga · Action/Other', f: () => S.manga.filter(m => m.category !== 'Romance/Comedy').map(m => [m.title, m.rating, mrf]) },
+  { k: 'games', short: 'Games', title: 'Games', f: () => S.games.map(m => [m.title, m.rating, mrf]) },
+  { k: 'movies', short: 'Movies', title: 'Movies', f: () => S.media.filter(m => m.category === DMOV).map(m => [m.title, m.rating, rfmt]) },
+  { k: 'anime', short: 'Anime', title: 'Anime', f: () => S.media.filter(m => /^Anime/.test(m.category)).map(m => [m.title, m.rating, mrf]) },
+  { k: 'shows', short: 'Shows', title: 'TV Shows', f: () => S.media.filter(m => /^TV/.test(m.category)).map(m => [m.title, m.rating, mrf]) },
+  { k: 'songs', short: 'Songs', title: 'Songs', f: () => S.msong.map(x => { const a = S.malb.find(v => v.id === x.album_id); return [x.title + (a ? ' — ' + a.artist : ''), x.rating, muSrf]; }) },
+  { k: 'albums', short: 'Albums', title: 'Albums', f: () => S.malb.map(a => [a.artist + ' - ' + a.title, muAlbR(a), muRf]) }
+];
+function topList(t) {
+  const items = t.f().filter(([, r]) => r != null && r !== '' && !isNaN(Number(r))).map(([n, r, fmt]) => ({ n: String(n || ''), r: Number(r), fmt }));
+  items.sort((a, b) => Math.round(b.r * 1000) - Math.round(a.r * 1000) || a.n.localeCompare(b.n));
+  return items.slice(0, 25);
+}
+function topCard(t) {
+  const l = topList(t);
+  return `<div class="card topc"><div class="head"><h2>${esc(t.title)}</h2><span class="cat">Top ${l.length}</span></div>${l.length ? l.map((x, i) => `<div class="row"><div class="c0">${i + 1}</div><div class="t1" title="${esc(x.n)}">${esc(x.n)}</div><div class="t4 topr">${x.fmt(x.r)}</div></div>`).join('') : '<div class="cat">Nothing rated yet.</div>'}</div>`;
+}
+function topView() {
+  if (isMob()) {
+    const sel = TOPS.find(t => t.k === S.topsel) || TOPS[0];
+    return `<div class="seg sm">${TOPS.map(t => `<button class="${t === sel ? 'on' : ''}" data-topsel="${t.k}">${t.short}</button>`).join('')}</div>${topCard(sel)}`;
+  }
+  return `<div class="topgrid">${TOPS.map(topCard).join('')}</div>`;
 }
 
 function cuBlock(arrows) {
@@ -1719,7 +1749,7 @@ function render() {
   const modal = S.rgm ? rgModalHtml() : S.glm ? glModalHtml() : S.modal ? modalHtml() : S.bulk ? bulkHtml() : S.bren ? bookRenHtml() : S.bm ? bookModalHtml() : S.mm ? mangaModalHtml() : S.gm ? gamesModalHtml() : S.mdm ? mediaModalHtml() : S.mum ? musicModalHtml() : S.wheel ? wheelHtml() : S.cm ? curModalHtml() : S.re ? rogueEditHtml() : S.ce ? catEditHtml() : S.settings ? settingsHtml() : '';
   const bsc = document.querySelector('.bk-scroll'), bpos = bsc && !S.bkreset ? [bsc.scrollLeft, bsc.scrollTop] : null; S.bkreset = false;
   const sh0 = document.querySelector('.sheet'), sy0 = sh0 ? sh0.scrollTop : 0, mk = S.rgm ? 'x' : S.glm ? 'y' : S.modal ? 'm' : S.bulk ? 'b' : S.wheel ? 'w' : S.cm ? 'c' : S.bren ? 'n' : S.bm ? 'k' : S.mm ? 'g' : S.gm ? 'j' : S.mdm ? 'd' : S.mum ? 'u' : S.re ? 'r' : S.ce ? 'e' : S.settings ? 's' : '';
-  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music', 'home'].includes(S.tab) ? 'wide' : ['wheel', 'current'].includes(S.tab) ? 'mid' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
+  app.innerHTML = `<div class="wrap ${['books', 'manga', 'games', 'media', 'music', 'home'].includes(S.tab) || (S.tab === 'current' && S.cat === 'top') ? 'wide' : ['wheel', 'current'].includes(S.tab) ? 'mid' : ''}"><header class="${S.tab === 'wheel' ? 'stick' : ''}"><h1>Justin’s Sheet</h1>
     <nav><button class="${S.tab === 'home' ? 'on' : ''}" data-tab="home">Home</button><button class="${S.tab === 'wheel' ? 'on' : ''}" data-tab="wheel">Wheel</button><button class="${S.tab === 'current' ? 'on' : ''}" data-tab="current">Current</button><button class="${S.tab === 'books' ? 'on' : ''}" data-tab="books">Books</button><button class="${S.tab === 'manga' ? 'on' : ''}" data-tab="manga">Manga</button><button class="${S.tab === 'games' ? 'on' : ''}" data-tab="games">Games</button><button class="${S.tab === 'media' ? 'on' : ''}" data-tab="media">Media</button><button class="${S.tab === 'music' ? 'on' : ''}" data-tab="music">Music</button></nav>
     <div class="side"><button class="gear" data-settings title="Settings">⚙︎</button><button class="link" data-out>Sign out</button></div>
     ${S.tab === 'wheel' ? `<input id="q" placeholder="Search" value="${esc(S.q)}" style="flex:1 0 100%">` : ''}</header>
@@ -1920,6 +1950,7 @@ document.addEventListener('click', e => {
   if (g('data-wdel')) { S.wheel.n = Number($('#w-n').value) || S.wheel.n; S.wheel.res.splice(Number(g('data-wdel').dataset.wdel), 1); return render(); }
   if (g('data-settings')) { S.settings = true; return render(); }
   if (g('data-addcat')) return addCat();
+  if (g('data-topsel')) { S.topsel = g('data-topsel').dataset.topsel; return render(); }
   if (g('data-psort')) return sortPriority();
   if (g('data-sub')) { S.sub = g('data-sub').dataset.sub; S.pcat = null; return render(); }
   if (g('data-catf')) { if (S.tab === 'wheel') { S.wcat = g('data-catf').dataset.catf; S.anchor = true; } else S.pcat = g('data-catf').dataset.catf; return render(); }
