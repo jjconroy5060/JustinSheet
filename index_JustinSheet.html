@@ -54,8 +54,8 @@ nav button.on,.seg button.on{background:var(--accent);color:var(--accent-ink);bo
 .paused{color:var(--danger)}.dropped{color:var(--mute);text-decoration:line-through}
 .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}.cols .card,.ovg .card{margin:0}
 .homeov.big .row{font-size:.91rem;padding:3px 7px}.homeov.big .row .c0{font-size:.82rem}.homeov.big .card h2{font-size:1.12rem}.homeov.big .cat{font-size:.9rem}.homeov.big .btn{font-size:.9rem}
-.topgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;align-items:start;margin-top:6px}.topc{margin:0;padding:7px 8px}.topc .head{margin-bottom:4px}.big .topc h2{font-size:.88rem !important}.topc .head .cat{display:none}.big .topc .row{font-size:.84rem;padding:2px 2px !important;line-height:1.25;min-height:0;gap:4px}.big .topc .row .c0{flex:0 0 1.8em;width:auto;font-size:.74rem;text-align:right}.big .topc .row .t1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;flex:1 1 0;min-width:0}.big .topc .row .t4{flex:0 0 3.7em;font-size:.82rem}.topr{white-space:nowrap}
-@media(min-width:1250px){.topgrid{grid-template-columns:repeat(9,minmax(0,1fr))}.wrap.wide.wtop{padding:10px 10px}}
+.topgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;align-items:start;margin-top:6px}.topc{margin:0;padding:7px 8px}.topc .head{margin-bottom:4px}.big .topc h2{font-size:.88rem !important}.topc .head .cat{display:none}.big .topc .row{font-size:.82rem;padding:2px 3px !important;line-height:1.25;min-height:0;gap:4px}.big .topc .row .c0{flex:0 0 1.8em;width:auto;font-size:.74rem;text-align:right}.big .topc .row .t1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;flex:1 1 0;min-width:0}.big .topc .row .t4{flex:0 0 3.7em;font-size:.82rem}.topr{white-space:nowrap}
+@media(min-width:1250px){.topgrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.wrap.wide.wtop{padding:10px 10px}}
 .homegrid{display:grid;grid-template-columns:minmax(300px,4fr) minmax(0,7fr);gap:14px;align-items:start}.homeov .ovg{grid-template-columns:1fr}.homeov .card:first-child{margin-top:0}
 .wrap.mid{max-width:1360px}@media(min-width:701px){.big .row .c3{width:130px;white-space:nowrap}}.big .seg.sm button{font-size:.92rem;padding:6px 12px}.big .card h2{font-size:1.2rem}.big .cat{font-size:.95rem}.big .chkrow{font-size:1rem}
 .big .row{font-size:1.02rem;padding:5px 8px;line-height:1.35}.big .row .c0{font-size:.9rem}.big .seg button{font-size:1rem}.big .btn{font-size:.95rem}
@@ -1514,11 +1514,12 @@ const TOPS = [
   { k: 'books', short: 'Books', title: 'Books', f: () => S.books.filter(b => b.section !== 'Light Novels').map(b => [b.title, b.rating, rfmt]) },
   { k: 'mrom', short: 'Romance', title: 'Romance/Comedy Manga', f: () => S.manga.filter(m => m.category === 'Romance/Comedy').map(m => [m.title, m.rating, mrf]) },
   { k: 'mact', short: 'Action', title: 'Action/Other Manga', f: () => S.manga.filter(m => m.category !== 'Romance/Comedy').map(m => [m.title, m.rating, mrf]) },
-  { k: 'games', short: 'Games', title: 'Games', f: () => S.games.map(m => [m.title, m.rating, mrf]) },
+  { k: 'games', short: 'Single', title: 'Games · Single Player', f: () => S.games.filter(m => m.category !== 'Multiplayer/Sports').map(m => [m.title, m.rating, mrf]) },
+  { k: 'gmulti', short: 'Multi', title: 'Games · Multiplayer', f: () => S.games.filter(m => m.category === 'Multiplayer/Sports').map(m => [m.title, m.rating, mrf]) },
   { k: 'movies', short: 'Movies', title: 'Movies', f: () => S.media.filter(m => m.category === DMOV).map(m => [m.title, m.rating, rfmt]) },
   { k: 'anime', short: 'Anime', title: 'Anime', f: () => S.media.filter(m => /^Anime/.test(m.category)).map(m => [m.title, m.rating, mrf]) },
   { k: 'shows', short: 'Shows', title: 'TV Shows', f: () => S.media.filter(m => /^TV/.test(m.category)).map(m => [m.title, m.rating, mrf]) },
-  { k: 'songs', short: 'Songs', title: 'Songs', f: () => S.msong.map(x => { const a = S.malb.find(v => v.id === x.album_id); return [x.title + (a ? ' — ' + a.artist : ''), x.rating, muSrf]; }) },
+  { k: 'songs', short: 'Songs', title: 'Songs', f: () => S.msong.map(x => [x.title, x.rating, muSrf]) },
   { k: 'albums', short: 'Albums', title: 'Albums', f: () => S.malb.map(a => [a.artist + ' - ' + a.title, muAlbR(a), muRf]) }
 ];
 function topList(t) {
