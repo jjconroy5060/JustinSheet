@@ -1213,7 +1213,7 @@ async function loadMusic() {
 }
 const muSecs = x => { x = Math.round(x); const h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60), s = x % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`; };
 const muParse = t => { t = String(t || '').trim(); if (!t) return { v: null }; const p = t.split(':'); if (p.length > 3 || p.some(x => !/^\d+$/.test(x))) return { err: true }; if (p.length === 1) return { v: +p[0] }; if (p.length === 2) return +p[1] < 60 ? { v: +p[0] * 60 + +p[1] } : { err: true }; return +p[1] < 60 && +p[2] < 60 ? { v: +p[0] * 3600 + +p[1] * 60 + +p[2] } : { err: true }; };
-/* album rating = average of counted song ratings x 0.6 + average of Themes/Lyrics/Culture x 0.4; blank until both parts exist */
+/* album rating = average of counted song ratings x 0.6 + average of Themes/Lyrics/Enjoyment x 0.4; blank until both parts exist */
 function muCalc(songs, t, l, c) {
   const rs = songs.filter(x => x.counts !== false && x.rating != null && x.rating !== '').map(x => Number(x.rating)), tl = [t, l, c];
   if (!rs.length || tl.some(v => v == null || v === '' || isNaN(Number(v)))) return null;
@@ -1262,8 +1262,8 @@ function musicModalHtml() {
     <label>Artist</label><select id="u-art">${arts.map(a => `<option value="${esc(a)}" ${a === m.artist ? 'selected' : ''}>${esc(a)}</option>`).join('')}<option value="__new__" ${isNewA || !arts.length ? 'selected' : ''}>New artist…</option></select>${isNewA || !arts.length ? `<input id="u-artn" placeholder="Artist name" value="${esc(m.artistNew || '')}" style="margin-top:4px">` : ''}
     <div style="display:flex;gap:8px"><div style="flex:1"><label>Artist year (first album/formed)</label><input id="u-ayr" type="number" value="${esc(m.artistYear)}"></div><div style="flex:1"><label>Album year</label><input id="u-year" type="number" value="${esc(m.year)}"></div></div>
     <label>Album title</label><input id="u-title" value="${esc(m.title)}">
-    <label>Themes · Lyrics · Culture (0–5)</label>
-    <div style="display:flex;gap:8px"><input id="u-t" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Themes" value="${esc(m.t)}"><input id="u-l" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Lyrics" value="${esc(m.l)}"><input id="u-c" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Culture" value="${esc(m.c)}"></div>
+    <label>Themes · Lyrics · Enjoyment (0–5)</label>
+    <div style="display:flex;gap:8px"><input id="u-t" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Themes" value="${esc(m.t)}"><input id="u-l" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Lyrics" value="${esc(m.l)}"><input id="u-c" class="uin" type="number" min="0" max="5" step="0.1" placeholder="Enjoyment" value="${esc(m.c)}"></div>
     <div class="scok good" id="u-prev" style="margin-top:6px"></div>
     <label style="margin-top:10px">Songs</label>
     <div class="usgrid hd"><span>Title</span><span>M:SS</span><span>Rating</span><span>Listen</span><span title="Counts toward the album rating">Cnt</span><span></span></div>
@@ -1285,7 +1285,7 @@ function muPreview() {
   const m = readUm(), n = v => v === '' ? null : Number(v), c = muCalc(m.songs.map(x => ({ rating: n(x.rating), counts: x.counts })), n(m.t), n(m.l), n(m.c)), el = $('#u-prev'); if (!el) return;
   const cnt = m.songs.filter(x => x.counts && x.rating !== '').length;
   el.className = 'scok ' + (c ? 'good' : 'warn');
-  el.textContent = c ? `Album rating ${c.r.toFixed(2)} = songs avg ${c.sa.toFixed(2)} (${cnt} counted) × 0.6 + Themes/Lyrics/Culture avg ${c.ta.toFixed(2)} × 0.4` : 'Album rating shows once at least one counted song is rated and Themes, Lyrics and Culture are all filled.';
+  el.textContent = c ? `Album rating ${c.r.toFixed(2)} = songs avg ${c.sa.toFixed(2)} (${cnt} counted) × 0.6 + Themes/Lyrics/Enjoyment avg ${c.ta.toFixed(2)} × 0.4` : 'Album rating shows once at least one counted song is rated and Themes, Lyrics and Enjoyment are all filled.';
 }
 /* one song per line: "Title - 4:21", "4:21 Title", "3. Title 4:21"; lines like "1.9M plays" are skipped */
 function muParseList(text) {
@@ -1308,7 +1308,7 @@ async function saveMusic() {
   const m = readUm(), title = m.title.trim(), art = (m.artist === '__new__' || !S.malb.some(a => a.genre === m.genre && a.artist === m.artist) ? (m.artist === '__new__' ? m.artistNew : m.artist) : m.artist) || '';
   if (!title) return toast('Add an album title first'); if (!String(art).trim()) return toast('Add the artist name');
   const num = v => String(v).trim() === '' ? null : Number(v);
-  for (const k of ['t', 'l', 'c']) { const v = num(m[k]); if (v != null && !(v >= 0 && v <= 5)) return toast('Themes / Lyrics / Culture must be 0–5'); }
+  for (const k of ['t', 'l', 'c']) { const v = num(m[k]); if (v != null && !(v >= 0 && v <= 5)) return toast('Themes / Lyrics / Enjoyment must be 0–5'); }
   const songs = []; for (const [i, x] of m.songs.entries()) { if (!String(x.title).trim()) continue; const t = muParse(x.time); if (t.err) return toast(`Song "${x.title}": time should look like 4:21`); const r = num(x.rating); if (r != null && !(r >= 0 && r <= 5)) return toast(`Song "${x.title}": rating must be 0–5`); songs.push({ id: x.id, title: String(x.title).trim(), secs: t.v, rating: r, listen: x.listen, counts: !!x.counts }); }
   const payload = { genre: m.genre, artist: String(art).trim(), artist_year: num(m.artistYear), title, year: num(m.year), themes: num(m.t), lyrics: num(m.l), culture: num(m.c) };
   const res = m.id ? await db.from('music_albums').update(payload).eq('id', m.id).select().single() : await db.from('music_albums').insert(payload).select().single();
