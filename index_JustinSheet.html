@@ -1511,25 +1511,25 @@ function currentView() {
 
 /* ---------- Top 25 lists (read-only, from the category tabs) ---------- */
 const TOPS = [
-  { k: 'books', short: 'Books', title: 'Books', f: () => S.books.filter(b => b.section !== 'Light Novels').map(b => [b.title, b.rating, rfmt]) },
-  { k: 'mrom', short: 'Romance', title: 'Romance/Comedy Manga', f: () => S.manga.filter(m => m.category === 'Romance/Comedy').map(m => [m.title, m.rating, mrf]) },
-  { k: 'mact', short: 'Action', title: 'Action/Other Manga', f: () => S.manga.filter(m => m.category !== 'Romance/Comedy').map(m => [m.title, m.rating, mrf]) },
-  { k: 'games', short: 'Single', title: 'Games · Single Player', f: () => S.games.filter(m => m.category !== 'Multiplayer/Sports').map(m => [m.title, m.rating, mrf]) },
-  { k: 'gmulti', short: 'Multi', title: 'Games · Multiplayer', f: () => S.games.filter(m => m.category === 'Multiplayer/Sports').map(m => [m.title, m.rating, mrf]) },
-  { k: 'movies', short: 'Movies', title: 'Movies', f: () => S.media.filter(m => m.category === DMOV).map(m => [m.title, m.rating, rfmt]) },
-  { k: 'anime', short: 'Anime', title: 'Anime', f: () => S.media.filter(m => /^Anime/.test(m.category)).map(m => [m.title, m.rating, mrf]) },
-  { k: 'shows', short: 'Shows', title: 'TV Shows', f: () => S.media.filter(m => /^TV/.test(m.category)).map(m => [m.title, m.rating, mrf]) },
-  { k: 'songs', short: 'Songs', title: 'Songs', f: () => S.msong.map(x => [x.title, x.rating, muSrf]) },
-  { k: 'albums', short: 'Albums', title: 'Albums', f: () => S.malb.map(a => [a.artist + ' - ' + a.title, muAlbR(a), muRf]) }
+  { k: 'books', short: 'Books', title: 'Books', f: () => S.books.filter(b => b.section !== 'Light Novels').map(b => [b.title, b.rating, rfmt, 'data-bedit', b.id]) },
+  { k: 'mrom', short: 'Romance', title: 'Romance/Comedy Manga', f: () => S.manga.filter(m => m.category === 'Romance/Comedy').map(m => [m.title, m.rating, mrf, 'data-medit', m.id]) },
+  { k: 'mact', short: 'Action', title: 'Action/Other Manga', f: () => S.manga.filter(m => m.category !== 'Romance/Comedy').map(m => [m.title, m.rating, mrf, 'data-medit', m.id]) },
+  { k: 'games', short: 'Single', title: 'Games · Single Player', f: () => S.games.filter(m => m.category !== 'Multiplayer/Sports').map(m => [m.title, m.rating, mrf, 'data-gedit', m.id]) },
+  { k: 'gmulti', short: 'Multi', title: 'Games · Multiplayer', f: () => S.games.filter(m => m.category === 'Multiplayer/Sports').map(m => [m.title, m.rating, mrf, 'data-gedit', m.id]) },
+  { k: 'movies', short: 'Movies', title: 'Movies', f: () => S.media.filter(m => m.category === DMOV).map(m => [m.title, m.rating, rfmt, 'data-mdedit', m.id]) },
+  { k: 'anime', short: 'Anime', title: 'Anime', f: () => S.media.filter(m => /^Anime/.test(m.category)).map(m => [m.title, m.rating, mrf, 'data-mdedit', m.id]) },
+  { k: 'shows', short: 'Shows', title: 'TV Shows', f: () => S.media.filter(m => /^TV/.test(m.category)).map(m => [m.title, m.rating, mrf, 'data-mdedit', m.id]) },
+  { k: 'songs', short: 'Songs', title: 'Songs', f: () => S.msong.map(x => [x.title, x.rating, muSrf, 'data-muedit', x.album_id]) },
+  { k: 'albums', short: 'Albums', title: 'Albums', f: () => S.malb.map(a => [a.artist + ' - ' + a.title, muAlbR(a), muRf, 'data-muedit', a.id]) }
 ];
 function topList(t) {
-  const items = t.f().filter(([, r]) => r != null && r !== '' && !isNaN(Number(r))).map(([n, r, fmt]) => ({ n: String(n || ''), r: Number(r), fmt }));
+  const items = t.f().filter(([, r]) => r != null && r !== '' && !isNaN(Number(r))).map(([n, r, fmt, at, id]) => ({ n: String(n || ''), r: Number(r), fmt, at, id }));
   items.sort((a, b) => Math.round(b.r * 1000) - Math.round(a.r * 1000) || a.n.localeCompare(b.n));
   return items.slice(0, 25);
 }
 function topCard(t) {
   const l = topList(t);
-  return `<div class="card topc"><div class="head"><h2>${esc(t.title)}</h2><span class="cat">Top ${l.length}</span></div>${l.length ? l.map((x, i) => `<div class="row"><div class="c0">${i + 1}</div><div class="t1" title="${esc(x.n)}">${esc(x.n)}</div><div class="t4 topr">${x.fmt(x.r)}</div></div>`).join('') : '<div class="cat">Nothing rated yet.</div>'}</div>`;
+  return `<div class="card topc"><div class="head"><h2>${esc(t.title)}</h2><span class="cat">Top ${l.length}</span></div>${l.length ? l.map((x, i) => `<div class="row" ${x.at}="${x.id}" style="cursor:pointer"><div class="c0">${i + 1}</div><div class="t1" title="${esc(x.n)}">${esc(x.n)}</div><div class="t4 topr">${x.fmt(x.r)}</div></div>`).join('') : '<div class="cat">Nothing rated yet.</div>'}</div>`;
 }
 function topView() {
   if (isMob()) {
