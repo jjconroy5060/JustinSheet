@@ -1205,11 +1205,11 @@ async function delMedia() {
 }
 
 /* ---------------- Music (genres > artists > albums > songs) ---------------- */
-const MUG = ['Alternative', 'Indie', 'Rock', 'Pop/Electronic', 'Soul', 'Hip Hop', 'Other'];
+const MUG = ['Alternative', 'Indie/Folk', 'Rock', 'Pop/Electronic', 'Soul', 'Hip Hop', 'Other'];
 const MUL = { 1: 'No listens', 2: 'Have heard', 3: 'Know lyrics' };
 async function loadMusic() {
   const a = await db.from('music_albums').select('*').range(0, 999), so = await db.from('music_songs').select('*').order('sort_order').range(0, 4999);
-  S.malb = a.data || []; S.msong = so.data || []; S.muErr = a.error ? a.error.message : so.error ? so.error.message : null;
+  S.malb = (a.data || []).map(x => x.genre === 'Indie' ? { ...x, genre: 'Indie/Folk' } : x); S.msong = so.data || []; S.muErr = a.error ? a.error.message : so.error ? so.error.message : null;
 }
 const muSecs = x => { x = Math.round(x); const h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60), s = x % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`; };
 const muParse = t => { t = String(t || '').trim(); if (!t) return { v: null }; const p = t.split(':'); if (p.length > 3 || p.some(x => !/^\d+$/.test(x))) return { err: true }; if (p.length === 1) return { v: +p[0] }; if (p.length === 2) return +p[1] < 60 ? { v: +p[0] * 60 + +p[1] } : { err: true }; return +p[1] < 60 && +p[2] < 60 ? { v: +p[0] * 3600 + +p[1] * 60 + +p[2] } : { err: true }; };
